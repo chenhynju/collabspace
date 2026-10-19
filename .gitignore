@@ -1,0 +1,34 @@
+node_modules
+dist
+.next
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+coverage
+.vite
+.turbo
+.uploads
+.pgdata*
+.uploads
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# Local acceptance and archives
+.test-runs/
+*.tsbuildinfo
+*.bundle
+backups/
+
+!.env.production.example
+*.pem
+*.key
+
