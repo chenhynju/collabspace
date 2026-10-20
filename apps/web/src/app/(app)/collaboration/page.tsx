@@ -29,19 +29,19 @@ export default function CollaborationHub() {
       <p className="text-sm text-blue-700">
         CollabSpace / Real-time collaboration
       </p>
-      <h1 className="text-3xl font-semibold">和团队一起写，一起画。</h1>
+      <h1 className="text-3xl font-semibold">让团队始终编辑同一份文档。</h1>
       <p className="max-w-3xl text-slate-500">
-        协作文档承载需求、决策与交付记录；实时白板用于流程梳理、方案讨论与便签共创。选择项目后创建或打开协作空间，再通过共享权限邀请组织成员。
+        多人共同编辑、在线状态与光标、原文评论和冲突合并。选择项目，打开同一份文档，通过共享权限邀请组织成员；断线重连后继续同步。
       </p>
       <div className="grid gap-4 md:grid-cols-2">
-        <section className="rounded-xl border bg-white p-6">
+        <section className="rounded-xl border border-blue-200 bg-blue-50 p-6">
           <h2 className="text-xl font-semibold">协作文档</h2>
           <p className="mt-2 text-sm text-slate-500">
             富文本、多人选区与光标、原文评论、版本和离线恢复。
           </p>
         </section>
         <section className="rounded-xl border bg-white p-6">
-          <h2 className="text-xl font-semibold">实时白板</h2>
+          <h2 className="text-xl font-semibold">白板扩展</h2>
           <p className="mt-2 text-sm text-slate-500">
             图形、便签、文字与箭头；多人光标、缩放平移、各自撤销和离线重连。
           </p>
@@ -72,13 +72,13 @@ export default function CollaborationHub() {
             </div>
             <div className="flex gap-3">
               <Link
-                className="rounded border px-4 py-2 text-sm"
+                className="rounded bg-blue-600 px-4 py-2 text-sm text-white"
                 href={`/projects/${p.id}/documents`}
               >
                 打开协作文档
               </Link>
               <Link
-                className="rounded bg-blue-600 px-4 py-2 text-sm text-white"
+                className="rounded border px-4 py-2 text-sm"
                 href={`/projects/${p.id}/boards`}
               >
                 打开实时白板
