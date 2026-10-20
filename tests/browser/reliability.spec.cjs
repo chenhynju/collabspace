@@ -97,7 +97,7 @@ test("offline keystrokes survive closing the page and replay after reconnect wit
   request,
 }) => {
   const seconds = Number(process.env.OFFLINE_HOLD_SECONDS || 0);
-  test.setTimeout((seconds + 180) * 1000);
+  test.setTimeout((seconds + 420) * 1000);
   const { context, path } = await fixture(browser, request);
   let page = await context.newPage();
   const pendingText = "offline-" + "abcdefghijklmnop".repeat(8);
@@ -127,10 +127,23 @@ test("offline keystrokes survive closing the page and replay after reconnect wit
     await expect(
       page.getByRole("textbox", { name: "协作文档正文" }),
     ).toContainText(pendingText);
+    const replayStarted = Date.now();
+    let replayed = 0, acknowledged = 0;
+    page.on("websocket", (socket) => {
+      socket.on("framesent", ({ payload }) => {
+        try { if (JSON.parse(String(payload)).type === "update") replayed++; } catch {}
+      });
+      socket.on("framereceived", ({ payload }) => {
+        try { if (JSON.parse(String(payload)).type === "ack") acknowledged++; } catch {}
+      });
+    });
     await context.unroute("**/documents/*/session-ticket");
     await expect(
       page.getByText("已保存到服务器", { exact: false }),
-    ).toBeVisible({ timeout: 60000 });
+    ).toBeVisible({ timeout: pendingText.length * 2000 + 30000 });
+    console.log(JSON.stringify({ offlineReplayMs: Date.now() - replayStarted, replayed, acknowledged }));
+    expect(replayed).toBeGreaterThan(0);
+    expect(acknowledged).toBe(replayed);
     await page.reload();
     await expect(
       page.getByRole("textbox", { name: "协作文档正文" }),

@@ -2,7 +2,7 @@
 # TeamSpace API — NestJS + Prisma（pnpm workspace 内构建）
 FROM node:20-alpine AS deps
 WORKDIR /repo
-RUN corepack enable
+RUN apk add --no-cache openssl && corepack enable
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY apps/api/package.json apps/api/
 COPY packages packages

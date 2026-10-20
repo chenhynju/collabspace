@@ -24,8 +24,17 @@ function run(args, env = {}) {
         "SELECT count(*)::int AS n FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE'",
       )
     ).rows[0].n;
-    if (count !== 0) throw Error("Refusing to initialize a non-empty database");
-    await pool.query(
+    if (count !== 0) {
+      if (process.env.RESUME_EMPTY_SCHEMA !== "1")
+        throw Error("Refusing to initialize a non-empty database");
+      const tables = (await pool.query("SELECT tablename FROM pg_tables WHERE schemaname='public'")).rows;
+      for (const { tablename } of tables) {
+        const quoted = '"' + tablename.replace(/"/g, '""') + '"';
+        if ((await pool.query(`SELECT EXISTS(SELECT 1 FROM public.${quoted}) AS populated`)).rows[0].populated)
+          throw Error("Refusing resume: existing business data");
+      }
+      console.log("Verified all existing schema tables are empty; resuming seed");
+    } else await pool.query(
       "BEGIN;\n" +
         readFileSync("/repo/deploy/collabspace/initial-schema.sql", "utf8") +
         "\nCOMMIT;",
