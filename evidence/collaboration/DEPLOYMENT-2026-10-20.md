@@ -1,27 +1,30 @@
 # CollabSpace 部署与线上验收状态
 
-用户 2026-10-20 接受本机约 0.43s 延迟，要求先自测、commit/push、部署并在线上自测。用户指定 Vercel 前端、腾讯云弗吉尼亚服务器后端，主域名 collabspace.purelamp.uk。
+2026-10-20：用户接受本机约 0.43s 的发布基线，明确批准 Vercel 前端、腾讯云弗吉尼亚独立后端，以及独立 PostgreSQL/Redis、非特权角色、随机密钥、演示账号和专用 DNS/Caddy 配置。其他项目保留。
 
-## 已完成
+## 已部署
 
-- 现场核对仓库原 HEAD 240a68d、工作树干净；该提交远端 CI 全部成功。
-- 本轮协作/非特权 PG/WS 回归 9/9、租户状态 2/2、API 支付与生产 seed 保护 18/18 通过。
-- 部署前原浏览器四项再次通过；改造为支持私有线上配置后发现多标签场景在文本尚未确认保存时立即选区的测试竞态，补足 durable ACK 和可见选区前置条件，独立重测通过；最终组合结果见 predeploy-browser-results.json。首次失败保留 predeploy-first-results.json，不算线上缺陷已修复的证据。
-- 创建独立 Vercel 项目 purelamp/collabspace，Next.js、apps/web、Node 22。部署 dpl_3mHHDyHg5X217663BvxjZZtGyEAa 为 READY，生产别名已分配 collabspace.purelamp.uk；原始状态见 vercel-deployment.json。DNS 尚未配置，不能据 READY 宣称网站业务可用。
-- 腾讯云 170.106.161.82 SSH 已只读核对，现有 Docker/Caddy 服务保留。新目录 /opt/collabspace/releases/r20261020-01；本项目镜像 collabspace-init/API/WS 已真实构建成功（约 1.68GB/751MB/892MB）。还没有启动 CollabSpace 数据容器或应用容器。
-- 生产编排独立卷、数据库和运行角色、127.0.0.1:3321/3322 端口、内存限制；准备了全新数据库初始迁移和拒绝覆盖非空数据库的 bootstrap。API 镜像用户固定 uid 10001，上传卷由初始化配置所有权。
-- seed 支持私有 SEED_PASSWORD，生产缺失/过短密码会在数据库访问前拒绝，不输出密码。线上 Playwright 只读取私有配置并要求 HTTPS，不接受数据库管理连接；丢 ACK 通过稳定 updateId/seq 重放和刷新内容核验。
+- 网站：https://collabspace.purelamp.uk；API：https://collabspace-api.purelamp.uk/api/v1；协作使用同后端域名的 /collab WSS。
+- Vercel purelamp/collabspace，项目 prj_ikHFp2kdcaWziNqBymd5GPVA53MS，部署 dpl_3mHHDyHg5X217663BvxjZZtGyEAa READY；apps/web，Node 22。实际前端代码与本次发布一致。
+- 腾讯云独立目录 /opt/collabspace/releases/r20261020-01，compose 项目 collabspace；PG/Redis 无宿主端口，API/WS 仅绑定 127.0.0.1:3321/3322，由专用 Caddy 站点提供 HTTPS/WSS。
+- 四个运行容器均 healthy；API readiness 确认 database/redis up。collabspace_app 的 rolsuper=false、rolbypassrls=false，8 张协作表启用 FORCE RLS。
+- Cloudflare 仅新增 DNS only A：collabspace→76.76.21.21，collabspace-api→170.106.161.82；截图 dns-live.png。Vercel 验证 misconfigured=false，托管 TLS 签发成功；从弗吉尼亚实际请求前端 /login 返回 HTTPS 200。
+- 独立随机凭据仅在服务端 0600 文件和本机忽略目录，未提交。支付 sandbox、邮件 console，不声称真实支付/邮件上线。
 
-## 待批准：生产初始化
+## 初始化与修复证据
 
-自动审批拒绝了在共享服务器持久创建数据库/JWT/Webhook/演示账号凭据的命令，理由是此前授权未明确覆盖生产凭据和资源初始化。命令没有执行；已通过 SSH 确认 /opt/collabspace/shared/.env.production 不存在，没有 CollabSpace 运行容器。
+- 初次初始化已建立结构，但 Prisma 因构建阶段缺少 OpenSSL 选错 musl 1.1 引擎，在写入演示数据前失败。修复 deps 阶段 OpenSSL 后真实重建镜像；续做显式要求 RESUME_EMPTY_SCHEMA=1，并逐表检查所有业务表为空，含任何数据即拒绝，不清库。随后初始化、种子和 RLS 完成。
+- Caddy 完整配置验证通过；systemctl reload 因另一项目配置文件仅 root 可读失败。使用 root caddy reload 经现有管理端口平滑加载成功，未修改其他文件权限或重启共享服务。
+- 首轮线上四项均在前端 page.goto 遇到 ERR_CONNECTION_CLOSED，未进入协作业务；保留 online-first-results.json。后端登录/建文档成功。Vercel 自定义域名证书签发后重测，不跳过 TLS 验证。
 
-已向用户请求明确批准：仅为 CollabSpace 新建独立 PostgreSQL/Redis 持久卷、非特权角色、随机密码与密钥、合成演示账号，新增专用 Caddy/DNS 配置并上线，其他项目不变。批准到达前不重试被拒绝动作，不使用旧工程凭据，不把构建镜像当成运行成功。
+## 验收
 
-Cloudflare 已登录且 DNS 列表已现场核对，无 collabspace/collabspace-api 现有记录。待批准后新增 DNS only 的 A 记录：collabspace→76.76.21.21（Vercel 本次推荐），collabspace-api→170.106.161.82；不修改其他记录。之后安装专用 Caddy 站点、验证配置并 reload，再验证真实 HTTPS/WSS。
+部署前：协作/非特权 PG/WS 9/9、租户状态 2/2、API 支付/seed 保护 18/18，完整浏览器 4/4；本轮容器修复后生产 seed 保护单独 1/1。
 
-## 线上自测：NOT_RUN
+线上首次 TLS 修复后 3/4 通过（online-second-results.json）；离线队列已恢复但固定 60 秒等待清空超时。测试改为按队列规模设置有限期限，并记录发送/ACK 数量，仍要求刷新后正文完全一致。独立复测 136/136 ACK，重放 49.3 秒，结果见 online-offline-results.json。最终完整组合结果见 online-browser-results.json。覆盖：三账号协作、离线合并、评论解决、版本只读预览/恢复私有副本、离线撤权、presence 去重/过期、原文删除后的评论、丢 ACK 稳定 ID 重连、关闭页面后的 IndexedDB 草稿重放。线上浏览器不使用数据库管理员连接。
 
-后端初始化、DNS/TLS、完整三账号浏览器业务测试尚未执行。线上必须验证创建/共享、多人编辑、离线重连、评论解决/孤立评论、版本预览/恢复私有副本、撤权拒绝、ACK 丢失重连以及草稿关闭重开。只有这些测试真实通过后才可把本状态改为线上通过。
+本次没有重跑容量长测；保留原 load-baseline.json 失败基线及 load-results.json 的原始 300ms 目标未达标标记，0.43s 是用户接受的发布基线，不能改写为 300ms 目标通过。备份恢复演练、生产负载/HA、真实邮件/支付未验收。
 
-部署和线上测试命令见 deploy/collabspace/README.md。发布账号/密钥仅存私有环境或忽略目录，不能写入此报告或提交 Git。
+真实登录表单 → /dashboard → Acme 组织与官网项目可见通过，见 online-login.json / online-dashboard.png。部署修复提交 8db3418 的远端 CI 全部成功，见 deployment-ci.json。
+
+最终线上完整组合：4/4 PASSED，4.1 分钟，未跳过。离线队列 136/136 ACK，64.699 秒，刷新后正文完全一致；不能把单次 49.3 秒复测当成稳定耗时。原固定 60 秒超时保留。线上截图 online-editor.png；实际浏览器测试通过 canonical HTTPS/WSS，无跳过证书验证。

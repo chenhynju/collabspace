@@ -1,0 +1,1 @@
+{"conclusion":"success","headSha":"8db34187c81d5dbc1664176e67f304ac3baefb07","jobs":[{"conclusion":"success","name":"Tenant and product acceptance"},{"conclusion":"success","name":"Lint · Build · Test"},{"conclusion":"success","name":"Terraform · fmt \u0026 validate"},{"conclusion":"success","name":"Dockerfile · hadolint"}],"status":"completed"}

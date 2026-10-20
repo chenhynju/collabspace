@@ -1,6 +1,6 @@
 # 实现取舍与运行说明
 
-2026-10-20 后续部署进展见 [部署与线上验收状态](../../evidence/collaboration/DEPLOYMENT-2026-10-20.md)：Vercel 前端已 READY，完整后端初始化和线上业务验收仍待明确的生产资源批准；以下本地边界不作为线上通过证明。
+2026-10-20 后续部署进展见 [部署与线上验收状态](../../evidence/collaboration/DEPLOYMENT-2026-10-20.md)：用户已明确批准独立生产资源，Vercel 前端和腾讯云独立后端已上线，线上业务验收结果以部署报告为准；以下本地边界不作为线上通过证明。
 
 CollabSpace 为独立私有仓库，origin 指向 https://github.com/chenhynju/collabspace。旧 CD、Hetzner、Terraform 部署工作流已移到 docs/legacy-workflows；本项目没有连接旧生产资源。
 

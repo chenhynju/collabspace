@@ -1,0 +1,366 @@
+{
+  "config": {
+    "configFile": "D:\\appspace\\collaboration\\playwright.config.cjs",
+    "rootDir": "D:/appspace/collaboration/tests/browser",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/appspace/collaboration/.test-runs/browser-online",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "D:/appspace/collaboration/tests/browser",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 300000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "documents.spec.cjs",
+      "file": "documents.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "three users collaborate, reconnect offline edits, comment, version and recover a private copy",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 9620,
+                  "error": {
+                    "message": "Error: page.goto: net::ERR_CONNECTION_CLOSED at https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/89f43442-9267-4c11-bf4d-af337f415974\nCall log:\n\u001b[2m  - navigating to \"https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/89f43442-9267-4c11-bf4d-af337f415974\", waiting until \"load\"\u001b[22m\n",
+                    "stack": "Error: page.goto: net::ERR_CONNECTION_CLOSED at https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/89f43442-9267-4c11-bf4d-af337f415974\nCall log:\n\u001b[2m  - navigating to \"https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/89f43442-9267-4c11-bf4d-af337f415974\", waiting until \"load\"\u001b[22m\n\n    at client (D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs:58:13)\n    at D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs:66:15",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs",
+                      "column": 13,
+                      "line": 58
+                    },
+                    "snippet": "  56 |     const p = await c.newPage();\n  57 |     p.on(\"pageerror\", (e) => errors.push(e.message));\n> 58 |     await p.goto(`${web}/projects/${config.TEST_PROJECT}/documents/${doc.id}`);\n     |             ^\n  59 |     await expect(\n  60 |       p.getByRole(\"textbox\", { name: \"协作文档正文\" }),\n  61 |     ).toBeVisible();"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs",
+                        "column": 13,
+                        "line": 58
+                      },
+                      "message": "Error: page.goto: net::ERR_CONNECTION_CLOSED at https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/89f43442-9267-4c11-bf4d-af337f415974\nCall log:\n\u001b[2m  - navigating to \"https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/89f43442-9267-4c11-bf4d-af337f415974\", waiting until \"load\"\u001b[22m\n\n\n  56 |     const p = await c.newPage();\n  57 |     p.on(\"pageerror\", (e) => errors.push(e.message));\n> 58 |     await p.goto(`${web}/projects/${config.TEST_PROJECT}/documents/${doc.id}`);\n     |             ^\n  59 |     await expect(\n  60 |       p.getByRole(\"textbox\", { name: \"协作文档正文\" }),\n  61 |     ).toBeVisible();\n    at client (D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs:58:13)\n    at D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs:66:15"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-20T02:19:16.839Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\browser-online\\documents-three-users-coll-ae866--and-recover-a-private-copy\\test-failed-1.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\browser-online\\documents-three-users-coll-ae866--and-recover-a-private-copy\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs",
+                    "column": 13,
+                    "line": 58
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "6dce67fb81c2d874da2f-4e82287b195a97cd1ae4",
+          "file": "documents.spec.cjs",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "presence-comments.spec.cjs",
+      "file": "presence-comments.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "same-user tabs deduplicate presence; disconnect expires and deleted-source comments remain visible",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 7570,
+                  "error": {
+                    "message": "Error: page.goto: net::ERR_CONNECTION_CLOSED at https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/99a9ed0a-d082-4039-ad17-b7616e26b81a\nCall log:\n\u001b[2m  - navigating to \"https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/99a9ed0a-d082-4039-ad17-b7616e26b81a\", waiting until \"load\"\u001b[22m\n",
+                    "stack": "Error: page.goto: net::ERR_CONNECTION_CLOSED at https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/99a9ed0a-d082-4039-ad17-b7616e26b81a\nCall log:\n\u001b[2m  - navigating to \"https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/99a9ed0a-d082-4039-ad17-b7616e26b81a\", waiting until \"load\"\u001b[22m\n\n    at open (D:\\appspace\\collaboration\\tests\\browser\\presence-comments.spec.cjs:55:16)\n    at D:\\appspace\\collaboration\\tests\\browser\\presence-comments.spec.cjs:66:18",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\presence-comments.spec.cjs",
+                      "column": 16,
+                      "line": 55
+                    },
+                    "snippet": "  53 |   async function open(c) {\n  54 |     const page = await c.newPage();\n> 55 |     await page.goto(\n     |                ^\n  56 |       `${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${doc.id}`,\n  57 |     );\n  58 |     await expect("
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\presence-comments.spec.cjs",
+                        "column": 16,
+                        "line": 55
+                      },
+                      "message": "Error: page.goto: net::ERR_CONNECTION_CLOSED at https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/99a9ed0a-d082-4039-ad17-b7616e26b81a\nCall log:\n\u001b[2m  - navigating to \"https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/99a9ed0a-d082-4039-ad17-b7616e26b81a\", waiting until \"load\"\u001b[22m\n\n\n  53 |   async function open(c) {\n  54 |     const page = await c.newPage();\n> 55 |     await page.goto(\n     |                ^\n  56 |       `${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${doc.id}`,\n  57 |     );\n  58 |     await expect(\n    at open (D:\\appspace\\collaboration\\tests\\browser\\presence-comments.spec.cjs:55:16)\n    at D:\\appspace\\collaboration\\tests\\browser\\presence-comments.spec.cjs:66:18"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-20T02:19:38.083Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\browser-online\\presence-comments-same-use-f92e2-rce-comments-remain-visible\\test-failed-1.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\browser-online\\presence-comments-same-use-f92e2-rce-comments-remain-visible\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\presence-comments.spec.cjs",
+                    "column": 16,
+                    "line": 55
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "d8c2a2fddbd1944c7518-1c5601270db36d88e174",
+          "file": "presence-comments.spec.cjs",
+          "line": 5,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "reliability.spec.cjs",
+      "file": "reliability.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "lost durable ACK reconnects with the same update ID and never duplicates the committed edit",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 7056,
+                  "error": {
+                    "message": "Error: page.goto: net::ERR_CONNECTION_CLOSED at https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/cd864a5e-be22-4cc5-ae0c-e944b44f22d5\nCall log:\n\u001b[2m  - navigating to \"https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/cd864a5e-be22-4cc5-ae0c-e944b44f22d5\", waiting until \"load\"\u001b[22m\n",
+                    "stack": "Error: page.goto: net::ERR_CONNECTION_CLOSED at https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/cd864a5e-be22-4cc5-ae0c-e944b44f22d5\nCall log:\n\u001b[2m  - navigating to \"https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/cd864a5e-be22-4cc5-ae0c-e944b44f22d5\", waiting until \"load\"\u001b[22m\n\n    at D:\\appspace\\collaboration\\tests\\browser\\reliability.spec.cjs:62:16",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\reliability.spec.cjs",
+                      "column": 16,
+                      "line": 62
+                    },
+                    "snippet": "  60 |   const page = await context.newPage();\n  61 |   try {\n> 62 |     await page.goto(path);\n     |                ^\n  63 |     await expect(\n  64 |       page.getByText(\"已保存到服务器\", { exact: false }),\n  65 |     ).toBeVisible();"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\reliability.spec.cjs",
+                        "column": 16,
+                        "line": 62
+                      },
+                      "message": "Error: page.goto: net::ERR_CONNECTION_CLOSED at https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/cd864a5e-be22-4cc5-ae0c-e944b44f22d5\nCall log:\n\u001b[2m  - navigating to \"https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/cd864a5e-be22-4cc5-ae0c-e944b44f22d5\", waiting until \"load\"\u001b[22m\n\n\n  60 |   const page = await context.newPage();\n  61 |   try {\n> 62 |     await page.goto(path);\n     |                ^\n  63 |     await expect(\n  64 |       page.getByText(\"已保存到服务器\", { exact: false }),\n  65 |     ).toBeVisible();\n    at D:\\appspace\\collaboration\\tests\\browser\\reliability.spec.cjs:62:16"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-20T02:19:57.047Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\browser-online\\reliability-lost-durable-A-b733d-plicates-the-committed-edit\\test-failed-1.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\browser-online\\reliability-lost-durable-A-b733d-plicates-the-committed-edit\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\reliability.spec.cjs",
+                    "column": 16,
+                    "line": 62
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "54ba89ed427ba53634c3-fc1df8031387903ab1a1",
+          "file": "reliability.spec.cjs",
+          "line": 37,
+          "column": 1
+        },
+        {
+          "title": "offline keystrokes survive closing the page and replay after reconnect without flooding",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 8714,
+                  "error": {
+                    "message": "Error: page.goto: net::ERR_CONNECTION_CLOSED at https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/70e6af39-8097-4542-bd83-eb177e53c231\nCall log:\n\u001b[2m  - navigating to \"https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/70e6af39-8097-4542-bd83-eb177e53c231\", waiting until \"load\"\u001b[22m\n",
+                    "stack": "Error: page.goto: net::ERR_CONNECTION_CLOSED at https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/70e6af39-8097-4542-bd83-eb177e53c231\nCall log:\n\u001b[2m  - navigating to \"https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/70e6af39-8097-4542-bd83-eb177e53c231\", waiting until \"load\"\u001b[22m\n\n    at D:\\appspace\\collaboration\\tests\\browser\\reliability.spec.cjs:105:16",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\reliability.spec.cjs",
+                      "column": 16,
+                      "line": 105
+                    },
+                    "snippet": "  103 |   const pendingText = \"offline-\" + \"abcdefghijklmnop\".repeat(8);\n  104 |   try {\n> 105 |     await page.goto(path);\n      |                ^\n  106 |     await expect(\n  107 |       page.getByText(\"已保存到服务器\", { exact: false }),\n  108 |     ).toBeVisible();"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\reliability.spec.cjs",
+                        "column": 16,
+                        "line": 105
+                      },
+                      "message": "Error: page.goto: net::ERR_CONNECTION_CLOSED at https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/70e6af39-8097-4542-bd83-eb177e53c231\nCall log:\n\u001b[2m  - navigating to \"https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/70e6af39-8097-4542-bd83-eb177e53c231\", waiting until \"load\"\u001b[22m\n\n\n  103 |   const pendingText = \"offline-\" + \"abcdefghijklmnop\".repeat(8);\n  104 |   try {\n> 105 |     await page.goto(path);\n      |                ^\n  106 |     await expect(\n  107 |       page.getByText(\"已保存到服务器\", { exact: false }),\n  108 |     ).toBeVisible();\n    at D:\\appspace\\collaboration\\tests\\browser\\reliability.spec.cjs:105:16"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-20T02:20:18.043Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\browser-online\\reliability-offline-keystr-e8462--reconnect-without-flooding\\test-failed-1.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\browser-online\\reliability-offline-keystr-e8462--reconnect-without-flooding\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\reliability.spec.cjs",
+                    "column": 16,
+                    "line": 105
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "54ba89ed427ba53634c3-5a0d489db8e720c9ddbe",
+          "file": "reliability.spec.cjs",
+          "line": 95,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-20T02:19:12.884Z",
+    "duration": 84155.45400000001,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 4,
+    "flaky": 0
+  }
+}
