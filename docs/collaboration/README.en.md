@@ -1,6 +1,6 @@
 # CollabSpace
 
-Reliable project documents for remote delivery teams. Built on an independently copied TeamSpace foundation: Next.js, React, NestJS, Prisma and PostgreSQL. This repository is private; no production deployment is implied.
+Reliable project documents for remote delivery teams. Built on an independently copied TeamSpace foundation: Next.js, React, NestJS, Prisma and PostgreSQL. Live demo: https://collabspace.purelamp.uk/collaboration. Deployment and acceptance claims are scoped to the evidence reports.
 
 ## The product journey
 
@@ -47,4 +47,8 @@ See [implementation notes](IMPLEMENTATION_NOTES.md) for storage tradeoffs and [r
 
 ## Boundaries
 
-The current architecture is single-node. Redis is inherited infrastructure for OAuth/IM, not a durable collaboration log. There is no offline first-load service worker, anonymous sharing, AI writing, whiteboard, live billing acceptance or automatic history compaction. A full current-state snapshot on each commit deliberately favors recovery simplicity over write efficiency; capacity reports must be read with that tradeoff in mind.
+The current architecture is single-node. Redis is inherited infrastructure for OAuth/IM, not a durable collaboration log. An optional whiteboard extension reuses the same authorization and durable update pipeline. There is no offline first-load service worker, anonymous sharing, AI writing, live billing acceptance or automatic history compaction. A full current-state snapshot on each commit deliberately favors recovery simplicity over write efficiency; capacity reports must be read with that tradeoff in mind.
+
+## Demonstrating consistency
+
+Open Real-time collaboration in the sidebar, select a project and open Documents. The core journey is multi-user document editing, presence, anchored comments and conflict merging. The online conflict test starts two accounts at the same position, partitions both clients, reconnects them and compares both refreshed views with an immutable PostgreSQL version. Semantic text excludes cursor-name decorations; the proof records the final text hash. See conflict-proof.json and REALTIME-2026-10-21.md under evidence/collaboration. Redis backs OAuth state and the existing Socket.IO adapter; the native document service is currently single-instance.

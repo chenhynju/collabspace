@@ -1,0 +1,27 @@
+{
+  "url": "https://collabspace.purelamp.uk",
+  "documentId": "108bf4b3-4613-47fb-a1c5-f8d1567cfc57",
+  "accounts": 2,
+  "phases": [
+    {
+      "name": "same-position online inserts",
+      "text": "Alpha Beta Base",
+      "converged": true
+    },
+    {
+      "name": "partition",
+      "a": "Alpha Beta Base offline-A",
+      "b": "Alpha Beta Base offline-B"
+    },
+    {
+      "name": "reconnected",
+      "text": "Alpha Beta Base offline-A offline-B",
+      "sha256": "c7f0224ae6ddd46b3f1234483d1c0307aaa48e77183760c1dabba2eb6edc6b64",
+      "durableAcknowledged": true,
+      "reconnectMs": 12829
+    }
+  ],
+  "status": "PASSED",
+  "refreshedBoth": true,
+  "persistedSnapshotMatches": true
+}

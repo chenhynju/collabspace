@@ -1,0 +1,9 @@
+/collabspace-api-1 image=sha256:9eb8fc4ae4a322dbe4bec6237ce7a56a11746454105139333fce81d4ab8034da health=healthy
+/collabspace-collab-1 image=sha256:5fcc072fbe17bcde2d4d906bd285343f77dfc2711436c7036ff8cac51dee99fd health=healthy
+/collabspace-postgres-1 image=sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea health=healthy
+/collabspace-redis-1 image=sha256:858f009f9709ce576febc734aa78b8f6d624b82571f9ddb6bda4377c833b3499 health=healthy
+# Clients
+connected_clients:5
+cluster_connections:0
+maxclients:10000
+1
