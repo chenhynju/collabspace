@@ -13,6 +13,8 @@ import { yXmlFragmentToProsemirrorJSON } from "y-prosemirror";
 import { DocumentProvider, from64 } from "@/lib/document-provider";
 import { useAuthStore } from "@/store/auth";
 import { api } from "@/lib/api";
+import { BoardPreview } from '@/components/boards/Whiteboard';
+const Whiteboard = dynamic(()=>import('@/components/boards/Whiteboard'),{ssr:false});
 const DocumentEditor = dynamic(
   () => import("@/components/documents/DocumentEditor"),
   { ssr: false },
@@ -173,14 +175,15 @@ export default function DocumentPage({
       </div>
     );
   const uniquePeople = [...new Map(people.map((p) => [p.userId, p])).values()];
+  const Surface = meta.kind === 'BOARD' ? Whiteboard : DocumentEditor;
   return (
     <div className="flex min-h-[85vh] flex-col bg-slate-50">
       <header className="border-b bg-white px-6 py-4">
         <Link
           className="text-sm text-slate-500"
-          href={`/projects/${params.id}/documents`}
+          href={`/projects/${params.id}/${meta.kind==='BOARD'?'boards':'documents'}`}
         >
-          ← 项目文档
+          ← {meta.kind==='BOARD'?'项目白板':'项目文档'}
         </Link>
         <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -240,7 +243,7 @@ export default function DocumentPage({
       <div className="flex flex-1 flex-col lg:flex-row">
         <main className="mx-auto my-6 w-full max-w-4xl flex-1 rounded-xl border bg-white shadow-sm">
           {org && user && (
-            <DocumentEditor
+            <Surface
               key={`${org}:${params.docId}`}
               docId={params.docId}
               org={org}
@@ -534,7 +537,7 @@ export default function DocumentPage({
                 <Dialog.Title>{preview.name} · 只读预览</Dialog.Title>
                 <Dialog.Close>关闭预览</Dialog.Close>
               </div>
-              <Preview state={preview.state} />
+              {meta.kind==='BOARD'?<BoardPreview key={preview.id} state={preview.state}/>:<Preview state={preview.state} />}
             </Dialog.Content>
           </Dialog.Portal>
         </Dialog.Root>

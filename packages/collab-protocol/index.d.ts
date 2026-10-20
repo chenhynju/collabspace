@@ -10,4 +10,14 @@ export type Member = {
   userId: string;
   name: string;
   selection: Selection;
+  cursor?: { x: number; y: number } | null;
 };
+export type BoardShape = {
+  type: "rect" | "ellipse" | "note" | "text" | "arrow";
+  geometry: { x: number; y: number; w: number; h: number };
+  text: string;
+  fill: "#fef3c7" | "#dbeafe" | "#dcfce7" | "#fce7f3" | "#ffffff";
+  order: number;
+};
+export const boardShape: z.ZodTypeAny;
+export function validateBoard(shapes: Record<string, unknown>): void;

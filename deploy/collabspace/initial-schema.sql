@@ -285,6 +285,7 @@ CREATE TABLE "prj_project" (
 -- CreateTable
 CREATE TABLE "collab_document" (
     "id" TEXT NOT NULL,
+    "kind" TEXT NOT NULL DEFAULT 'DOCUMENT' CHECK ("kind" IN ('DOCUMENT','BOARD')),
     "organization_id" TEXT NOT NULL,
     "project_id" TEXT NOT NULL,
     "title" TEXT NOT NULL,

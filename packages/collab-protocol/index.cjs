@@ -34,7 +34,47 @@ const frame = z.discriminatedUnion("type", [
       selection: z
         .object({ anchor: z.string().max(2000), head: z.string().max(2000) })
         .nullable(),
+      cursor: z
+        .object({
+          x: z.number().finite().min(-10000).max(10000),
+          y: z.number().finite().min(-10000).max(10000),
+        })
+        .strict()
+        .nullable()
+        .optional(),
     })
     .strict(),
 ]);
-module.exports = { VERSION, MAX_FRAME_BYTES, auth, frame };
+const geometry = z
+  .object({
+    x: z.number().finite().min(-10000).max(10000),
+    y: z.number().finite().min(-10000).max(10000),
+    w: z.number().finite().min(20).max(2000),
+    h: z.number().finite().min(20).max(2000),
+  })
+  .strict();
+const boardShape = z
+  .object({
+    type: z.enum(["rect", "ellipse", "note", "text", "arrow"]),
+    geometry,
+    text: z.string().max(2000),
+    fill: z.enum(["#fef3c7", "#dbeafe", "#dcfce7", "#fce7f3", "#ffffff"]),
+    order: z.number().finite().min(0).max(1e15),
+  })
+  .strict();
+function validateBoard(shapes) {
+  const entries = Object.entries(shapes);
+  if (entries.length > 500) throw Error("BOARD_SHAPE_LIMIT");
+  for (const [id, shape] of entries) {
+    z.string().uuid().parse(id);
+    boardShape.parse(shape);
+  }
+}
+module.exports = {
+  VERSION,
+  MAX_FRAME_BYTES,
+  auth,
+  frame,
+  boardShape,
+  validateBoard,
+};

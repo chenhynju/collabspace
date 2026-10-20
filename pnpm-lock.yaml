@@ -295,6 +295,9 @@ importers:
 
   packages/collab-store:
     dependencies:
+      '@collabspace/protocol':
+        specifier: workspace:*
+        version: link:../collab-protocol
       pg:
         specifier: 8.16.3
         version: 8.16.3

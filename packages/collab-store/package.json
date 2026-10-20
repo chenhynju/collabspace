@@ -9,6 +9,7 @@
     "migrate": "node migrate.cjs"
   },
   "dependencies": {
+    "@collabspace/protocol": "workspace:*",
     "pg": "8.16.3",
     "yjs": "13.6.27",
     "zod": "3.25.76"

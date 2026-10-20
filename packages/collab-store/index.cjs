@@ -3,6 +3,7 @@ const Y = require("yjs");
 const { randomUUID, randomBytes, createHash } = require("node:crypto");
 const { z } = require("zod");
 const { isDeepStrictEqual } = require("node:util");
+const { validateBoard } = require("@collabspace/protocol");
 class StoreError extends Error {
   constructor(status, code) {
     super(code);
@@ -34,14 +35,31 @@ function materialize(bytes) {
   Y.applyUpdate(d, bytes);
   return d;
 }
-function copyContent(bytes) {
+function checkBoard(doc) {
+  if ([...doc.share.keys()].some((key) => key !== "shapes"))
+    fail(400, "INVALID_BOARD");
+  const shapes = doc.getMap("shapes");
+  for (const shape of shapes.values())
+    if (!(shape instanceof Y.Map)) fail(400, "INVALID_BOARD");
+  try {
+    validateBoard(shapes.toJSON());
+  } catch {
+    fail(400, "INVALID_BOARD");
+  }
+}
+function copyContent(bytes, kind = "DOCUMENT") {
   const old = materialize(bytes),
     fresh = new Y.Doc();
-  const root = old.getXmlFragment("default");
-  fresh.getXmlFragment("default").insert(
-    0,
-    root.toArray().map((n) => n.clone()),
-  );
+  if (kind === "BOARD") {
+    for (const [id, shape] of old.getMap("shapes"))
+      fresh.getMap("shapes").set(id, shape.clone());
+  } else {
+    const root = old.getXmlFragment("default");
+    fresh.getXmlFragment("default").insert(
+      0,
+      root.toArray().map((n) => n.clone()),
+    );
+  }
   const result = Buffer.from(Y.encodeStateAsUpdate(fresh));
   old.destroy();
   fresh.destroy();
@@ -186,7 +204,7 @@ class Store {
       await this.parent(c, ctx, project);
       return (
         await c.query(
-          "SELECT d.id,d.title,d.status,d.revision,d.updated_at,g.role FROM collab_document d JOIN collab_grant g ON g.document_id=d.id AND g.organization_id=d.organization_id WHERE d.organization_id=$1 AND d.project_id=$2 AND g.user_id=$3 ORDER BY d.updated_at DESC LIMIT 100",
+          "SELECT d.id,d.title,d.kind,d.status,d.revision,d.updated_at,g.role FROM collab_document d JOIN collab_grant g ON g.document_id=d.id AND g.organization_id=d.organization_id WHERE d.organization_id=$1 AND d.project_id=$2 AND g.user_id=$3 ORDER BY d.updated_at DESC LIMIT 100",
           [ctx.org, project, ctx.user],
         )
       ).rows;
@@ -194,22 +212,29 @@ class Store {
   }
   async create(ctx, project, input) {
     const name = title.parse(input.title);
+    const kind = z
+      .enum(["DOCUMENT", "BOARD"])
+      .default("DOCUMENT")
+      .parse(input.kind);
     return this.tx(ctx, async (c) => {
       const { p } = await this.parent(c, ctx, project);
       if (p.status === "ARCHIVED") fail(409, "PROJECT_ARCHIVED");
-      return this.insert(c, ctx, project, name);
+      return this.insert(c, ctx, project, name, undefined, kind);
     });
   }
-  async insert(c, ctx, project, name, state) {
+  async insert(c, ctx, project, name, state, kind = "DOCUMENT") {
     const id = randomUUID();
     const empty = new Y.Doc();
-    empty.getXmlFragment("default").insert(0, [new Y.XmlElement("paragraph")]);
+    if (kind === "DOCUMENT")
+      empty
+        .getXmlFragment("default")
+        .insert(0, [new Y.XmlElement("paragraph")]);
     state = state || Buffer.from(Y.encodeStateAsUpdate(empty));
     empty.destroy();
     const d = (
       await c.query(
-        "INSERT INTO collab_document(id,organization_id,project_id,title,state,created_by) VALUES($1,$2,$3,$4,$5,$6) RETURNING *",
-        [id, ctx.org, project, name, state, ctx.user],
+        "INSERT INTO collab_document(id,organization_id,project_id,title,state,created_by,kind) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *",
+        [id, ctx.org, project, name, state, ctx.user, kind],
       )
     ).rows[0];
     await c.query("INSERT INTO collab_grant VALUES($1,$2,$3,'OWNER')", [
@@ -404,6 +429,7 @@ class Store {
       let state;
       try {
         Y.applyUpdate(doc, bytes);
+        if (d.kind === "BOARD") checkBoard(doc);
         state = Buffer.from(Y.encodeStateAsUpdate(doc));
         if (state.length > 5 * 1024 * 1024) fail(413, "DOCUMENT_TOO_LARGE");
       } catch (e) {
@@ -545,6 +571,9 @@ class Store {
           }
           if (!inserts.length) return results;
           const encoded = Buffer.from(Y.encodeStateAsUpdate(doc));
+          if (state.kind === "BOARD") {
+            checkBoard(doc);
+          }
           if (encoded.length > 5 * 1024 * 1024) fail(413, "DOCUMENT_TOO_LARGE");
           await c.query(
             `INSERT INTO collab_update(organization_id,document_id,update_id,seq,actor_id,checksum,bytes)
@@ -799,7 +828,8 @@ class Store {
         ctx,
         d.project_id,
         `${d.title.slice(0, 130)} · 恢复副本`,
-        copyContent(v.state),
+        copyContent(v.state, d.kind),
+        d.kind,
       );
       await c.query("INSERT INTO collab_restore VALUES($1,$2,$3,$4,$5,$6)", [
         key,

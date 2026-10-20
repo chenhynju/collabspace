@@ -311,6 +311,9 @@ export class DocumentProvider {
   selection(selection: Member["selection"]) {
     this.send({ type: "presence", selection });
   }
+  cursor(cursor: Member["cursor"]) {
+    this.send({ type: "presence", selection: null, cursor });
+  }
   async destroy() {
     if (this.stopped) return;
     this.stopped = true;

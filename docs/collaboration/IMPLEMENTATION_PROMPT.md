@@ -1,5 +1,7 @@
 # 可直接交给开发 Agent 的 Prompt
 
+2026-10-21 用户扩展范围：协作文档与实时白板都实现。最新范围、对象协议、冲突/权限及 WB01–WB06 验收见 [WHITEBOARD.md](WHITEBOARD.md)，覆盖下文旧的白板后续规划；历史文档验收不能替代白板验收。
+
 你是本仓库的全栈产品工程师。请在 D:\appspace\collaboration 实现 CollabSpace：面向远程开发团队的项目协作文档。用户目标是完整、可验证的业务闭环，不能只交付计划、SDK 展示页或静态菜单。
 
 先读根 AGENTS.md，再依次读 docs/collaboration/REQUIREMENTS.md、DESIGN.md、IMPLEMENTATION_NOTES.md 和 evidence/collaboration/ACCEPTANCE-2026-10-20.md，现场确认 Git/服务/证据。BASELINE.md 是首次复制的历史快照，仓库现已创建，不能据此重复建仓或覆盖已实现功能。根 README/REQUIREMENTS/DESIGN 中 TeamSpace 内容是继承底座。保留现有登录、组织、项目、RBAC、RLS、审计、IM；不重新搭建孤立应用，不把既有证据当新功能证据。

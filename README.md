@@ -1,4 +1,4 @@
-# CollabSpace — 远程团队协作文档
+# CollabSpace — 实时协作文档与白板
 
 本工程从 F-U01 / TeamSpace 当前文件快照独立复制，私有仓库为 chenhynju/collabspace。已实现项目协作文档、多人编辑、离线草稿、评论、命名版本和文档权限；验收结果及未完成门槛见下方证据，不代表生产发布。
 
@@ -9,6 +9,8 @@
 - [实现取舍与本地运行](docs/collaboration/IMPLEMENTATION_NOTES.md)
 - [English walkthrough](docs/collaboration/README.en.md)
 - [本轮验收状态](evidence/collaboration/ACCEPTANCE-2026-10-20.md)
+
+2026-10-21：新增侧栏“项目协同 → 实时协作”入口，按项目进入协作文档或实时白板。白板的功能边界、同步/冲突与权限设计见 [WHITEBOARD.md](docs/collaboration/WHITEBOARD.md)。生产验收以对应报告为准，不把历史文档成绩视为白板成绩。
 
 以下为继承的 TeamSpace 文档，部署域名、资源和证据仅供追溯，不代表新工程发布状态。
 

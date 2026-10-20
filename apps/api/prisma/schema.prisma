@@ -375,6 +375,7 @@ model Project {
 
 // CollabSpace: raw SQL migration additionally installs FORCE RLS policies.
 model CollabDocument {
+ kind String @default("DOCUMENT")
  id String @id
  organizationId String @map("organization_id")
  projectId String @map("project_id")

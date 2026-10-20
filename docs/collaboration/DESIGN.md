@@ -1,5 +1,7 @@
 # CollabSpace — 详细设计 v1
 
+2026-10-21 用户扩展范围：协作文档与实时白板都实现。最新范围、对象协议、冲突/权限及 WB01–WB06 验收见 [WHITEBOARD.md](WHITEBOARD.md)，覆盖下文旧的白板后续规划；历史文档验收不能替代白板验收。
+
 本文件是初始设计基线，与同目录 REQUIREMENTS.md 的 BR/AT 对应。2026-10-20 的实际 API、批量提交和已知缩减见 IMPLEMENTATION_NOTES.md；设计指标不是验收成绩。
 
 ## D01 架构与选型

@@ -34,6 +34,7 @@ const GROUPS: NavGroup[] = [
     items: [
       { href: '/workspaces', label: '工作区', icon: FolderKanban, perm: 'workspace:list' },
       { href: '/projects', label: '项目', icon: FileText, perm: 'project:list' },
+      { href: '/collaboration', label: '实时协作', icon: BookOpen, perm: 'project:list' },
       { href: '/files', label: '文件', icon: Files, perm: 'file:manage' },
       { href: '/im', label: '消息', icon: MessageSquare, perm: 'im:view' },
     ],

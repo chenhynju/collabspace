@@ -95,6 +95,7 @@ function start({
           userId: p.ctx.user,
           name: authorized.name,
           selection: p.selection || null,
+          cursor: p.cursor || null,
         });
       } else p.close(4003, "Access revoked");
     }
@@ -176,6 +177,7 @@ function start({
             if (Date.now() - s.presenceAt < 100) return;
             s.presenceAt = Date.now();
             s.selection = m.selection;
+            s.cursor = m.cursor || null;
             await presence(s);
             return;
           }
