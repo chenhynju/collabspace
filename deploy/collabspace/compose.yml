@@ -1,0 +1,93 @@
+name: collabspace
+services:
+  postgres:
+    image: postgres:16-alpine
+    command: [postgres, -c, max_connections=40, -c, shared_buffers=64MB]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: collabspace
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+      POSTGRES_DB: collabspace
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U collabspace -d collabspace"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    mem_limit: 256m
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: [redis-server, --appendonly, "yes", --maxmemory, 64mb, --maxmemory-policy, noeviction]
+    volumes: ["redisdata:/data"]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 96m
+  api:
+    image: collabspace-api:${RELEASE:?required}
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    environment:
+      NODE_ENV: production
+      APP_PORT: 3001
+      APP_URL: https://collabspace-api.purelamp.uk
+      WEB_URL: https://collabspace.purelamp.uk
+      COLLAB_WS_URL: wss://collabspace-api.purelamp.uk/collab
+      DATABASE_URL: ${DATABASE_URL:?required}
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: ${JWT_SECRET:?required}
+      JWT_ACCESS_EXPIRES_IN: 1h
+      BILLING_MODE: sandbox
+      BILLING_WEBHOOK_SECRET: ${BILLING_WEBHOOK_SECRET:?required}
+      EMAIL_PROVIDER: console
+      UPLOAD_ROOT: /app/uploads
+    ports: ["127.0.0.1:3321:3001"]
+    volumes: ["uploads:/app/uploads"]
+    mem_limit: 384m
+  collab:
+    image: collabspace-ws:${RELEASE:?required}
+    build:
+      context: ../..
+      dockerfile: apps/collab/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres: {condition: service_healthy}
+    environment:
+      NODE_ENV: production
+      COLLAB_HOST: 0.0.0.0
+      COLLAB_PORT: 3002
+      WEB_URL: https://collabspace.purelamp.uk
+      DATABASE_URL: ${DATABASE_URL:?required}
+    ports: ["127.0.0.1:3322:3002"]
+    mem_limit: 256m
+  init:
+    image: collabspace-init:${RELEASE:?required}
+    profiles: [tools]
+    build:
+      context: ../..
+      dockerfile: apps/api/Dockerfile
+      target: build
+    working_dir: /repo/apps/api
+    environment:
+      NODE_ENV: production
+      DATABASE_ADMIN_URL: ${DATABASE_ADMIN_URL:?required}
+      DATABASE_URL: ${DATABASE_URL:?required}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?required}
+      SEED_PASSWORD: ${SEED_PASSWORD:?required}
+      UPLOAD_ROOT: /repo/apps/api/.uploads
+    volumes: ["uploads:/repo/apps/api/.uploads"]
+    entrypoint: [node]
+    command: [/repo/deploy/collabspace/bootstrap.cjs]
+    mem_limit: 768m
+volumes:
+  pgdata:
+  redisdata:
+  uploads:

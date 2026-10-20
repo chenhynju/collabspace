@@ -1,9 +1,6 @@
 const { test, expect } = require("@playwright/test");
-const { readFileSync } = require("node:fs");
 const { randomUUID } = require("node:crypto");
-const config = JSON.parse(
-  readFileSync(".test-runs/collab-local/config.json", "utf8"),
-);
+const config = require("./config.cjs");
 test("three users collaborate, reconnect offline edits, comment, version and recover a private copy", async ({
   browser,
   request,
@@ -13,15 +10,15 @@ test("three users collaborate, reconnect offline edits, comment, version and rec
     org = config.TEST_ORG;
   async function login(email) {
     const r = await request.post(`${api}/auth/login`, {
-      data: { email, password: "Passw0rd!" },
+      data: { email, password: config.TEST_PASSWORD },
     });
     expect(r.ok(), await r.text()).toBeTruthy();
     const d = await r.json();
     return d.accessToken;
   }
-  const token = await login("owner@acme.dev"),
-    memberToken = await login("member@acme.dev"),
-    adminToken = await login("admin@acme.dev");
+  const token = await login(config.TEST_OWNER_EMAIL),
+    memberToken = await login(config.TEST_MEMBER_EMAIL),
+    adminToken = await login(config.TEST_ADMIN_EMAIL);
   const headers = {
     Authorization: `Bearer ${token}`,
     "x-organization-id": org,

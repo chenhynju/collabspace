@@ -1,9 +1,6 @@
 const { test, expect } = require("@playwright/test");
-const { readFileSync } = require("node:fs");
 const { randomUUID } = require("node:crypto");
-const config = JSON.parse(
-  readFileSync(".test-runs/collab-local/config.json", "utf8"),
-);
+const config = require("./config.cjs");
 
 test("same-user tabs deduplicate presence; disconnect expires and deleted-source comments remain visible", async ({
   browser,
@@ -13,7 +10,7 @@ test("same-user tabs deduplicate presence; disconnect expires and deleted-source
     api = config.NEXT_PUBLIC_API_URL;
   async function login(email) {
     const response = await request.post(`${api}/auth/login`, {
-      data: { email, password: "Passw0rd!" },
+      data: { email, password: config.TEST_PASSWORD },
     });
     expect(response.ok()).toBeTruthy();
     const token = (await response.json()).accessToken;
@@ -24,8 +21,8 @@ test("same-user tabs deduplicate presence; disconnect expires and deleted-source
     const me = await request.get(`${api}/users/me`, { headers });
     return { token, headers, name: (await me.json()).name };
   }
-  const owner = await login("owner@acme.dev"),
-    member = await login("member@acme.dev");
+  const owner = await login(config.TEST_OWNER_EMAIL),
+    member = await login(config.TEST_MEMBER_EMAIL);
   const response = await request.post(`${api}/documents`, {
     headers: owner.headers,
     data: { projectId: config.TEST_PROJECT, title: `Presence ${randomUUID()}` },
@@ -78,14 +75,16 @@ test("same-user tabs deduplicate presence; disconnect expires and deleted-source
     await expect(online).toHaveText(owner.name, { timeout: 30000 });
     const editor = page.getByRole("textbox", { name: "协作文档正文" });
     await editor.fill("Original quoted passage");
+    await expect(page.getByText('已保存到服务器',{exact:false})).toBeVisible();
     await editor.press("Control+Home");
     await editor.press("Control+Shift+End");
+    await expect(page.getByRole('button',{name:'评论选中内容',exact:true})).toBeVisible();
     await page
       .getByRole("textbox", { name: "评论内容" })
       .fill("Keep this discussion after deleting the source");
     await page
       .getByRole("button", { name: "评论选中内容", exact: true })
-      .click();
+      .click({timeout:20000});
     await expect(
       page.getByText("Keep this discussion after deleting the source", {
         exact: true,

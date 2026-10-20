@@ -22,7 +22,13 @@ const prisma = new PrismaClient({
   datasources: { db: { url: process.env.DATABASE_ADMIN_URL ?? process.env.DATABASE_URL } },
 });
 const provisioning = new ProvisioningService();
-const PASSWORD = 'Passw0rd!';
+const PASSWORD = process.env.SEED_PASSWORD || 'Passw0rd!';
+if (
+  process.env.NODE_ENV === 'production' &&
+  (!process.env.SEED_PASSWORD || PASSWORD.length < 24)
+) {
+  throw new Error('Production demo initialization requires a private SEED_PASSWORD of at least 24 characters');
+}
 const UPLOAD_ROOT = path.resolve(process.env.UPLOAD_ROOT || path.join(process.cwd(), '.uploads'));
 
 // ==================== 菜单模板 ====================
@@ -597,7 +603,7 @@ async function main() {
 
   console.log('\n✅ seed 完成');
   console.log('────────────────────────────────────────────');
-  console.log('账号（密码均为', PASSWORD, '）:');
+  console.log(process.env.SEED_PASSWORD ? '演示账号已使用私有初始化密码（不输出密码）:' : '本地合成账号默认密码：Passw0rd!');
   console.log('  Acme   owner@acme.dev / admin@acme.dev / member@acme.dev');
   console.log('  Globex owner@globex.dev / member@globex.dev');
   console.log('  平台超管 chenhynju@gmail.com');

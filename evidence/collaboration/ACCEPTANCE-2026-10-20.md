@@ -1,5 +1,7 @@
 # CollabSpace 本地验收 — 2026-10-20
 
+后续发布状态：用户已接受约 0.43s 作为本次发布基线；新部署准备、生产初始化审批及线上自测状态见 DEPLOYMENT-2026-10-20.md。source-manifest.json 为原实现提交 0bbedc1 的源码摘要，不覆盖后续部署脚本和测试配置改动。
+
 本轮于北京时间 07:37 后继续。基础 HEAD b6a80b90e58b671975f0afcf4c379dc8365fab85，保留中断前工作树，不修改源 F-U01。origin 为用户授权的私有 chenhynju/collabspace；本地与实时远端 HEAD 在续做时一致。最终代码对应本报告所在提交，源码摘要另见 source-manifest.json。
 
 ## 环境与命令

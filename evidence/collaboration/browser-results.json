@@ -16,14 +16,10 @@
     "preserveOutput": "always",
     "reporter": [
       [
-        "list",
-        null
+        "list"
       ],
       [
-        "json",
-        {
-          "outputFile": "evidence/collaboration/browser-results.json"
-        }
+        "json"
       ]
     ],
     "reportSlowTests": {
@@ -33,7 +29,7 @@
     "quiet": false,
     "projects": [
       {
-        "outputDir": "D:/appspace/collaboration/.test-runs/browser-final",
+        "outputDir": "D:/appspace/collaboration/.test-runs/browser-predeploy-final",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -79,12 +75,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 71341,
+                  "duration": 33477,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-20T00:24:30.523Z",
+                  "startTime": "2026-10-20T01:55:12.586Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -94,7 +90,7 @@
           ],
           "id": "6dce67fb81c2d874da2f-4e82287b195a97cd1ae4",
           "file": "documents.spec.cjs",
-          "line": 7,
+          "line": 4,
           "column": 1
         }
       ]
@@ -121,12 +117,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 33242,
+                  "duration": 32061,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-20T00:25:42.989Z",
+                  "startTime": "2026-10-20T01:55:47.043Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -136,7 +132,7 @@
           ],
           "id": "d8c2a2fddbd1944c7518-1c5601270db36d88e174",
           "file": "presence-comments.spec.cjs",
-          "line": 8,
+          "line": 5,
           "column": 1
         }
       ]
@@ -163,12 +159,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 15685,
+                  "duration": 13877,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-20T00:26:16.410Z",
+                  "startTime": "2026-10-20T01:56:19.250Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -178,7 +174,7 @@
           ],
           "id": "54ba89ed427ba53634c3-fc1df8031387903ab1a1",
           "file": "reliability.spec.cjs",
-          "line": 40,
+          "line": 37,
           "column": 1
         },
         {
@@ -197,12 +193,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 24539,
+                  "duration": 24618,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-20T00:26:32.140Z",
+                  "startTime": "2026-10-20T01:56:33.163Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -212,7 +208,7 @@
           ],
           "id": "54ba89ed427ba53634c3-5a0d489db8e720c9ddbe",
           "file": "reliability.spec.cjs",
-          "line": 91,
+          "line": 95,
           "column": 1
         }
       ]
@@ -220,8 +216,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-10-20T00:24:28.468Z",
-    "duration": 149219.891,
+    "startTime": "2026-10-20T01:55:09.766Z",
+    "duration": 109073.383,
     "expected": 4,
     "skipped": 0,
     "unexpected": 0,

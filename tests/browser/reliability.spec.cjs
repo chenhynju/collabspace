@@ -1,15 +1,12 @@
 const { test, expect } = require("@playwright/test");
-const { readFileSync } = require("node:fs");
 const { randomUUID } = require("node:crypto");
 const { Pool } = require("../../packages/collab-store/node_modules/pg");
-const config = JSON.parse(
-  readFileSync(".test-runs/collab-local/config.json", "utf8"),
-);
+const config = require("./config.cjs");
 async function fixture(browser, request) {
   const api = config.NEXT_PUBLIC_API_URL,
     org = config.TEST_ORG;
   const response = await request.post(`${api}/auth/login`, {
-    data: { email: "owner@acme.dev", password: "Passw0rd!" },
+    data: { email: config.TEST_OWNER_EMAIL, password: config.TEST_PASSWORD },
   });
   expect(response.ok()).toBeTruthy();
   const token = (await response.json()).accessToken;
@@ -43,7 +40,9 @@ test("lost durable ACK reconnects with the same update ID and never duplicates t
 }) => {
   const { context, path, doc } = await fixture(browser, request);
   let enabled = false,
-    droppedId = null;
+    droppedId = null,
+    droppedSeq = null,
+    replaySeq = null;
   await context.routeWebSocket("**/collab", (route) => {
     const upstream = route.connectToServer();
     route.onMessage((message) => upstream.send(message));
@@ -51,8 +50,10 @@ test("lost durable ACK reconnects with the same update ID and never duplicates t
       const m = JSON.parse(message.toString());
       if (enabled && !droppedId && m.type === "ack") {
         droppedId = m.updateId;
+        droppedSeq = m.seq;
         return;
       }
+      if (m.type === "ack" && m.updateId === droppedId) replaySeq = m.seq;
       route.send(message);
     });
   });
@@ -70,15 +71,18 @@ test("lost durable ACK reconnects with the same update ID and never duplicates t
     await expect(
       page.getByText("已保存到服务器", { exact: false }),
     ).toBeVisible({ timeout: 30000 });
-    const pool = new Pool({ connectionString: config.DATABASE_ADMIN_URL });
-    try {
-      const rows = await pool.query(
-        "SELECT count(*)::int AS n FROM collab_update WHERE document_id=$1 AND update_id=$2",
-        [doc.id, droppedId],
-      );
-      expect(rows.rows[0].n).toBe(1);
-    } finally {
-      await pool.end();
+    await expect.poll(() => replaySeq).toBe(droppedSeq);
+    if (config.DATABASE_ADMIN_URL) {
+      const pool = new Pool({ connectionString: config.DATABASE_ADMIN_URL });
+      try {
+        const rows = await pool.query(
+          "SELECT count(*)::int AS n FROM collab_update WHERE document_id=$1 AND update_id=$2",
+          [doc.id, droppedId],
+        );
+        expect(rows.rows[0].n).toBe(1);
+      } finally {
+        await pool.end();
+      }
     }
     await page.reload();
     await expect(

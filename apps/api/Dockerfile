@@ -10,6 +10,7 @@ RUN pnpm install --frozen-lockfile --filter @teamspace/api...
 
 FROM deps AS build
 COPY apps/api apps/api
+COPY deploy/collabspace deploy/collabspace
 RUN pnpm --filter @teamspace/api exec prisma generate \
  && pnpm --filter @teamspace/api run build
 
@@ -19,7 +20,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 # openssl CLI：Prisma 运行时用它探测引擎版本（musl-openssl-3.0.x），缺失会回退 1.1 引擎导致崩溃
-RUN addgroup -S app && adduser -S app -G app && apk add --no-cache openssl
+RUN addgroup -S -g 10001 app && adduser -S -u 10001 app -G app && apk add --no-cache openssl
 COPY --from=build /repo/node_modules ./node_modules
 COPY --from=build /repo/packages ./packages
 COPY --from=build /repo/apps/api/node_modules ./apps/api/node_modules

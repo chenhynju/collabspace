@@ -1,0 +1,14 @@
+.git
+.test-runs
+.env*
+**/.env*
+**/node_modules
+**/dist
+**/.next*
+*.log
+evidence
+docs
+terraform
+deploy
+backups
+*.bundle

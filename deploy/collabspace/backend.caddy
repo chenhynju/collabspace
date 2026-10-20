@@ -1,0 +1,12 @@
+collabspace-api.purelamp.uk {
+    encode zstd gzip
+    request_body {
+        max_size 20MB
+    }
+    handle /collab {
+        reverse_proxy 127.0.0.1:3322
+    }
+    handle {
+        reverse_proxy 127.0.0.1:3321
+    }
+}
