@@ -43,7 +43,11 @@ export const useImStore = create<ImState>((set) => ({
   setConversations: (conversations) => set({ conversations }),
   setCurrentConversationId: (currentConversationId) => set({ currentConversationId }),
   setMessages: (messages) => set({ messages }),
-  appendMessage: (msg) => set((s) => ({ messages: [...s.messages, msg] })),
+  // The POST response and the realtime echo describe the same durable message.
+  // Deduplicate by server ID, never by content (identical messages are valid).
+  appendMessage: (msg) => set((s) => s.messages.some((m) => m.id === msg.id)
+    ? s
+    : { messages: [...s.messages, msg] }),
   updateConversationPreview: (conversationId, lastMessage) =>
     set((s) => ({
       conversations: s.conversations.map((c) =>

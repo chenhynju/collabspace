@@ -6,12 +6,14 @@ import { useImStore } from '@/store/im';
 export default function MessageComposer({ conversationId }: { conversationId: string }) {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
   const appendMessage = useImStore((s) => s.appendMessage);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   const sendText = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() || sendingRef.current) return;
+    sendingRef.current = true;
     setSending(true);
     try {
       const res = await api.post(`/conversations/${conversationId}/messages`, {
@@ -23,6 +25,7 @@ export default function MessageComposer({ conversationId }: { conversationId: st
     } catch (e) {
       console.error('send failed', e);
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   };
@@ -35,6 +38,8 @@ export default function MessageComposer({ conversationId }: { conversationId: st
   };
 
   const uploadAndSend = async (file: File, type: 'IMAGE' | 'FILE') => {
+    if (sendingRef.current) return;
+    sendingRef.current = true;
     setSending(true);
     try {
       const form = new FormData();
@@ -51,6 +56,7 @@ export default function MessageComposer({ conversationId }: { conversationId: st
     } catch (e) {
       console.error('upload failed', e);
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   };
