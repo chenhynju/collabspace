@@ -90,7 +90,7 @@ export default function Sidebar() {
       <div className="p-4 border-b border-slate-800">
         <div className="flex items-center gap-2">
           <Building2 className="w-6 h-6 text-blue-400" />
-          <span className="font-bold text-lg">TeamSpace</span>
+          <span className="font-bold text-lg">CollabSpace</span>
         </div>
       </div>
 

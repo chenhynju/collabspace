@@ -1,0 +1,10 @@
+{
+  "name": "@collabspace/protocol",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.cjs",
+  "types": "index.d.ts",
+  "dependencies": {
+    "zod": "3.25.76"
+  }
+}

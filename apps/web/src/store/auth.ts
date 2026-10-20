@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { api } from '@/lib/api';
 import { useImStore } from './im';
+import { clearDocumentCaches } from '@/lib/document-provider';
 
 export interface MembershipOrg {
   id: string;
@@ -69,6 +70,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
+    window.dispatchEvent(new Event("collabspace:logout"));
+    void clearDocumentCaches(get().user?.id);
     useImStore.setState({ conversations: [], currentConversationId: null, messages: [] });
     localStorage.removeItem('access_token');
     localStorage.removeItem('current_org_id');

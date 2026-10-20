@@ -22,6 +22,8 @@ api.interceptors.response.use(
   (err) => {
     if (err.response?.status === 401) {
       if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('collabspace:logout'));
+        void import('./document-provider').then(m=>m.clearDocumentCaches());
         localStorage.removeItem('access_token');
         localStorage.removeItem('current_org_id');
         window.location.href = '/login';

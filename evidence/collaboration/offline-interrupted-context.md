@@ -1,0 +1,149 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e5]:
+        - img [ref=e6]
+        - generic [ref=e10]: CollabSpace
+      - combobox [ref=e12]:
+        - option "Acme 智造" [selected]
+      - navigation [ref=e13]:
+        - link "概览" [ref=e15] [cursor=pointer]:
+          - /url: /dashboard
+          - img [ref=e16]
+          - text: 概览
+        - generic [ref=e21]:
+          - paragraph [ref=e22]: 项目协同
+          - link "工作区" [ref=e23] [cursor=pointer]:
+            - /url: /workspaces
+            - img [ref=e24]
+            - text: 工作区
+          - link "项目" [ref=e26] [cursor=pointer]:
+            - /url: /projects
+            - img [ref=e27]
+            - text: 项目
+          - link "文件" [ref=e30] [cursor=pointer]:
+            - /url: /files
+            - img [ref=e31]
+            - text: 文件
+          - link "消息" [ref=e35] [cursor=pointer]:
+            - /url: /im
+            - img [ref=e36]
+            - text: 消息
+        - generic [ref=e38]:
+          - paragraph [ref=e39]: 组织管理
+          - link "成员" [ref=e40] [cursor=pointer]:
+            - /url: /members
+            - img [ref=e41]
+            - text: 成员
+          - link "邀请" [ref=e46] [cursor=pointer]:
+            - /url: /invitations
+            - img [ref=e47]
+            - text: 邀请
+          - link "部门岗位" [ref=e59] [cursor=pointer]:
+            - /url: /depts
+            - img [ref=e60]
+            - text: 部门岗位
+          - link "角色权限" [ref=e65] [cursor=pointer]:
+            - /url: /roles
+            - img [ref=e66]
+            - text: 角色权限
+        - generic [ref=e78]:
+          - paragraph [ref=e79]: 系统管理
+          - link "通知公告" [ref=e80] [cursor=pointer]:
+            - /url: /notices
+            - img [ref=e81]
+            - text: 通知公告
+          - link "菜单管理" [ref=e84] [cursor=pointer]:
+            - /url: /system/menus
+            - img [ref=e85]
+            - text: 菜单管理
+          - link "字典管理" [ref=e86] [cursor=pointer]:
+            - /url: /system/dicts
+            - img [ref=e87]
+            - text: 字典管理
+          - link "参数设置" [ref=e90] [cursor=pointer]:
+            - /url: /system/configs
+            - img [ref=e91]
+            - text: 参数设置
+          - link "登录日志" [ref=e92] [cursor=pointer]:
+            - /url: /system/login-logs
+            - img [ref=e93]
+            - text: 登录日志
+          - link "审计日志" [ref=e96] [cursor=pointer]:
+            - /url: /audit
+            - img [ref=e97]
+            - text: 审计日志
+        - generic [ref=e100]:
+          - paragraph [ref=e101]: 系统监控
+          - link "在线用户" [ref=e102] [cursor=pointer]:
+            - /url: /monitor/online
+            - img [ref=e103]
+            - text: 在线用户
+          - link "服务监控" [ref=e107] [cursor=pointer]:
+            - /url: /monitor/server
+            - img [ref=e108]
+            - text: 服务监控
+          - link "缓存监控" [ref=e111] [cursor=pointer]:
+            - /url: /monitor/cache
+            - img [ref=e112]
+            - text: 缓存监控
+          - link "定时任务" [ref=e116] [cursor=pointer]:
+            - /url: /monitor/jobs
+            - img [ref=e117]
+            - text: 定时任务
+          - link "数据库会话" [ref=e120] [cursor=pointer]:
+            - /url: /monitor/database
+            - img [ref=e121]
+            - text: 数据库会话
+      - generic [ref=e123]:
+        - generic [ref=e124]: 陈知微
+        - generic [ref=e125]: owner@acme.dev
+        - button "退出登录" [ref=e126] [cursor=pointer]:
+          - img [ref=e127]
+          - text: 退出登录
+    - main [ref=e130]:
+      - generic [ref=e131]:
+        - generic [ref=e132]:
+          - link "← 项目文档" [ref=e133] [cursor=pointer]:
+            - /url: /projects/cmvfdejmu001wboezgx3dj5en/documents
+          - generic [ref=e134]:
+            - generic [ref=e135]:
+              - heading "Reliability d8f55ff2" [level=1] [ref=e136]
+              - status [ref=e137]: 已保存到服务器 · OWNER
+            - generic [ref=e138]:
+              - generic "在线成员" [ref=e139]: 陈知微
+              - button "共享权限" [ref=e140] [cursor=pointer]
+              - button "历史版本" [ref=e141] [cursor=pointer]
+              - button "重命名" [ref=e142] [cursor=pointer]
+        - generic [ref=e143]:
+          - main [ref=e144]:
+            - toolbar "正文格式" [ref=e145]:
+              - button "粗体" [ref=e146] [cursor=pointer]
+              - button "斜体" [ref=e147] [cursor=pointer]
+              - button "标题" [ref=e148] [cursor=pointer]
+              - button "列表" [ref=e149] [cursor=pointer]
+              - button "任务" [ref=e150] [cursor=pointer]
+              - button "引用" [ref=e151] [cursor=pointer]
+              - button "代码" [ref=e152] [cursor=pointer]
+              - button "链接" [ref=e153] [cursor=pointer]
+              - button "撤销" [ref=e154] [cursor=pointer]
+              - button "重做" [ref=e155] [cursor=pointer]
+            - textbox "协作文档正文" [ref=e157]:
+              - paragraph [ref=e158]: offline-abcdefghijklmnopabcdefghijklmnopabcdefghijklmnopabcdefghijklmnopabcdefghijklmnopabcdefghijklmnopabcdefghijklmnopabcdefghijklmnop
+            - button "导出本地纯文本草稿" [ref=e159] [cursor=pointer]
+          - complementary [ref=e160]:
+            - navigation "文档侧栏" [ref=e161]:
+              - button "评论" [pressed] [ref=e162] [cursor=pointer]
+              - button "历史" [ref=e163] [cursor=pointer]
+              - button "权限" [ref=e164] [cursor=pointer]
+            - heading "讨论与待办" [level=2] [ref=e165]
+            - generic [ref=e166]:
+              - textbox "评论内容" [ref=e167]:
+                - /placeholder: 对齐一个细节，或留下待讨论的问题…
+              - button "添加文档评论" [disabled] [ref=e168]
+            - paragraph [ref=e169]: 选中原文发表评论，或直接讨论整份文档。
+  - alert [ref=e170]
+```

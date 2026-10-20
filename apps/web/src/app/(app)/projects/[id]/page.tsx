@@ -130,6 +130,7 @@ export default function ProjectDetail({ params }: { params: { id: string } }) {
   return (
     <div className="p-6">
       <PageHeader title={project.name}>
+        <Link href={`/projects/${params.id}/documents`} className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white">协作文档</Link>
         <PresenceBar presence={presence} connected={connected} />
         <Link href="/projects">
           <Button variant="secondary">返回列表</Button>

@@ -6,6 +6,7 @@ declare global {
     interface Request {
       traceId: string;
       orgContext?: OrgContext;
+      accessibleProjectIds?: string[];
       // user 由 @types/passport 声明；JWT 实际负载在需要处就地断言
     }
   }

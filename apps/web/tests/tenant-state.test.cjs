@@ -13,12 +13,13 @@ function fixture() {
     const exports = {};
     const source = fs.readFileSync(path.join(__dirname, '..', file), 'utf8');
     const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
-    vm.runInNewContext(compiled, { exports, localStorage, window: {}, require: id => dependencies[id] ?? require(id) });
+    vm.runInNewContext(compiled, { exports, localStorage, window: { dispatchEvent() {} }, Event: class Event {}, require: id => dependencies[id] ?? require(id) });
     return exports;
   }
   const im = load('src/store/im.ts', {});
   const auth = load('src/store/auth.ts', {
     './im': im,
+    '@/lib/document-provider': { clearDocumentCaches: async () => {} },
     '@/lib/api': { api: { get: () => new Promise(resolve => pending.push(resolve)) } },
   });
   return { auth: auth.useAuthStore, im: im.useImStore, pending };

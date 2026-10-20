@@ -15,9 +15,16 @@
     "lint": "pnpm -r run lint",
     "db:generate": "pnpm --filter @teamspace/api exec prisma generate",
     "db:migrate": "pnpm --filter @teamspace/api exec prisma migrate dev",
-    "db:seed": "pnpm --filter @teamspace/api exec ts-node prisma/seed.ts"
+    "db:seed": "pnpm --filter @teamspace/api exec ts-node prisma/seed.ts",
+    "dev:collab": "pnpm --filter @collabspace/collab dev",
+    "collab:migrate": "pnpm --filter @collabspace/store migrate",
+    "test:collab": "node scripts/test-collab.cjs",
+    "local:up": "node scripts/local-up.cjs"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1"
   }
 }

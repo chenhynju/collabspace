@@ -8,9 +8,12 @@ import {
   Param,
   Query,
   UseGuards,
+  Req,
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { Request } from 'express';
+import { ResourceAccessGuard } from '../groups/resource-access.guard';
 import { OrgContextGuard } from '../../common/guards/org-context.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
 import { RequirePermissions } from '../../common/decorators/permissions.decorator';
@@ -80,7 +83,7 @@ class UpdateTaskDto {
 }
 
 @Controller('tasks')
-@UseGuards(OrgContextGuard, PermissionsGuard)
+@UseGuards(OrgContextGuard, PermissionsGuard, ResourceAccessGuard)
 export class TasksController {
   constructor(
     private readonly prisma: PrismaService,
@@ -89,11 +92,12 @@ export class TasksController {
 
   @Get()
   @RequirePermissions('task:manage')
-  list(@CurrentOrg() org: OrgContext, @Query('projectId') projectId?: string) {
+  list(@CurrentOrg() org: OrgContext, @Req() accessReq: Request, @Query('projectId') projectId?: string) {
     return this.prisma.withOrg(org.organizationId, (tx) =>
       tx.task.findMany({
         where: {
           organizationId: org.organizationId,
+          projectId: { in: accessReq.accessibleProjectIds ?? [] },
           ...(projectId ? { projectId } : {}),
         },
         include: { assignee: { select: { id: true, name: true } } },

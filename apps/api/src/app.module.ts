@@ -24,12 +24,15 @@ import { MonitorModule } from './modules/monitor/monitor.module';
 import { HealthModule } from './modules/health/health.module';
 import { TraceIdMiddleware } from './common/middleware/trace-id.middleware';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { DocumentsController } from './modules/documents/documents.controller';
+import { GroupsModule } from './modules/groups/groups.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
     ScheduleModule.forRoot(),
     PrismaModule,
+    GroupsModule,
     RealtimeModule,
     AuthModule,
     UsersModule,
@@ -50,6 +53,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     MonitorModule,
     HealthModule,
   ],
+  controllers: [DocumentsController],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
   ],

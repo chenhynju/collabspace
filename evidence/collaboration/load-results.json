@@ -1,0 +1,59 @@
+{
+  "date": "2026-10-20T00:12:03.502Z",
+  "node": "v22.20.0",
+  "os": "Windows_NT 10.0.26300",
+  "cpu": "Intel(R) Core(TM) i5-8350U CPU @ 1.70GHz",
+  "logicalCpus": 8,
+  "memoryGiB": 32,
+  "network": "Windows loopback, no artificial RTT; simultaneous development workload",
+  "scenarios": [
+    {
+      "name": "multi-room",
+      "seconds": 900,
+      "documents": 10,
+      "clients": 20,
+      "targetEditsPerSecondPerClient": 2,
+      "updates": 34220,
+      "payloadBytes": 733665,
+      "ack": {
+        "samples": 34220,
+        "p50": 136.664700000023,
+        "p95": 431.69350000005215,
+        "p99": 861.4923000000417
+      },
+      "remote": {
+        "samples": 34220,
+        "p50": 136.73499999998603,
+        "p95": 431.5117999999784,
+        "p99": 862.5799000000115
+      },
+      "errors": 0,
+      "ackLoss": 0,
+      "targetMet": false
+    },
+    {
+      "name": "hot-room",
+      "seconds": 60,
+      "documents": 1,
+      "clients": 20,
+      "targetEditsPerSecondPerClient": 2,
+      "updates": 2360,
+      "payloadBytes": 48621,
+      "ack": {
+        "samples": 2360,
+        "p50": 70.53870000003371,
+        "p95": 120.95350000006147,
+        "p99": 203.00009999994654
+      },
+      "remote": {
+        "samples": 44840,
+        "p50": 70.94559999997728,
+        "p95": 123.4427999999607,
+        "p99": 203.97479999996722
+      },
+      "errors": 0,
+      "ackLoss": 0,
+      "targetMet": true
+    }
+  ]
+}

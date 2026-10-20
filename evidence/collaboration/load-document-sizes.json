@@ -1,0 +1,100 @@
+{
+  "runDate": "2026-10-20T00:12:03.502Z",
+  "documents": [
+    {
+      "id": "7dee1bb1-8e19-4577-843d-82723329eb26",
+      "title": "Load multi-room 0",
+      "seq": "3422",
+      "state_bytes": 38897,
+      "created_at": "2026-10-20T00:12:04.041Z"
+    },
+    {
+      "id": "f1ac42c0-91f9-48d5-b03d-b82d0e2cdc9b",
+      "title": "Load multi-room 1",
+      "seq": "3422",
+      "state_bytes": 38926,
+      "created_at": "2026-10-20T00:12:04.185Z"
+    },
+    {
+      "id": "3425f3ac-523a-44b4-ae94-1845dfe7a727",
+      "title": "Load multi-room 2",
+      "seq": "3422",
+      "state_bytes": 38847,
+      "created_at": "2026-10-20T00:12:04.204Z"
+    },
+    {
+      "id": "64164f25-20cd-43f3-bea1-96cc5f62d3e3",
+      "title": "Load multi-room 3",
+      "seq": "3422",
+      "state_bytes": 38890,
+      "created_at": "2026-10-20T00:12:04.221Z"
+    },
+    {
+      "id": "09615ff1-de04-4357-a1d2-aa2f5df28eed",
+      "title": "Load multi-room 4",
+      "seq": "3422",
+      "state_bytes": 38872,
+      "created_at": "2026-10-20T00:12:04.237Z"
+    },
+    {
+      "id": "2e253af7-1cec-47fb-92a0-45ad6790e995",
+      "title": "Load multi-room 5",
+      "seq": "3422",
+      "state_bytes": 38890,
+      "created_at": "2026-10-20T00:12:04.254Z"
+    },
+    {
+      "id": "70c866c6-1c28-41c8-8de8-2a69386b838f",
+      "title": "Load multi-room 6",
+      "seq": "3422",
+      "state_bytes": 38890,
+      "created_at": "2026-10-20T00:12:04.276Z"
+    },
+    {
+      "id": "4c755754-d59c-4020-89ce-029cd93443b4",
+      "title": "Load multi-room 7",
+      "seq": "3422",
+      "state_bytes": 38890,
+      "created_at": "2026-10-20T00:12:04.295Z"
+    },
+    {
+      "id": "56b045d5-57d7-4e9c-a036-4dcc97e05077",
+      "title": "Load multi-room 8",
+      "seq": "3422",
+      "state_bytes": 38874,
+      "created_at": "2026-10-20T00:12:04.317Z"
+    },
+    {
+      "id": "dd6f8070-41d5-4a99-874d-d6c61e2ecd94",
+      "title": "Load multi-room 9",
+      "seq": "3422",
+      "state_bytes": 38854,
+      "created_at": "2026-10-20T00:12:04.342Z"
+    },
+    {
+      "id": "4d8696e1-1a69-4450-8300-1cecd7ecff6e",
+      "title": "Load hot-room 0",
+      "seq": "2360",
+      "state_bytes": 26391,
+      "created_at": "2026-10-20T00:27:10.035Z"
+    }
+  ],
+  "settings": [
+    {
+      "name": "fsync",
+      "setting": "on"
+    },
+    {
+      "name": "full_page_writes",
+      "setting": "on"
+    },
+    {
+      "name": "synchronous_commit",
+      "setting": "on"
+    },
+    {
+      "name": "track_io_timing",
+      "setting": "off"
+    }
+  ]
+}

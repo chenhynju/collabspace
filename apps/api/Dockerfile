@@ -5,6 +5,7 @@ WORKDIR /repo
 RUN corepack enable
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY apps/api/package.json apps/api/
+COPY packages packages
 RUN pnpm install --frozen-lockfile --filter @teamspace/api...
 
 FROM deps AS build
@@ -20,6 +21,7 @@ ENV NODE_ENV=production
 # openssl CLI：Prisma 运行时用它探测引擎版本（musl-openssl-3.0.x），缺失会回退 1.1 引擎导致崩溃
 RUN addgroup -S app && adduser -S app -G app && apk add --no-cache openssl
 COPY --from=build /repo/node_modules ./node_modules
+COPY --from=build /repo/packages ./packages
 COPY --from=build /repo/apps/api/node_modules ./apps/api/node_modules
 COPY --from=build /repo/apps/api/dist ./apps/api/dist
 COPY --from=build /repo/apps/api/prisma ./apps/api/prisma

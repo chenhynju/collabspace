@@ -14,6 +14,7 @@ import { ConfigService } from '@nestjs/config';
 import { Server, Socket } from 'socket.io';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RealtimeEventsService } from './realtime-events.service';
+import { ResourcePolicyService } from '../groups/resource-policy.service';
 
 interface PresenceUser {
   userId: string;
@@ -58,6 +59,7 @@ export class CollaborationGateway
   private readonly jwt: JwtService;
 
   constructor(
+    private readonly resourcePolicy: ResourcePolicyService,
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
     private readonly events: RealtimeEventsService,
@@ -150,6 +152,9 @@ export class CollaborationGateway
       }),
     );
     if (!allowed) return { ok: false, code: 'NOT_MEMBER' };
+    if (!(await this.resourcePolicy.socketAllowed(body.organizationId, user.id, body.projectId))) {
+      return { ok: false, code: 'PROJECT_NOT_FOUND' };
+    }
 
     // 离开此前的项目房间（每个连接一次只看一个项目）
     for (const r of client.data.joined) {
@@ -228,7 +233,7 @@ export class CollaborationGateway
             where: { organizationId: r.organizationId, status: 'ACTIVE' },
           }),
         );
-        if (!ms) {
+        if (!ms || !(await this.resourcePolicy.socketAllowed(r.organizationId, data.user.id, r.projectId))) {
           s.leave(RealtimeEventsService.projectRoom(r.organizationId, r.projectId));
           s.leave(RealtimeEventsService.orgRoom(r.organizationId));
           data.joined = data.joined.filter(

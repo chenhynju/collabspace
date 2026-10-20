@@ -2,7 +2,7 @@
 
 你是本仓库的全栈产品工程师。请在 D:\appspace\collaboration 实现 CollabSpace：面向远程开发团队的项目协作文档。用户目标是完整、可验证的业务闭环，不能只交付计划、SDK 展示页或静态菜单。
 
-先读根 AGENTS.md，再依次读 docs/collaboration/REQUIREMENTS.md、DESIGN.md、BASELINE.md。它们是本次产品范围和验收依据；根 README/REQUIREMENTS/DESIGN 中 TeamSpace 内容是继承底座。保留现有登录、组织、项目、RBAC、RLS、审计、IM；不重新搭建孤立应用，不把既有证据当新功能证据。
+先读根 AGENTS.md，再依次读 docs/collaboration/REQUIREMENTS.md、DESIGN.md、IMPLEMENTATION_NOTES.md 和 evidence/collaboration/ACCEPTANCE-2026-10-20.md，现场确认 Git/服务/证据。BASELINE.md 是首次复制的历史快照，仓库现已创建，不能据此重复建仓或覆盖已实现功能。根 README/REQUIREMENTS/DESIGN 中 TeamSpace 内容是继承底座。保留现有登录、组织、项目、RBAC、RLS、审计、IM；不重新搭建孤立应用，不把既有证据当新功能证据。
 
 产品：项目下创建文档，邀请有效组织成员并授予 Owner/Editor/Commenter/Viewer，Tiptap + Yjs 多人正文编辑与选区光标，IndexedDB 离线缓存与重新鉴权后的差量同步，选区/文档评论和解决，命名版本、只读历史及恢复为新副本。默认不做白板、AI、匿名分享、计费扩展、原地回滚与双节点。
 

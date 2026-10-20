@@ -5,6 +5,7 @@ WORKDIR /repo
 RUN corepack enable
 COPY pnpm-workspace.yaml pnpm-lock.yaml package.json ./
 COPY apps/web/package.json apps/web/
+COPY packages packages
 RUN pnpm install --frozen-lockfile --filter @teamspace/web...
 
 FROM deps AS build

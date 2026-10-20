@@ -1,0 +1,236 @@
+{
+  "config": {
+    "configFile": "D:\\appspace\\collaboration\\playwright.config.cjs",
+    "rootDir": "D:/appspace/collaboration/tests/browser",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "evidence/collaboration/browser-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/appspace/collaboration/.test-runs/browser",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "D:/appspace/collaboration/tests/browser",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 300000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "documents.spec.cjs",
+      "file": "documents.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "three users collaborate, reconnect offline edits, comment, version and recover a private copy",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 45395,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-19T23:54:32.651Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6dce67fb81c2d874da2f-4e82287b195a97cd1ae4",
+          "file": "documents.spec.cjs",
+          "line": 7,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "reliability.spec.cjs",
+      "file": "reliability.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "lost durable ACK reconnects with the same update ID and never duplicates the committed edit",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 15851,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-19T23:55:19.372Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "54ba89ed427ba53634c3-fc1df8031387903ab1a1",
+          "file": "reliability.spec.cjs",
+          "line": 14,
+          "column": 1
+        },
+        {
+          "title": "offline keystrokes survive closing the page and replay after reconnect without flooding",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 780000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 626244,
+                  "error": {
+                    "message": "Error: apiRequestContext._wrapApiCall: ENOENT: no such file or directory, open 'D:\\appspace\\collaboration\\.test-runs\\browser\\.playwright-artifacts-0\\traces\\54ba89ed427ba53634c3-5a0d489db8e720c9ddbe-recording7.trace'",
+                    "stack": "Error: apiRequestContext._wrapApiCall: ENOENT: no such file or directory, open 'D:\\appspace\\collaboration\\.test-runs\\browser\\.playwright-artifacts-0\\traces\\54ba89ed427ba53634c3-5a0d489db8e720c9ddbe-recording7.trace'\n    at D:\\appspace\\collaboration\\tests\\browser\\reliability.spec.cjs:37:25",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\reliability.spec.cjs",
+                      "column": 25,
+                      "line": 37
+                    },
+                    "snippet": "  35 |   await expect(page.getByRole('textbox',{name:'协作文档正文'})).toContainText(pendingText);await context.unroute('**/documents/*/session-ticket');\n  36 |   await expect(page.getByText('已保存到服务器',{exact:false})).toBeVisible({timeout:60000});await page.reload();await expect(page.getByRole('textbox',{name:'协作文档正文'})).toHaveText(pendingText);\n> 37 |  }finally{await context.close();}\n     |                         ^\n  38 | });\n  39 |"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\reliability.spec.cjs",
+                        "column": 25,
+                        "line": 37
+                      },
+                      "message": "Error: apiRequestContext._wrapApiCall: ENOENT: no such file or directory, open 'D:\\appspace\\collaboration\\.test-runs\\browser\\.playwright-artifacts-0\\traces\\54ba89ed427ba53634c3-5a0d489db8e720c9ddbe-recording7.trace'\n\n  35 |   await expect(page.getByRole('textbox',{name:'协作文档正文'})).toContainText(pendingText);await context.unroute('**/documents/*/session-ticket');\n  36 |   await expect(page.getByText('已保存到服务器',{exact:false})).toBeVisible({timeout:60000});await page.reload();await expect(page.getByRole('textbox',{name:'协作文档正文'})).toHaveText(pendingText);\n> 37 |  }finally{await context.close();}\n     |                         ^\n  38 | });\n  39 |\n    at D:\\appspace\\collaboration\\tests\\browser\\reliability.spec.cjs:37:25"
+                    },
+                    {
+                      "message": "Error: apiRequestContext._wrapApiCall: ENOENT: no such file or directory, copyfile 'D:\\appspace\\collaboration\\.test-runs\\browser\\.playwright-artifacts-0\\traces\\54ba89ed427ba53634c3-5a0d489db8e720c9ddbe-recording6.network' -> 'D:\\appspace\\collaboration\\.test-runs\\browser\\.playwright-artifacts-0\\traces\\54ba89ed427ba53634c3-5a0d489db8e720c9ddbe-recording6-pwnetcopy-1.network'"
+                    },
+                    {
+                      "message": "Error: ENOENT: no such file or directory, open 'D:\\appspace\\collaboration\\.test-runs\\browser\\.playwright-artifacts-0\\318695f6f05a3dfd18859cb5ff3e1f4e.zip'"
+                    },
+                    {
+                      "message": "\u001b[31mTest timeout of 300000ms exceeded.\u001b[39m"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "Holding disconnected editor for 600s\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-19T23:55:35.280Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\browser\\reliability-offline-keystr-e8462--reconnect-without-flooding\\test-failed-1.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\browser\\reliability-offline-keystr-e8462--reconnect-without-flooding\\error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\reliability.spec.cjs",
+                    "column": 25,
+                    "line": 37
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "54ba89ed427ba53634c3-5a0d489db8e720c9ddbe",
+          "file": "reliability.spec.cjs",
+          "line": 26,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-19T23:54:27.882Z",
+    "duration": 994740.534,
+    "expected": 2,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

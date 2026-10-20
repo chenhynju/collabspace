@@ -1,0 +1,66 @@
+TAP version 13
+# CollabSpace WS listening on 127.0.0.1:55583
+# CollabSpace WS listening on 127.0.0.1:51949
+# Subtest: WebSocket: commit ACK, restart recovery, viewer attack, revoked connection
+ok 1 - WebSocket: commit ACK, restart recovery, viewer attack, revoked connection
+  ---
+  duration_ms: 2159.1363
+  type: 'test'
+  ...
+# Subtest: hard-killed process retains ACKed update; deferred DB commit failure sends no ACK
+ok 2 - hard-killed process retains ACKed update; deferred DB commit failure sends no ACK
+  ---
+  duration_ms: 2899.9548
+  type: 'test'
+  ...
+# Subtest: concurrent, repeated and reordered Yjs updates converge semantically
+ok 3 - concurrent, repeated and reordered Yjs updates converge semantically
+  ---
+  duration_ms: 63.5634
+  type: 'test'
+  ...
+# Subtest: restoring rich text creates independent CRDT identities and content
+ok 4 - restoring rich text creates independent CRDT identities and content
+  ---
+  duration_ms: 21.1756
+  type: 'test'
+  ...
+# Subtest: reject oversized and malformed update envelopes before decode
+ok 5 - reject oversized and malformed update envelopes before decode
+  ---
+  duration_ms: 10.9688
+  type: 'test'
+  ...
+# Subtest: local undo preserves remote edits and relative anchors survive insertion
+ok 6 - local undo preserves remote edits and relative anchors survive insertion
+  ---
+  duration_ms: 38.6666
+  type: 'test'
+  ...
+# Subtest: group commit authorizes each actor, deduplicates receipts and rolls back every edit on commit failure
+ok 7 - group commit authorizes each actor, deduplicates receipts and rolls back every edit on commit failure
+  ---
+  duration_ms: 1461.2844
+  type: 'test'
+  ...
+# Subtest: real nonprivileged PostgreSQL: isolation, grants, durable retries, comments and history
+ok 8 - real nonprivileged PostgreSQL: isolation, grants, durable retries, comments and history
+  ---
+  duration_ms: 1394.1639
+  type: 'test'
+  ...
+# Subtest: fan-out excludes restricted, suspended and revoked recipients; parent revocation fences queued writes
+ok 9 - fan-out excludes restricted, suspended and revoked recipients; parent revocation fences queued writes
+  ---
+  duration_ms: 1251.4959
+  type: 'test'
+  ...
+1..9
+# tests 9
+# suites 0
+# pass 9
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 6078.6245

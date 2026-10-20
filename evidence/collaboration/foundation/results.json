@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-20T00:08:05.453Z",
+  "api": "http://localhost:43123/api/v1",
+  "results": [
+    {
+      "script": "acceptance.ts",
+      "exitCode": 0
+    },
+    {
+      "script": "acceptance-im.ts",
+      "exitCode": 0
+    },
+    {
+      "script": "acceptance-system.ts",
+      "exitCode": 0
+    },
+    {
+      "script": "acceptance-foundation.ts",
+      "exitCode": 0
+    }
+  ]
+}

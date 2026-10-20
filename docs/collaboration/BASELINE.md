@@ -1,5 +1,7 @@
 # 复制来源与交付边界
 
+> 历史快照：下文记录首次复制当时的状态，不能作为当前状态。用户随后明确授权，私有 chenhynju/collabspace 已创建并配置 origin，首次推送已完成（b6a80b9）。当前实现和验证见 IMPLEMENTATION_NOTES.md 及 evidence/collaboration/ACCEPTANCE-2026-10-20.md；不要依据下文重复建仓。
+
 日期：2026-10-19（Asia/Shanghai）。
 
 - 来源：D:\appspace\githubdesgin\catalog\full-stack\F-U01。

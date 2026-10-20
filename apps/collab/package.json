@@ -1,0 +1,16 @@
+{
+  "name": "@collabspace/collab",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node src/server.cjs",
+    "start": "node src/server.cjs",
+    "test": "node --test tests/*.test.cjs"
+  },
+  "dependencies": {
+    "@collabspace/store": "workspace:*",
+    "ws": "8.18.3",
+    "zod": "3.25.76",
+    "@collabspace/protocol": "workspace:*"
+  }
+}

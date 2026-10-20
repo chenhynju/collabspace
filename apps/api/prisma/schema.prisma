@@ -110,6 +110,14 @@ model Organization {
   status    OrgStatus  @default(ACTIVE)
   createdAt DateTime   @default(now()) @map("created_at")
   updatedAt DateTime   @updatedAt @map("updated_at")
+  stripeCustomerId String? @unique @map("stripe_customer_id")
+  paypalSubscriptionId String? @unique @map("paypal_subscription_id")
+  checkoutAttemptId String? @map("checkout_attempt_id")
+  checkoutProvider String? @map("checkout_provider")
+  checkoutPlanKey String? @map("checkout_plan_key")
+  checkoutSessionId String? @map("checkout_session_id")
+  checkoutUrl String? @map("checkout_url")
+  checkoutExpiresAt DateTime? @map("checkout_expires_at")
 
   plan          Plan?          @relation(fields: [planId], references: [id])
   workspaces    Workspace[]
@@ -164,6 +172,7 @@ model Membership {
   dept         Dept?              @relation(fields: [deptId], references: [id])
   roles        MembershipRole[]
   posts        MembershipPost[]
+  groupMemberships GroupMember[]
 
   @@unique([organizationId, userId])
   @@index([organizationId, status])
@@ -346,6 +355,7 @@ model Project {
   ownerId        String        @map("owner_id")
   name           String
   description    String?
+  visibility     String @default("ORGANIZATION")
   status         ProjectStatus @default(DRAFT)
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime      @updatedAt @map("updated_at")
@@ -355,9 +365,122 @@ model Project {
   owner        User         @relation("ProjectOwner", fields: [ownerId], references: [id])
   tasks        Task[]
   files        File[]
+  collabDocuments CollabDocument[]
+  resourceGrants ResourceGrant[]
 
   @@index([organizationId, workspaceId])
+  @@unique([organizationId, id], map: "prj_project_org_id_key")
   @@map("prj_project")
+}
+
+// CollabSpace: raw SQL migration additionally installs FORCE RLS policies.
+model CollabDocument {
+ id String @id
+ organizationId String @map("organization_id")
+ projectId String @map("project_id")
+ title String
+ status String @default("ACTIVE")
+ revision Int @default(1)
+ aclEpoch Int @default(1) @map("acl_epoch")
+ seq BigInt @default(0)
+ state Bytes
+ createdBy String @map("created_by")
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+ updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz
+ project Project @relation(fields:[organizationId,projectId],references:[organizationId,id],onDelete:Cascade)
+ grants CollabGrant[]
+ updates CollabUpdate[]
+ tickets CollabTicket[]
+ threads CollabThread[]
+ versions CollabVersion[]
+ restores CollabRestore[] @relation("RestoreSource")
+ restoredResults CollabRestore[] @relation("RestoreResult")
+ @@unique([organizationId,id])
+ @@index([organizationId,projectId,updatedAt(sort: Desc)], map:"collab_document_project")
+ @@map("collab_document")
+}
+model CollabGrant {
+ organizationId String @map("organization_id")
+ documentId String @map("document_id")
+ userId String @map("user_id")
+ role String
+ document CollabDocument @relation(fields:[organizationId,documentId],references:[organizationId,id],onDelete:Cascade)
+ @@id([documentId,userId])
+ @@map("collab_grant")
+}
+model CollabUpdate {
+ organizationId String @map("organization_id")
+ documentId String @map("document_id")
+ updateId String @map("update_id") @db.Uuid
+ seq BigInt
+ actorId String @map("actor_id")
+ checksum String
+ bytes Bytes
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+ document CollabDocument @relation(fields:[organizationId,documentId],references:[organizationId,id],onDelete:Cascade)
+ @@id([documentId,updateId])
+ @@unique([documentId,seq])
+ @@map("collab_update")
+}
+model CollabTicket {
+ hash String @id
+ organizationId String @map("organization_id")
+ documentId String @map("document_id")
+ userId String @map("user_id")
+ expiresAt DateTime @map("expires_at") @db.Timestamptz
+ consumedAt DateTime? @map("consumed_at") @db.Timestamptz
+ document CollabDocument @relation(fields:[organizationId,documentId],references:[organizationId,id],onDelete:Cascade)
+ @@map("collab_ticket")
+}
+model CollabThread {
+ id String @id @db.Uuid
+ organizationId String @map("organization_id")
+ documentId String @map("document_id")
+ body String
+ quote String @default("")
+ anchor Json?
+ resolved Boolean @default(false)
+ revision Int @default(1)
+ createdBy String @map("created_by")
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+ document CollabDocument @relation(fields:[organizationId,documentId],references:[organizationId,id],onDelete:Cascade)
+ replies CollabReply[]
+ @@unique([organizationId,documentId,id])
+ @@map("collab_thread")
+}
+model CollabReply {
+ id String @id @db.Uuid
+ organizationId String @map("organization_id")
+ documentId String @map("document_id")
+ threadId String @map("thread_id") @db.Uuid
+ body String
+ createdBy String @map("created_by")
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+ thread CollabThread @relation(fields:[organizationId,documentId,threadId],references:[organizationId,documentId,id],onDelete:Cascade)
+ @@map("collab_reply")
+}
+model CollabVersion {
+ id String @id @db.Uuid
+ organizationId String @map("organization_id")
+ documentId String @map("document_id")
+ name String
+ seq BigInt
+ state Bytes
+ createdBy String @map("created_by")
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+ document CollabDocument @relation(fields:[organizationId,documentId],references:[organizationId,id],onDelete:Cascade)
+ @@map("collab_version")
+}
+model CollabRestore {
+ id String @id @db.Uuid
+ organizationId String @map("organization_id")
+ documentId String @map("document_id")
+ versionId String @map("version_id") @db.Uuid
+ actorId String @map("actor_id")
+ resultId String @map("result_id")
+ source CollabDocument @relation("RestoreSource",fields:[organizationId,documentId],references:[organizationId,id],onDelete:Cascade)
+ result CollabDocument @relation("RestoreResult",fields:[organizationId,resultId],references:[organizationId,id],onDelete:Cascade)
+ @@map("collab_restore")
 }
 
 model Task {
@@ -438,6 +561,8 @@ model Plan {
 model Subscription {
   id                 String    @id @default(cuid())
   organizationId     String    @map("organization_id")
+  provider           String    @default("sandbox")
+  externalId         String?   @unique @map("external_id")
   planId             String    @map("plan_id")
   status             SubStatus @default(ACTIVE)
   currentPeriodStart DateTime  @map("current_period_start")
@@ -450,6 +575,46 @@ model Subscription {
   plan         Plan         @relation(fields: [planId], references: [id])
 
   @@map("bill_subscription")
+}
+
+// These models are required by inherited modules/groups, which arrived without
+// their schema definitions in the copied baseline. No production migration is run.
+model CollaborationGroup {
+ id String @id @default(cuid())
+ organizationId String @map("organization_id")
+ name String
+ kind String
+ description String?
+ archivedAt DateTime? @map("archived_at")
+ createdAt DateTime @default(now()) @map("created_at")
+ members GroupMember[]
+ grants ResourceGrant[]
+ @@index([organizationId])
+ @@map("org_collaboration_group")
+}
+model GroupMember {
+ id String @id @default(cuid())
+ organizationId String @map("organization_id")
+ groupId String @map("group_id")
+ membershipId String @map("membership_id")
+ role String @default("MEMBER")
+ group CollaborationGroup @relation(fields:[groupId],references:[id],onDelete:Cascade)
+ membership Membership @relation(fields:[membershipId],references:[id],onDelete:Cascade)
+ @@unique([groupId,membershipId])
+ @@index([organizationId])
+ @@map("org_group_member")
+}
+model ResourceGrant {
+ id String @id @default(cuid())
+ organizationId String @map("organization_id")
+ groupId String @map("group_id")
+ projectId String @map("project_id")
+ access String
+ group CollaborationGroup @relation(fields:[groupId],references:[id],onDelete:Cascade)
+ project Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+ @@unique([groupId,projectId])
+ @@index([organizationId])
+ @@map("org_resource_grant")
 }
 
 model Entitlement {

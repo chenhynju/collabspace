@@ -1,0 +1,137 @@
+const { test, expect } = require("@playwright/test");
+const { readFileSync } = require("node:fs");
+const { randomUUID } = require("node:crypto");
+const { Pool } = require("../../packages/collab-store/node_modules/pg");
+const config = JSON.parse(
+  readFileSync(".test-runs/collab-local/config.json", "utf8"),
+);
+async function fixture(browser, request) {
+  const api = config.NEXT_PUBLIC_API_URL,
+    org = config.TEST_ORG;
+  const response = await request.post(`${api}/auth/login`, {
+    data: { email: "owner@acme.dev", password: "Passw0rd!" },
+  });
+  expect(response.ok()).toBeTruthy();
+  const token = (await response.json()).accessToken;
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    "x-organization-id": org,
+  };
+  const created = await request.post(`${api}/documents`, {
+    headers,
+    data: {
+      projectId: config.TEST_PROJECT,
+      title: "Reliability " + randomUUID().slice(0, 8),
+    },
+  });
+  expect(created.ok()).toBeTruthy();
+  const doc = await created.json();
+  const context = await browser.newContext();
+  await context.addInitScript(
+    ({ token, org }) => {
+      localStorage.setItem("access_token", token);
+      localStorage.setItem("current_org_id", org);
+    },
+    { token, org },
+  );
+  const path = `${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${doc.id}`;
+  return { context, path, doc };
+}
+test("lost durable ACK reconnects with the same update ID and never duplicates the committed edit", async ({
+  browser,
+  request,
+}) => {
+  const { context, path, doc } = await fixture(browser, request);
+  let enabled = false,
+    droppedId = null;
+  await context.routeWebSocket("**/collab", (route) => {
+    const upstream = route.connectToServer();
+    route.onMessage((message) => upstream.send(message));
+    upstream.onMessage((message) => {
+      const m = JSON.parse(message.toString());
+      if (enabled && !droppedId && m.type === "ack") {
+        droppedId = m.updateId;
+        return;
+      }
+      route.send(message);
+    });
+  });
+  const page = await context.newPage();
+  try {
+    await page.goto(path);
+    await expect(
+      page.getByText("已保存到服务器", { exact: false }),
+    ).toBeVisible();
+    enabled = true;
+    await page
+      .getByRole("textbox", { name: "协作文档正文" })
+      .fill("ACK replay remains one committed edit");
+    await expect.poll(() => droppedId).not.toBeNull();
+    await expect(
+      page.getByText("已保存到服务器", { exact: false }),
+    ).toBeVisible({ timeout: 30000 });
+    const pool = new Pool({ connectionString: config.DATABASE_ADMIN_URL });
+    try {
+      const rows = await pool.query(
+        "SELECT count(*)::int AS n FROM collab_update WHERE document_id=$1 AND update_id=$2",
+        [doc.id, droppedId],
+      );
+      expect(rows.rows[0].n).toBe(1);
+    } finally {
+      await pool.end();
+    }
+    await page.reload();
+    await expect(
+      page.getByRole("textbox", { name: "协作文档正文" }),
+    ).toHaveText("ACK replay remains one committed edit");
+  } finally {
+    await context.close();
+  }
+});
+test("offline keystrokes survive closing the page and replay after reconnect without flooding", async ({
+  browser,
+  request,
+}) => {
+  const seconds = Number(process.env.OFFLINE_HOLD_SECONDS || 0);
+  test.setTimeout((seconds + 180) * 1000);
+  const { context, path } = await fixture(browser, request);
+  let page = await context.newPage();
+  const pendingText = "offline-" + "abcdefghijklmnop".repeat(8);
+  try {
+    await page.goto(path);
+    await expect(
+      page.getByText("已保存到服务器", { exact: false }),
+    ).toBeVisible();
+    await context.setOffline(true);
+    const editor = page.getByRole("textbox", { name: "协作文档正文" });
+    await editor.click();
+    await page.keyboard.type(pendingText);
+    await expect(
+      page.getByText("已保存到此设备 · 离线", { exact: false }),
+    ).toBeVisible();
+    if (seconds) {
+      console.log(`Holding disconnected editor for ${seconds}s`);
+      await page.waitForTimeout(seconds * 1000);
+    }
+    await context.route("**/documents/*/session-ticket", (route) =>
+      route.abort(),
+    );
+    await page.close();
+    await context.setOffline(false);
+    page = await context.newPage();
+    await page.goto(path);
+    await expect(
+      page.getByRole("textbox", { name: "协作文档正文" }),
+    ).toContainText(pendingText);
+    await context.unroute("**/documents/*/session-ticket");
+    await expect(
+      page.getByText("已保存到服务器", { exact: false }),
+    ).toBeVisible({ timeout: 60000 });
+    await page.reload();
+    await expect(
+      page.getByRole("textbox", { name: "协作文档正文" }),
+    ).toHaveText(pendingText);
+  } finally {
+    await context.close();
+  }
+});

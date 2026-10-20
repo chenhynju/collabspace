@@ -1,6 +1,6 @@
 # CollabSpace — 详细设计 v1
 
-本文件是待实施设计，与同目录 REQUIREMENTS.md 的 BR/AT 对应。
+本文件是初始设计基线，与同目录 REQUIREMENTS.md 的 BR/AT 对应。2026-10-20 的实际 API、批量提交和已知缩减见 IMPLEMENTATION_NOTES.md；设计指标不是验收成绩。
 
 ## D01 架构与选型
 

@@ -43,6 +43,9 @@ jobs:
       - name: Build
         run: pnpm -r run build
 
+      - name: Collaboration convergence unit tests
+        run: pnpm --filter @collabspace/store test
+
       - name: Test (API)
         run: pnpm --filter @teamspace/api run test
 
@@ -97,6 +100,7 @@ jobs:
           pnpm exec ts-node --transpile-only scripts/seed-im-menus.ts
           pnpm exec ts-node --transpile-only scripts/seed-system-menus.ts
           pnpm exec ts-node --transpile-only scripts/grant-monitor-privs.ts
+          pnpm --filter @collabspace/store migrate
           pnpm run build
       - name: Run product acceptance
         working-directory: apps/api
@@ -104,6 +108,10 @@ jobs:
           node dist/main.js > /tmp/teamspace-api.log 2>&1 &
           for attempt in $(seq 1 30); do curl -fsS http://localhost:3001/api/v1/health/ready && break; sleep 1; done
           pnpm run test:acceptance
+      - name: Real collaboration database and WebSocket acceptance
+        run: |
+          node scripts/ci-collab-config.cjs
+          node scripts/test-collab.cjs
       - name: Upload acceptance evidence
         if: always()
         uses: actions/upload-artifact@v4
