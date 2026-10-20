@@ -1078,4 +1078,3 @@ ALTER TABLE "sys_oper_log" ADD CONSTRAINT "sys_oper_log_organization_id_fkey" FO
 
 -- AddForeignKey
 ALTER TABLE "sys_oper_log" ADD CONSTRAINT "sys_oper_log_actor_id_fkey" FOREIGN KEY ("actor_id") REFERENCES "sys_user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-
