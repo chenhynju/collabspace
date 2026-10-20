@@ -19,7 +19,7 @@ Windows、Node 22、Next 14、Edge headless；独立本地 PostgreSQL 18.4（554
 | 逐字离线编辑/关闭再打开 | PASSED | browser-offline-results.json：真实断网 600 秒、逐字编辑、关闭重开本地恢复、重连与刷新后正文保留；耗时约 10.5 分钟 |
 | 多标签在线与孤立评论 | PASSED | browser-presence-results.json；按用户去重、断线退场、删除原文后评论可见且刷新保留 |
 | 完整容量基准 | BLOCKED：未全面达标 | 两次完整多房间测试远端 p95 均超 300ms；截止无未 ACK 更新。最终热点结果见下文 |
-| GitHub CI | NOT_RUN | 已更新工作区路径与真实 PG/WS 测试；推送后需读取实际运行结果 |
+| GitHub CI | PASSED 4/4 jobs | 源码提交 0bbedc191c7d0adc0ae6a801440efe1a9634d86a；Lint/构建/测试、真实 PG 业务验收、hadolint、Terraform 静态验证均成功，ci-results.json 保存实际结果 |
 | Docker 构建与运行 | NOT_RUN | 本机无 Docker；仅核对依赖/符号链接布局与构建上下文排除规则 |
 | TLS/反代/备份演练/双节点 | NOT_RUN | 无生产授权，单节点实现不能推导跨节点可靠性 |
 
