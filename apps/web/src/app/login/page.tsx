@@ -66,8 +66,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-        <h1 className="text-2xl font-bold text-center mb-2">TeamSpace</h1>
-        <p className="text-center text-slate-500 mb-6">企业项目协作云</p>
+        <h1 className="text-2xl font-bold text-center mb-2">CollabSpace</h1>
+        <p className="text-center text-slate-500 mb-6">团队实时协作文档</p>
 
         {error && <div className="bg-red-50 text-red-600 text-sm p-3 rounded mb-4">{error}</div>}
         {unverifiedEmail && (

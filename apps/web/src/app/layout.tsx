@@ -2,7 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'TeamSpace - 企业项目协作云',
+  title: 'CollabSpace - 团队实时协作文档',
   description: '多租户 B2B 企业协作平台',
 };
 
