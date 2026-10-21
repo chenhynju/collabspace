@@ -1,10 +1,10 @@
 const { test, expect } = require("@playwright/test");
 const { randomUUID } = require("node:crypto");
-const WebSocket = require("../../apps/collab/node_modules/ws");
 const config = require("./config.cjs");
 
 test("two tenants reject foreign document HTTP access and forged WebSocket identity", async ({
   request,
+  page,
 }) => {
   const api = config.NEXT_PUBLIC_API_URL;
   async function login(email) {
@@ -72,24 +72,29 @@ test("two tenants reject foreign document HTTP access and forged WebSocket ident
     ticket: ticket.ticket,
   };
   const url = ticket.wsUrl || config.COLLAB_WS_URL;
+  await page.goto(config.WEB_URL + "/login");
   async function first(frame) {
-    return new Promise((resolve, reject) => {
-      const ws = new WebSocket(url, { origin: config.WEB_URL });
+    return page.evaluate(({url,frame}) => new Promise((resolve, reject) => {
+      const ws = new WebSocket(url);
       const timer = setTimeout(() => {
-        ws.terminate();
+        ws.close();
         reject(Error("WebSocket auth timeout"));
       }, 15000);
-      ws.once("open", () => ws.send(JSON.stringify(frame)));
-      ws.once("error", (e) => {
+      ws.onopen = () => ws.send(JSON.stringify(frame));
+      ws.onerror = () => {
         clearTimeout(timer);
-        reject(e);
-      });
-      ws.once("message", (raw) => {
+        reject(Error("Browser WebSocket connection failed"));
+      };
+      ws.onclose = () => {
+        clearTimeout(timer);
+        reject(Error("WebSocket closed before authentication response"));
+      };
+      ws.onmessage = ({data}) => {
         clearTimeout(timer);
         ws.close();
-        resolve(JSON.parse(raw));
-      });
-    });
+        resolve(JSON.parse(data));
+      };
+    }),{url,frame});
   }
   for (const mutation of [
     { org: otherOrg },

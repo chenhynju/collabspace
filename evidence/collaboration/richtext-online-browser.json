@@ -1,0 +1,366 @@
+{
+  "config": {
+    "configFile": "D:\\appspace\\collaboration\\playwright.config.cjs",
+    "rootDir": "D:/appspace/collaboration/tests/browser",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/appspace/collaboration/.test-runs/richtext-online-browser",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "D:/appspace/collaboration/tests/browser",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 300000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "board.spec.cjs",
+      "file": "board.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "whiteboard: discover, draw, concurrent accounts, cursors, undo, offline replay, viewer and private version copy",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 91789,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCount\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  getByTestId('board-shape')\nExpected: \u001b[32m1\u001b[39m\nReceived: \u001b[31m0\u001b[39m\nTimeout:  30000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveCount\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('board-shape')\u001b[22m\n\u001b[2m    33 × locator resolved to 0 elements\u001b[22m\n\u001b[2m       - unexpected value \"0\"\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCount\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  getByTestId('board-shape')\nExpected: \u001b[32m1\u001b[39m\nReceived: \u001b[31m0\u001b[39m\nTimeout:  30000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveCount\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('board-shape')\u001b[22m\n\u001b[2m    33 × locator resolved to 0 elements\u001b[22m\n\u001b[2m       - unexpected value \"0\"\u001b[22m\n\n    at D:\\appspace\\collaboration\\tests\\browser\\board.spec.cjs:87:29",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\board.spec.cjs",
+                      "column": 29,
+                      "line": 87
+                    },
+                    "snippet": "  85 |     await saved(a);\n  86 |     await expect(shapes(b).filter({ hasText: \"Architecture\" })).toHaveCount(1);\n> 87 |     await expect(shapes(v)).toHaveCount(1);\n     |                             ^\n  88 |     const first = shapes(a).first();\n  89 |     const x = Number(await first.locator(\"rect\").first().getAttribute(\"x\"));\n  90 |     const box = await first.boundingBox();"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\board.spec.cjs",
+                        "column": 29,
+                        "line": 87
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoHaveCount\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator:  getByTestId('board-shape')\nExpected: \u001b[32m1\u001b[39m\nReceived: \u001b[31m0\u001b[39m\nTimeout:  30000ms\n\nCall log:\n\u001b[2m  - Expect \"toHaveCount\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('board-shape')\u001b[22m\n\u001b[2m    33 × locator resolved to 0 elements\u001b[22m\n\u001b[2m       - unexpected value \"0\"\u001b[22m\n\n\n  85 |     await saved(a);\n  86 |     await expect(shapes(b).filter({ hasText: \"Architecture\" })).toHaveCount(1);\n> 87 |     await expect(shapes(v)).toHaveCount(1);\n     |                             ^\n  88 |     const first = shapes(a).first();\n  89 |     const x = Number(await first.locator(\"rect\").first().getAttribute(\"x\"));\n  90 |     const box = await first.boundingBox();\n    at D:\\appspace\\collaboration\\tests\\browser\\board.spec.cjs:87:29"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T10:16:23.858Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-browser\\board-whiteboard-discover--cd30b-er-and-private-version-copy\\test-failed-1.png"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-browser\\board-whiteboard-discover--cd30b-er-and-private-version-copy\\test-failed-2.png"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-browser\\board-whiteboard-discover--cd30b-er-and-private-version-copy\\test-failed-3.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-browser\\board-whiteboard-discover--cd30b-er-and-private-version-copy\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\board.spec.cjs",
+                    "column": 29,
+                    "line": 87
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "60929b04aafe7b896a3a-567102d5f837f4bfc3a1",
+          "file": "board.spec.cjs",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "documents.spec.cjs",
+      "file": "documents.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "three users collaborate, reconnect offline edits, comment, version and recover a private copy",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 76247,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T10:18:01.854Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6dce67fb81c2d874da2f-4e82287b195a97cd1ae4",
+          "file": "documents.spec.cjs",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "mermaid.spec.cjs",
+      "file": "mermaid.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Mermaid authority: official graph/source views, two editors, viewer, offline, diagnostics and reload",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 118700,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T10:19:18.927Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "678693148c6dbbd63be4-342bf4e4e683c2d6c3ee",
+          "file": "mermaid.spec.cjs",
+          "line": 2,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "richtext.spec.cjs",
+      "file": "richtext.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "rich article: formats, upload/paste/drop images, captions, collaboration, private history and image ACL",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 64763,
+                  "error": {
+                    "message": "Error: apiRequestContext.post: read ECONNRESET\nCall log:\n\u001b[2m  - → POST https://collabspace-api.purelamp.uk/api/v1/documents/2b36fb22-7809-4915-881e-67d06b921125/images\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.56.1 (x64; windows 10.0) node/22.20\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - Authorization: Bearer [REDACTED]\u001b[22m\n\u001b[2m    - x-organization-id: cmvg1shgx000y55ocpwnoight\u001b[22m\n\u001b[2m    - content-type: multipart/form-data; boundary=----WebKitFormBoundarya8Q6DbWlqEojGkqQ\u001b[22m\n\u001b[2m    - content-length: 2216\u001b[22m\n",
+                    "stack": "Error: apiRequestContext.post: read ECONNRESET\nCall log:\n\u001b[2m  - → POST https://collabspace-api.purelamp.uk/api/v1/documents/2b36fb22-7809-4915-881e-67d06b921125/images\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.56.1 (x64; windows 10.0) node/22.20\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - Authorization: Bearer [REDACTED]\u001b[22m\n\u001b[2m    - x-organization-id: cmvg1shgx000y55ocpwnoight\u001b[22m\n\u001b[2m    - content-type: multipart/form-data; boundary=----WebKitFormBoundarya8Q6DbWlqEojGkqQ\u001b[22m\n\u001b[2m    - content-length: 2216\u001b[22m\n\n    at D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs:38:25",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs",
+                      "column": 25,
+                      "line": 38
+                    },
+                    "snippet": "  36 |   const asset=await body(a).locator('figure.document-image').first().getAttribute('data-asset-id');\n  37 |   const image=await request.get(`${api}/documents/${d.id}/images/${asset}`,{headers});expect(image.ok()).toBeTruthy();expect(image.headers()['cache-control']).toBe('no-store');expect(await image.body()).toEqual(png);\n> 38 |   expect((await request.post(`${api}/documents/${d.id}/images`,{headers:{Authorization:`Bearer ${viewer}`,'x-organization-id':config.TEST_ORG},multipart:{file:{name:'test.png',mimeType:'image/png',buffer:png}}})).status()).toBe(403);\n     |                         ^\n  39 |   expect((await request.get(`${api}/documents/${d.id}/images/${asset}`,{headers:{Authorization:`Bearer ${alien}`,'x-organization-id':config.TEST_OTHER_ORG}})).status()).toBe(404);\n  40 |   await a.getByLabel('上传文档图片').setInputFiles({name:'unsafe.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg/>')});await expect(a.getByRole('alert').filter({hasText:'PNG'})).toBeVisible();await expect(images(a)).toHaveCount(3);\n  41 |   await body(b).press('Control+End');await b.keyboard.insertText('远端成员补充的文字。');await expect(body(a)).toContainText('远端成员补充的文字。');await saved(b);"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs",
+                        "column": 25,
+                        "line": 38
+                      },
+                      "message": "Error: apiRequestContext.post: read ECONNRESET\nCall log:\n\u001b[2m  - → POST https://collabspace-api.purelamp.uk/api/v1/documents/2b36fb22-7809-4915-881e-67d06b921125/images\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.56.1 (x64; windows 10.0) node/22.20\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - Authorization: Bearer [REDACTED]\u001b[22m\n\u001b[2m    - x-organization-id: cmvg1shgx000y55ocpwnoight\u001b[22m\n\u001b[2m    - content-type: multipart/form-data; boundary=----WebKitFormBoundarya8Q6DbWlqEojGkqQ\u001b[22m\n\u001b[2m    - content-length: 2216\u001b[22m\n\n\n  36 |   const asset=await body(a).locator('figure.document-image').first().getAttribute('data-asset-id');\n  37 |   const image=await request.get(`${api}/documents/${d.id}/images/${asset}`,{headers});expect(image.ok()).toBeTruthy();expect(image.headers()['cache-control']).toBe('no-store');expect(await image.body()).toEqual(png);\n> 38 |   expect((await request.post(`${api}/documents/${d.id}/images`,{headers:{Authorization:`Bearer ${viewer}`,'x-organization-id':config.TEST_ORG},multipart:{file:{name:'test.png',mimeType:'image/png',buffer:png}}})).status()).toBe(403);\n     |                         ^\n  39 |   expect((await request.get(`${api}/documents/${d.id}/images/${asset}`,{headers:{Authorization:`Bearer ${alien}`,'x-organization-id':config.TEST_OTHER_ORG}})).status()).toBe(404);\n  40 |   await a.getByLabel('上传文档图片').setInputFiles({name:'unsafe.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg/>')});await expect(a.getByRole('alert').filter({hasText:'PNG'})).toBeVisible();await expect(images(a)).toHaveCount(3);\n  41 |   await body(b).press('Control+End');await b.keyboard.insertText('远端成员补充的文字。');await expect(body(a)).toContainText('远端成员补充的文字。');await saved(b);\n    at D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs:38:25"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T10:21:17.724Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-browser\\richtext-rich-article-form-fcd64-ivate-history-and-image-ACL\\test-failed-1.png"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-browser\\richtext-rich-article-form-fcd64-ivate-history-and-image-ACL\\test-failed-2.png"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-browser\\richtext-rich-article-form-fcd64-ivate-history-and-image-ACL\\test-failed-3.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-browser\\richtext-rich-article-form-fcd64-ivate-history-and-image-ACL\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs",
+                    "column": 25,
+                    "line": 38
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "17dbe3858eff00b108a2-a8a560f89982c1574da1",
+          "file": "richtext.spec.cjs",
+          "line": 3,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "tenant-isolation.spec.cjs",
+      "file": "tenant-isolation.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "two tenants reject foreign document HTTP access and forged WebSocket identity",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 15006,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T10:22:28.375Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d24333467702578990f9-b2b7d2a064ebf180556d",
+          "file": "tenant-isolation.spec.cjs",
+          "line": 6,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-21T10:16:21.127Z",
+    "duration": 382392.41,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}

@@ -1,0 +1,264 @@
+{
+  "config": {
+    "configFile": "D:\\appspace\\collaboration\\playwright.config.cjs",
+    "rootDir": "D:/appspace/collaboration/tests/browser",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/appspace/collaboration/.test-runs/richtext-online-recheck",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "D:/appspace/collaboration/tests/browser",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 300000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "documents.spec.cjs",
+      "file": "documents.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "three users collaborate, reconnect offline edits, comment, version and recover a private copy",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 83687,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T14:26:19.557Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6dce67fb81c2d874da2f-4e82287b195a97cd1ae4",
+          "file": "documents.spec.cjs",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "mermaid.spec.cjs",
+      "file": "mermaid.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Mermaid authority: official graph/source views, two editors, viewer, offline, diagnostics and reload",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 125365,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T14:27:43.960Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "678693148c6dbbd63be4-342bf4e4e683c2d6c3ee",
+          "file": "mermaid.spec.cjs",
+          "line": 2,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "richtext.spec.cjs",
+      "file": "richtext.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "rich article: formats, upload/paste/drop images, captions, collaboration, private history and image ACL",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 78167,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T14:29:49.416Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "17dbe3858eff00b108a2-a8a560f89982c1574da1",
+          "file": "richtext.spec.cjs",
+          "line": 3,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "tenant-isolation.spec.cjs",
+      "file": "tenant-isolation.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "two tenants reject foreign document HTTP access and forged WebSocket identity",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 21061,
+                  "error": {
+                    "message": "Error: WebSocket auth timeout",
+                    "stack": "Error: WebSocket auth timeout\n    at Timeout.<anonymous> (D:\\appspace\\collaboration\\tests\\browser\\tenant-isolation.spec.cjs:80:16)",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\tenant-isolation.spec.cjs",
+                      "column": 16,
+                      "line": 80
+                    },
+                    "snippet": "  78 |       const timer = setTimeout(() => {\n  79 |         ws.terminate();\n> 80 |         reject(Error(\"WebSocket auth timeout\"));\n     |                ^\n  81 |       }, 15000);\n  82 |       ws.once(\"open\", () => ws.send(JSON.stringify(frame)));\n  83 |       ws.once(\"error\", (e) => {"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\tenant-isolation.spec.cjs",
+                        "column": 16,
+                        "line": 80
+                      },
+                      "message": "Error: WebSocket auth timeout\n\n  78 |       const timer = setTimeout(() => {\n  79 |         ws.terminate();\n> 80 |         reject(Error(\"WebSocket auth timeout\"));\n     |                ^\n  81 |       }, 15000);\n  82 |       ws.once(\"open\", () => ws.send(JSON.stringify(frame)));\n  83 |       ws.once(\"error\", (e) => {\n    at Timeout.<anonymous> (D:\\appspace\\collaboration\\tests\\browser\\tenant-isolation.spec.cjs:80:16)"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T14:31:07.662Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-recheck\\tenant-isolation-two-tenan-cd44b-d-forged-WebSocket-identity\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\tenant-isolation.spec.cjs",
+                    "column": 16,
+                    "line": 80
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "d24333467702578990f9-b2b7d2a064ebf180556d",
+          "file": "tenant-isolation.spec.cjs",
+          "line": 6,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-21T14:26:17.923Z",
+    "duration": 315111.821,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

@@ -4,6 +4,8 @@ test('rich article: formats, upload/paste/drop images, captions, collaboration, 
  const api=config.NEXT_PUBLIC_API_URL,contexts=[];
  const login=async email=>{const r=await request.post(api+'/auth/login',{data:{email,password:config.TEST_PASSWORD}});expect(r.ok()).toBeTruthy();return(await r.json()).accessToken;};
  const owner=await login(config.TEST_OWNER_EMAIL),member=await login(config.TEST_MEMBER_EMAIL),viewer=await login(config.TEST_ADMIN_EMAIL),alien=await login(config.TEST_OTHER_EMAIL || 'owner@globex.dev');
+ const foreignProfile=await request.get(api+'/users/me',{headers:{Authorization:`Bearer ${alien}`}});expect(foreignProfile.ok()).toBeTruthy();
+ const foreignOrg=(await foreignProfile.json()).organizations.find(o=>o.id!==config.TEST_ORG)?.id;expect(foreignOrg).toBeTruthy();
  const headers={Authorization:`Bearer ${owner}`,'x-organization-id':config.TEST_ORG};
  const r=await request.post(api+'/documents',{headers,data:{projectId:config.TEST_PROJECT,title:'Rich article '+randomUUID().slice(0,8)}});expect(r.ok()).toBeTruthy();const d=await r.json();
  for(const [userId,role]of[[config.TEST_MEMBER,'EDITOR'],[config.TEST_ADMIN,'VIEWER']])expect((await request.put(`${api}/documents/${d.id}/grants`,{headers,data:{userId,role}})).ok()).toBeTruthy();
@@ -35,8 +37,11 @@ test('rich article: formats, upload/paste/drop images, captions, collaboration, 
   await expect(v.getByRole('button',{name:'插入图片',exact:true})).toBeDisabled();
   const asset=await body(a).locator('figure.document-image').first().getAttribute('data-asset-id');
   const image=await request.get(`${api}/documents/${d.id}/images/${asset}`,{headers});expect(image.ok()).toBeTruthy();expect(image.headers()['cache-control']).toBe('no-store');expect(await image.body()).toEqual(png);
-  expect((await request.post(`${api}/documents/${d.id}/images`,{headers:{Authorization:`Bearer ${viewer}`,'x-organization-id':config.TEST_ORG},multipart:{file:{name:'test.png',mimeType:'image/png',buffer:png}}})).status()).toBe(403);
-  expect((await request.get(`${api}/documents/${d.id}/images/${asset}`,{headers:{Authorization:`Bearer ${alien}`,'x-organization-id':config.TEST_OTHER_ORG}})).status()).toBe(404);
+  const denied=await v.evaluate(async({api,id,org,base64})=>{
+    const bytes=Uint8Array.from(atob(base64),c=>c.charCodeAt(0)),form=new FormData();form.append('file',new Blob([bytes],{type:'image/png'}),'test.png');
+    const response=await fetch(`${api}/documents/${id}/images`,{method:'POST',headers:{Authorization:'Bearer '+localStorage.getItem('access_token'),'x-organization-id':org},body:form});return response.status;
+  },{api,id:d.id,org:config.TEST_ORG,base64:png.toString('base64')});expect(denied).toBe(403);
+  expect((await request.get(`${api}/documents/${d.id}/images/${asset}`,{headers:{Authorization:`Bearer ${alien}`,'x-organization-id':foreignOrg}})).status()).toBe(404);
   await a.getByLabel('上传文档图片').setInputFiles({name:'unsafe.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg/>')});await expect(a.getByRole('alert').filter({hasText:'PNG'})).toBeVisible();await expect(images(a)).toHaveCount(3);
   await body(b).press('Control+End');await b.keyboard.insertText('远端成员补充的文字。');await expect(body(a)).toContainText('远端成员补充的文字。');await saved(b);
   await a.reload();await expect(images(a)).toHaveCount(3);await expect(body(a)).toContainText('图一：协作写作的配图说明');

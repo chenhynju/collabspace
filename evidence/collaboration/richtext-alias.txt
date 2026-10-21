@@ -1,0 +1,47 @@
+Vercel CLI 59.23.2 (Node.js 22.20.0)
+Fetching deployment "collabspace.purelamp.uk" in purelamp
+> Fetched deployment "collabspace-1ts5j34e8-purelamp.vercel.app" in purelamp [604ms]
+
+  General
+
+    id		dpl_2xMveNphtfpHsEkaebYRDUfhiPKY
+    name	collabspace
+    target	production
+    status	● Ready
+    url		https://collabspace-1ts5j34e8-purelamp.vercel.app
+    created	Wed Oct 21 2026 17:59:08 GMT+0800 (中国标准时间) [20m ago]
+
+
+  Build Machine
+
+    requested build machine basic
+    actual assigned cores   2 vCPU (actual assignment)
+    memory                  8192 MiB
+    selection type          fixed
+    selection source        plan-default
+
+
+  Duration
+
+    build duration	1m 10s
+    post-build duration	55s
+    billable duration	3m
+    CPU Minutes Usage	6 minutes (3m x 2vCPU)
+
+
+  Aliases
+
+    ╶ https://collabspace-purelamp.vercel.app
+    
+
+  Builds
+
+    ┌ .        [0ms]
+    ├── λ index (1.66MB) [iad1]
+    ├── λ audit (1.66MB) [iad1]
+    ├── λ audit.rsc (1.66MB) [iad1]
+    ├── λ billing (1.66MB) [iad1]
+    ├── λ billing.rsc (1.66MB) [iad1]
+    └── 73 output items hidden
+    
+

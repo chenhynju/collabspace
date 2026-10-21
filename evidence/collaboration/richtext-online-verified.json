@@ -1,0 +1,411 @@
+{
+  "config": {
+    "configFile": "D:\\appspace\\collaboration\\playwright.config.cjs",
+    "rootDir": "D:/appspace/collaboration/tests/browser",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/appspace/collaboration/.test-runs/richtext-online-verified",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "D:/appspace/collaboration/tests/browser",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 300000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "board.spec.cjs",
+      "file": "board.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "whiteboard: discover, draw, concurrent accounts, cursors, undo, offline replay, viewer and private version copy",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 98091,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T14:10:36.787Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "60929b04aafe7b896a3a-567102d5f837f4bfc3a1",
+          "file": "board.spec.cjs",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "documents.spec.cjs",
+      "file": "documents.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "three users collaborate, reconnect offline edits, comment, version and recover a private copy",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 104003,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('Confirm the acceptance checklist', { exact: true })\nExpected: visible\nTimeout: 30000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Confirm the acceptance checklist', { exact: true })\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('Confirm the acceptance checklist', { exact: true })\nExpected: visible\nTimeout: 30000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Confirm the acceptance checklist', { exact: true })\u001b[22m\n\n    at D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs:103:7",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs",
+                      "column": 7,
+                      "line": 103
+                    },
+                    "snippet": "  101 |     await expect(\n  102 |       b.p.getByText(\"Confirm the acceptance checklist\", { exact: true }),\n> 103 |     ).toBeVisible();\n      |       ^\n  104 |     await b.p.getByRole(\"button\", { name: \"标记解决\" }).click();\n  105 |     await expect(a.p.getByText(\"已解决\", { exact: false })).toBeVisible();\n  106 |     await a.p.getByRole(\"button\", { name: \"历史版本\", exact: true }).click();"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs",
+                        "column": 7,
+                        "line": 103
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByText('Confirm the acceptance checklist', { exact: true })\nExpected: visible\nTimeout: 30000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByText('Confirm the acceptance checklist', { exact: true })\u001b[22m\n\n\n  101 |     await expect(\n  102 |       b.p.getByText(\"Confirm the acceptance checklist\", { exact: true }),\n> 103 |     ).toBeVisible();\n      |       ^\n  104 |     await b.p.getByRole(\"button\", { name: \"标记解决\" }).click();\n  105 |     await expect(a.p.getByText(\"已解决\", { exact: false })).toBeVisible();\n  106 |     await a.p.getByRole(\"button\", { name: \"历史版本\", exact: true }).click();\n    at D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs:103:7"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T14:12:15.766Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-verified\\documents-three-users-coll-ae866--and-recover-a-private-copy\\test-failed-1.png"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-verified\\documents-three-users-coll-ae866--and-recover-a-private-copy\\test-failed-3.png"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-verified\\documents-three-users-coll-ae866--and-recover-a-private-copy\\test-failed-2.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-verified\\documents-three-users-coll-ae866--and-recover-a-private-copy\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs",
+                    "column": 7,
+                    "line": 103
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "6dce67fb81c2d874da2f-4e82287b195a97cd1ae4",
+          "file": "documents.spec.cjs",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "mermaid.spec.cjs",
+      "file": "mermaid.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Mermaid authority: official graph/source views, two editors, viewer, offline, diagnostics and reload",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 697,
+                  "error": {
+                    "message": "Error: apiRequestContext.post: getaddrinfo ENOTFOUND collabspace-api.purelamp.uk\nCall log:\n\u001b[2m  - → POST https://collabspace-api.purelamp.uk/api/v1/auth/login\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.56.1 (x64; windows 10.0) node/22.20\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 83\u001b[22m\n",
+                    "stack": "Error: apiRequestContext.post: getaddrinfo ENOTFOUND collabspace-api.purelamp.uk\nCall log:\n\u001b[2m  - → POST https://collabspace-api.purelamp.uk/api/v1/auth/login\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.56.1 (x64; windows 10.0) node/22.20\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 83\u001b[22m\n\n    at login (D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs:4:52)\n    at D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs:5:21",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs",
+                      "column": 52,
+                      "line": 4
+                    },
+                    "snippet": "  2 | test(\"Mermaid authority: official graph/source views, two editors, viewer, offline, diagnostics and reload\",async({browser,request})=>{\n  3 |   const api=config.NEXT_PUBLIC_API_URL,contexts=[];\n> 4 |   const login=async(email)=>{const r=await request.post(api+\"/auth/login\",{data:{email,password:config.TEST_PASSWORD}});expect(r.ok()).toBeTruthy();return(await r.json()).accessToken;};\n    |                                                    ^\n  5 |   const owner=await login(config.TEST_OWNER_EMAIL),peer=await login(config.TEST_MEMBER_EMAIL),viewer=await login(config.TEST_ADMIN_EMAIL);\n  6 |   const headers={Authorization:`Bearer ${owner}`,\"x-organization-id\":config.TEST_ORG};\n  7 |   const r=await request.post(api+\"/documents\",{headers,data:{projectId:config.TEST_PROJECT,title:\"Mermaid \"+randomUUID().slice(0,8),kind:\"BOARD\"}});expect(r.ok()).toBeTruthy();const d=await r.json();"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs",
+                        "column": 52,
+                        "line": 4
+                      },
+                      "message": "Error: apiRequestContext.post: getaddrinfo ENOTFOUND collabspace-api.purelamp.uk\nCall log:\n\u001b[2m  - → POST https://collabspace-api.purelamp.uk/api/v1/auth/login\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.56.1 (x64; windows 10.0) node/22.20\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 83\u001b[22m\n\n\n  2 | test(\"Mermaid authority: official graph/source views, two editors, viewer, offline, diagnostics and reload\",async({browser,request})=>{\n  3 |   const api=config.NEXT_PUBLIC_API_URL,contexts=[];\n> 4 |   const login=async(email)=>{const r=await request.post(api+\"/auth/login\",{data:{email,password:config.TEST_PASSWORD}});expect(r.ok()).toBeTruthy();return(await r.json()).accessToken;};\n    |                                                    ^\n  5 |   const owner=await login(config.TEST_OWNER_EMAIL),peer=await login(config.TEST_MEMBER_EMAIL),viewer=await login(config.TEST_ADMIN_EMAIL);\n  6 |   const headers={Authorization:`Bearer ${owner}`,\"x-organization-id\":config.TEST_ORG};\n  7 |   const r=await request.post(api+\"/documents\",{headers,data:{projectId:config.TEST_PROJECT,title:\"Mermaid \"+randomUUID().slice(0,8),kind:\"BOARD\"}});expect(r.ok()).toBeTruthy();const d=await r.json();\n    at login (D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs:4:52)\n    at D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs:5:21"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T14:14:08.762Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-verified\\mermaid-Mermaid-authority--db07b-line-diagnostics-and-reload\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs",
+                    "column": 52,
+                    "line": 4
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "678693148c6dbbd63be4-342bf4e4e683c2d6c3ee",
+          "file": "mermaid.spec.cjs",
+          "line": 2,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "richtext.spec.cjs",
+      "file": "richtext.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "rich article: formats, upload/paste/drop images, captions, collaboration, private history and image ACL",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 7062,
+                  "error": {
+                    "message": "Error: apiRequestContext.post: getaddrinfo ENOTFOUND collabspace-api.purelamp.uk\nCall log:\n\u001b[2m  - → POST https://collabspace-api.purelamp.uk/api/v1/auth/login\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.56.1 (x64; windows 10.0) node/22.20\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 83\u001b[22m\n",
+                    "stack": "Error: apiRequestContext.post: getaddrinfo ENOTFOUND collabspace-api.purelamp.uk\nCall log:\n\u001b[2m  - → POST https://collabspace-api.purelamp.uk/api/v1/auth/login\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.56.1 (x64; windows 10.0) node/22.20\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 83\u001b[22m\n\n    at login (D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs:5:50)\n    at D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs:6:20",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs",
+                      "column": 50,
+                      "line": 5
+                    },
+                    "snippet": "  3 | test('rich article: formats, upload/paste/drop images, captions, collaboration, private history and image ACL',async({browser,request})=>{\n  4 |  const api=config.NEXT_PUBLIC_API_URL,contexts=[];\n> 5 |  const login=async email=>{const r=await request.post(api+'/auth/login',{data:{email,password:config.TEST_PASSWORD}});expect(r.ok()).toBeTruthy();return(await r.json()).accessToken;};\n    |                                                  ^\n  6 |  const owner=await login(config.TEST_OWNER_EMAIL),member=await login(config.TEST_MEMBER_EMAIL),viewer=await login(config.TEST_ADMIN_EMAIL),alien=await login(config.TEST_OTHER_EMAIL || 'owner@globex.dev');\n  7 |  const foreignProfile=await request.get(api+'/users/me',{headers:{Authorization:`Bearer ${alien}`}});expect(foreignProfile.ok()).toBeTruthy();\n  8 |  const foreignOrg=(await foreignProfile.json()).organizations.find(o=>o.id!==config.TEST_ORG)?.id;expect(foreignOrg).toBeTruthy();"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs",
+                        "column": 50,
+                        "line": 5
+                      },
+                      "message": "Error: apiRequestContext.post: getaddrinfo ENOTFOUND collabspace-api.purelamp.uk\nCall log:\n\u001b[2m  - → POST https://collabspace-api.purelamp.uk/api/v1/auth/login\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.56.1 (x64; windows 10.0) node/22.20\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 83\u001b[22m\n\n\n  3 | test('rich article: formats, upload/paste/drop images, captions, collaboration, private history and image ACL',async({browser,request})=>{\n  4 |  const api=config.NEXT_PUBLIC_API_URL,contexts=[];\n> 5 |  const login=async email=>{const r=await request.post(api+'/auth/login',{data:{email,password:config.TEST_PASSWORD}});expect(r.ok()).toBeTruthy();return(await r.json()).accessToken;};\n    |                                                  ^\n  6 |  const owner=await login(config.TEST_OWNER_EMAIL),member=await login(config.TEST_MEMBER_EMAIL),viewer=await login(config.TEST_ADMIN_EMAIL),alien=await login(config.TEST_OTHER_EMAIL || 'owner@globex.dev');\n  7 |  const foreignProfile=await request.get(api+'/users/me',{headers:{Authorization:`Bearer ${alien}`}});expect(foreignProfile.ok()).toBeTruthy();\n  8 |  const foreignOrg=(await foreignProfile.json()).organizations.find(o=>o.id!==config.TEST_ORG)?.id;expect(foreignOrg).toBeTruthy();\n    at login (D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs:5:50)\n    at D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs:6:20"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T14:14:21.247Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-verified\\richtext-rich-article-form-fcd64-ivate-history-and-image-ACL\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs",
+                    "column": 50,
+                    "line": 5
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "17dbe3858eff00b108a2-a8a560f89982c1574da1",
+          "file": "richtext.spec.cjs",
+          "line": 3,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "tenant-isolation.spec.cjs",
+      "file": "tenant-isolation.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "two tenants reject foreign document HTTP access and forged WebSocket identity",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 6801,
+                  "error": {
+                    "message": "Error: apiRequestContext.post: getaddrinfo ENOTFOUND collabspace-api.purelamp.uk\nCall log:\n\u001b[2m  - → POST https://collabspace-api.purelamp.uk/api/v1/auth/login\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.56.1 (x64; windows 10.0) node/22.20\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 83\u001b[22m\n",
+                    "stack": "Error: apiRequestContext.post: getaddrinfo ENOTFOUND collabspace-api.purelamp.uk\nCall log:\n\u001b[2m  - → POST https://collabspace-api.purelamp.uk/api/v1/auth/login\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.56.1 (x64; windows 10.0) node/22.20\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 83\u001b[22m\n\n    at login (D:\\appspace\\collaboration\\tests\\browser\\tenant-isolation.spec.cjs:11:29)\n    at D:\\appspace\\collaboration\\tests\\browser\\tenant-isolation.spec.cjs:17:23",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\tenant-isolation.spec.cjs",
+                      "column": 29,
+                      "line": 11
+                    },
+                    "snippet": "   9 |   const api = config.NEXT_PUBLIC_API_URL;\n  10 |   async function login(email) {\n> 11 |     const r = await request.post(`${api}/auth/login`, {\n     |                             ^\n  12 |       data: { email, password: config.TEST_PASSWORD },\n  13 |     });\n  14 |     expect(r.ok()).toBeTruthy();"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\tenant-isolation.spec.cjs",
+                        "column": 29,
+                        "line": 11
+                      },
+                      "message": "Error: apiRequestContext.post: getaddrinfo ENOTFOUND collabspace-api.purelamp.uk\nCall log:\n\u001b[2m  - → POST https://collabspace-api.purelamp.uk/api/v1/auth/login\u001b[22m\n\u001b[2m    - user-agent: Playwright/1.56.1 (x64; windows 10.0) node/22.20\u001b[22m\n\u001b[2m    - accept: */*\u001b[22m\n\u001b[2m    - accept-encoding: gzip,deflate,br\u001b[22m\n\u001b[2m    - content-type: application/json\u001b[22m\n\u001b[2m    - content-length: 83\u001b[22m\n\n\n   9 |   const api = config.NEXT_PUBLIC_API_URL;\n  10 |   async function login(email) {\n> 11 |     const r = await request.post(`${api}/auth/login`, {\n     |                             ^\n  12 |       data: { email, password: config.TEST_PASSWORD },\n  13 |     });\n  14 |     expect(r.ok()).toBeTruthy();\n    at login (D:\\appspace\\collaboration\\tests\\browser\\tenant-isolation.spec.cjs:11:29)\n    at D:\\appspace\\collaboration\\tests\\browser\\tenant-isolation.spec.cjs:17:23"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T14:14:33.935Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-verified\\tenant-isolation-two-tenan-cd44b-d-forged-WebSocket-identity\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\tenant-isolation.spec.cjs",
+                    "column": 29,
+                    "line": 11
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "d24333467702578990f9-b2b7d2a064ebf180556d",
+          "file": "tenant-isolation.spec.cjs",
+          "line": 6,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-21T14:10:32.588Z",
+    "duration": 248296.852,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 4,
+    "flaky": 0
+  }
+}

@@ -1,0 +1,195 @@
+{
+  "config": {
+    "configFile": "D:\\appspace\\collaboration\\playwright.config.cjs",
+    "rootDir": "D:/appspace/collaboration/tests/browser",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/appspace/collaboration/.test-runs/richtext-online-targeted",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "D:/appspace/collaboration/tests/browser",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 300000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "board.spec.cjs",
+      "file": "board.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "whiteboard: discover, draw, concurrent accounts, cursors, undo, offline replay, viewer and private version copy",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 69594,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T10:34:31.472Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "60929b04aafe7b896a3a-567102d5f837f4bfc3a1",
+          "file": "board.spec.cjs",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "richtext.spec.cjs",
+      "file": "richtext.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "rich article: formats, upload/paste/drop images, captions, collaboration, private history and image ACL",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 45302,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m404\u001b[39m\nReceived: \u001b[31m400\u001b[39m",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m404\u001b[39m\nReceived: \u001b[31m400\u001b[39m\n    at D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs:42:170",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs",
+                      "column": 170,
+                      "line": 42
+                    },
+                    "snippet": "  40 |     const response=await fetch(`${api}/documents/${id}/images`,{method:'POST',headers:{Authorization:'Bearer '+localStorage.getItem('access_token'),'x-organization-id':org},body:form});return response.status;\n  41 |   },{api,id:d.id,org:config.TEST_ORG,base64:png.toString('base64')});expect(denied).toBe(403);\n> 42 |   expect((await request.get(`${api}/documents/${d.id}/images/${asset}`,{headers:{Authorization:`Bearer ${alien}`,'x-organization-id':config.TEST_OTHER_ORG}})).status()).toBe(404);\n     |                                                                                                                                                                          ^\n  43 |   await a.getByLabel('上传文档图片').setInputFiles({name:'unsafe.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg/>')});await expect(a.getByRole('alert').filter({hasText:'PNG'})).toBeVisible();await expect(images(a)).toHaveCount(3);\n  44 |   await body(b).press('Control+End');await b.keyboard.insertText('远端成员补充的文字。');await expect(body(a)).toContainText('远端成员补充的文字。');await saved(b);\n  45 |   await a.reload();await expect(images(a)).toHaveCount(3);await expect(body(a)).toContainText('图一：协作写作的配图说明');"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs",
+                        "column": 170,
+                        "line": 42
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoBe\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // Object.is equality\u001b[22m\n\nExpected: \u001b[32m404\u001b[39m\nReceived: \u001b[31m400\u001b[39m\n\n  40 |     const response=await fetch(`${api}/documents/${id}/images`,{method:'POST',headers:{Authorization:'Bearer '+localStorage.getItem('access_token'),'x-organization-id':org},body:form});return response.status;\n  41 |   },{api,id:d.id,org:config.TEST_ORG,base64:png.toString('base64')});expect(denied).toBe(403);\n> 42 |   expect((await request.get(`${api}/documents/${d.id}/images/${asset}`,{headers:{Authorization:`Bearer ${alien}`,'x-organization-id':config.TEST_OTHER_ORG}})).status()).toBe(404);\n     |                                                                                                                                                                          ^\n  43 |   await a.getByLabel('上传文档图片').setInputFiles({name:'unsafe.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg/>')});await expect(a.getByRole('alert').filter({hasText:'PNG'})).toBeVisible();await expect(images(a)).toHaveCount(3);\n  44 |   await body(b).press('Control+End');await b.keyboard.insertText('远端成员补充的文字。');await expect(body(a)).toContainText('远端成员补充的文字。');await saved(b);\n  45 |   await a.reload();await expect(images(a)).toHaveCount(3);await expect(body(a)).toContainText('图一：协作写作的配图说明');\n    at D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs:42:170"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T10:35:41.944Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-targeted\\richtext-rich-article-form-fcd64-ivate-history-and-image-ACL\\test-failed-1.png"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-targeted\\richtext-rich-article-form-fcd64-ivate-history-and-image-ACL\\test-failed-2.png"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-targeted\\richtext-rich-article-form-fcd64-ivate-history-and-image-ACL\\test-failed-3.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-online-targeted\\richtext-rich-article-form-fcd64-ivate-history-and-image-ACL\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs",
+                    "column": 170,
+                    "line": 42
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "17dbe3858eff00b108a2-a8a560f89982c1574da1",
+          "file": "richtext.spec.cjs",
+          "line": 3,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-21T10:34:28.913Z",
+    "duration": 120243.01999999999,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

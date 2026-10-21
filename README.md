@@ -2,6 +2,8 @@
 
 本工程从 F-U01 / TeamSpace 当前文件快照独立复制，私有仓库为 chenhynju/collabspace。已实现项目协作文档、多人编辑、离线草稿、评论、命名版本和文档权限；已上线独立演示环境，实际验收与边界见下方证据。
 
+在线文档支持富文本、正文配图、图片说明及宽度、上传/粘贴/拖入图片，并沿用多人同步和私有版本恢复。见 [图文写作契约](docs/collaboration/RICH_TEXT.md)、[验收与上线记录](evidence/collaboration/RICH-TEXT-2026-10-21.md)；登录后可打开 [图文协作示例](https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/30ae9064-e8e2-4ee6-8d24-9de1eb50f2e3)。
+
 白板图表以 Mermaid 源码为主要执行标准，支持图形 / 源码 / 分屏视图，并保留自由画布。官方渲染、共享源码、版本及未来 AI 受控编辑契约见 [Mermaid 设计](docs/collaboration/MERMAID.md)；任意 Mermaid 语法的图形拖动回写尚未完成。
 
 - [需求分析](docs/collaboration/REQUIREMENTS.md)

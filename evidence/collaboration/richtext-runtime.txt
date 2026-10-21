@@ -1,0 +1,34 @@
+5df49c62748ec0b8c77a30963623f86d9f5cd443d0cacc5cdc7b8890477bd0b0  /opt/collabspace/shared/before-r20261021-05.dump
+BEGIN
+CREATE TABLE
+DO
+ALTER TABLE
+ALTER TABLE
+DROP POLICY
+CREATE POLICY
+GRANT
+COMMIT
+NOTICE:  policy "tenant" for relation "collab_image" does not exist, skipping
+ Container collabspace-api-run-53efda636195 Creating 
+ Container collabspace-api-run-53efda636195 Created 
+Image table runtime / FORCE RLS gate passed
+ Container collabspace-postgres-1 Running 
+ Container collabspace-redis-1 Running 
+ Container collabspace-collab-1 Recreate 
+ Container collabspace-api-1 Recreate 
+ Container collabspace-collab-1 Recreated 
+ Container collabspace-api-1 Recreated 
+ Container collabspace-postgres-1 Waiting 
+ Container collabspace-postgres-1 Waiting 
+ Container collabspace-redis-1 Waiting 
+ Container collabspace-postgres-1 Healthy 
+ Container collabspace-collab-1 Starting 
+ Container collabspace-postgres-1 Healthy 
+ Container collabspace-redis-1 Healthy 
+ Container collabspace-api-1 Starting 
+ Container collabspace-collab-1 Started 
+client_loop: send disconnect: Connection reset
+0e71e274423f81d47ee45179d97fb8fedba657fc
+425
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vda2        59G   52G  4.8G  92% /

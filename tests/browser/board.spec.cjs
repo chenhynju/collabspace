@@ -6,6 +6,7 @@ test("whiteboard: discover, draw, concurrent accounts, cursors, undo, offline re
   request,
 }) => {
   const contexts = [];
+  const diagnostics=[];
   const api = config.NEXT_PUBLIC_API_URL;
   async function login(email) {
     const r = await request.post(`${api}/auth/login`, {
@@ -32,6 +33,14 @@ test("whiteboard: discover, draw, concurrent accounts, cursors, undo, offline re
       { token, org: config.TEST_ORG },
     );
     const p = await c.newPage();
+    if(process.env.COLLAB_WS_DIAGNOSTICS){
+      const Y=require('../../packages/collab-store/node_modules/yjs'),state=new Y.Doc(),page=contexts.length;
+      p.on('websocket',ws=>{if(!ws.url().includes('/collab'))return;
+        ws.on('framesent',event=>{try{const m=JSON.parse(String(event.payload));diagnostics.push({page,direction:'sent',type:m.type,docId:m.type==='auth'?m.docId:undefined,updateId:m.updateId});}catch{}});
+        ws.on('close',()=>diagnostics.push({page,type:'closed'}));
+        ws.on('framereceived',event=>{try{const m=JSON.parse(String(event.payload));if(m.type==='synced'||m.type==='remote')Y.applyUpdate(state,Buffer.from(m.update,'base64'));diagnostics.push({page,type:m.type,seq:m.seq,code:m.code,shapes:state.getMap('shapes').size,pending:!!state.store.pendingStructs});}catch{diagnostics.push({page,type:'decode-error'});}});
+      });
+    }
     await p.goto(config.WEB_URL + path);
     if (path.includes("/documents/")) await p.getByRole("button", { name: "自由画布", exact: true }).click();
     return p;
@@ -190,5 +199,6 @@ test("whiteboard: discover, draw, concurrent accounts, cursors, undo, offline re
     ).toHaveCount(0);
   } finally {
     for (const c of contexts) await c.close();
+    if(process.env.COLLAB_WS_DIAGNOSTICS)require('node:fs').writeFileSync('.test-runs/richtext-board-ws.json',JSON.stringify(diagnostics,null,2));
   }
 });
