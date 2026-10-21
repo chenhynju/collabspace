@@ -77,6 +77,44 @@ class Store {
   close() {
     return this.pool.end();
   }
+  async assertRuntime(db = this.pool) {
+    // Deployment gate, not a replacement for per-operation ACL checks.
+    const names = [
+      "collab_document",
+      "collab_grant",
+      "collab_update",
+      "collab_ticket",
+      "collab_thread",
+      "collab_reply",
+      "collab_version",
+      "collab_restore",
+    ];
+    const { rows } = await db.query(
+      `
+      SELECT r.rolsuper OR r.rolbypassrls AS unsafe,
+        c.relname, c.relowner = r.oid AS owns_table,
+        c.relrowsecurity AND c.relforcerowsecurity AS protected,
+        EXISTS (SELECT 1 FROM pg_policy p WHERE p.polrelid=c.oid
+          AND p.polname='tenant' AND p.polcmd='*'
+          AND p.polqual IS NOT NULL AND p.polwithcheck IS NOT NULL) AS policy
+      FROM pg_roles r
+      LEFT JOIN (pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+        AND n.nspname='public') ON c.relname=ANY($1::text[])
+      WHERE r.rolname=current_user`,
+      [names],
+    );
+    if (!rows.length || rows.some((r) => r.unsafe || r.owns_table))
+      throw new Error(
+        "Collaboration runtime role must not own tables or bypass RLS",
+      );
+    if (
+      rows.length !== names.length ||
+      rows.some((r) => !r.protected || !r.policy)
+    )
+      throw new Error(
+        "Collaboration schema, forced RLS and tenant policies are required",
+      );
+  }
   async tx(ctx, fn) {
     const c = await this.pool.connect();
     try {

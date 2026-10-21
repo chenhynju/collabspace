@@ -25,7 +25,7 @@ for (const key of ["DATABASE_URL", "DATABASE_ADMIN_URL"]) {
   )
     throw Error("Only the synthetic local database is allowed");
 }
-const port = 43123,
+const port = Number(process.env.FOUNDATION_TEST_PORT || 43123),
   dir = join(root, "evidence/collaboration/foundation");
 mkdirSync(dir, { recursive: true });
 const env = {

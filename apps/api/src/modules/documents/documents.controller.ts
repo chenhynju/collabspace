@@ -10,6 +10,7 @@ import {
   UseGuards,
   HttpException,
   OnModuleDestroy,
+  OnModuleInit,
 } from "@nestjs/common";
 import { Store } from "@collabspace/store";
 import { OrgContextGuard } from "../../common/guards/org-context.guard";
@@ -21,8 +22,11 @@ import { CurrentUser } from "../../common/decorators/current-user.decorator";
 
 @Controller("documents")
 @UseGuards(OrgContextGuard)
-export class DocumentsController implements OnModuleDestroy {
+export class DocumentsController implements OnModuleDestroy, OnModuleInit {
   private store = new Store();
+  onModuleInit() {
+    return this.store.assertRuntime();
+  }
   onModuleDestroy() {
     return this.store.close();
   }

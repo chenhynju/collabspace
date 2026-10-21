@@ -7,6 +7,48 @@ const enabled = !!process.env.COLLAB_TEST_DATABASE_URL;
 const { Pool } = require("pg");
 
 test(
+  "runtime gate refuses privileged roles and incomplete forced RLS",
+  { skip: !enabled },
+  async () => {
+    const s = new Store(process.env.COLLAB_TEST_DATABASE_URL);
+    const admin = new Pool({
+      connectionString: process.env.DATABASE_ADMIN_URL,
+    });
+    const c = await admin.connect();
+    try {
+      await s.assertRuntime();
+      await assert.rejects(
+        s.assertRuntime(admin),
+        /must not own tables or bypass RLS/,
+      );
+      const role = (await s.pool.query("SELECT current_user AS name")).rows[0]
+        .name;
+      for (const change of [
+        "ALTER TABLE collab_restore NO FORCE ROW LEVEL SECURITY",
+        "DROP POLICY tenant ON collab_restore",
+      ]) {
+        await c.query("BEGIN; SET LOCAL lock_timeout='5s'");
+        try {
+          await c.query(change);
+          await c.query('SET LOCAL ROLE "' + role.replaceAll('"', '""') + '"');
+          await assert.rejects(
+            s.assertRuntime(c),
+            /forced RLS and tenant policies/,
+          );
+        } finally {
+          await c.query("ROLLBACK");
+        }
+        await s.assertRuntime();
+      }
+    } finally {
+      c.release();
+      await admin.end();
+      await s.close();
+    }
+  },
+);
+
+test(
   "group commit authorizes each actor, deduplicates receipts and rolls back every edit on commit failure",
   { skip: !enabled },
   async () => {

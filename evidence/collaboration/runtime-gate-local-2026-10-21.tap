@@ -1,0 +1,90 @@
+TAP version 13
+# CollabSpace WS listening on 127.0.0.1:64360
+# CollabSpace WS listening on 127.0.0.1:64370
+# Subtest: WebSocket: commit ACK, restart recovery, viewer attack, revoked connection
+ok 1 - WebSocket: commit ACK, restart recovery, viewer attack, revoked connection
+  ---
+  duration_ms: 1781.714
+  type: 'test'
+  ...
+# Subtest: hard-killed process retains ACKed update; deferred DB commit failure sends no ACK
+ok 2 - hard-killed process retains ACKed update; deferred DB commit failure sends no ACK
+  ---
+  duration_ms: 2177.5348
+  type: 'test'
+  ...
+# Subtest: whiteboard concurrent properties converge; delete beats offline edits; undo excludes remote operations; copies have fresh lineage
+ok 3 - whiteboard concurrent properties converge; delete beats offline edits; undo excludes remote operations; copies have fresh lineage
+  ---
+  duration_ms: 58.3853
+  type: 'test'
+  ...
+# Subtest: whiteboard payload and presence reject unbounded values
+ok 4 - whiteboard payload and presence reject unbounded values
+  ---
+  duration_ms: 20.6846
+  type: 'test'
+  ...
+# Subtest: whiteboard real RLS storage preserves kind, rejects viewers and invalid shapes, and restores a private copy
+ok 5 - whiteboard real RLS storage preserves kind, rejects viewers and invalid shapes, and restores a private copy
+  ---
+  duration_ms: 667.2253
+  type: 'test'
+  ...
+# Subtest: concurrent, repeated and reordered Yjs updates converge semantically
+ok 6 - concurrent, repeated and reordered Yjs updates converge semantically
+  ---
+  duration_ms: 42.2601
+  type: 'test'
+  ...
+# Subtest: restoring rich text creates independent CRDT identities and content
+ok 7 - restoring rich text creates independent CRDT identities and content
+  ---
+  duration_ms: 20.6241
+  type: 'test'
+  ...
+# Subtest: reject oversized and malformed update envelopes before decode
+ok 8 - reject oversized and malformed update envelopes before decode
+  ---
+  duration_ms: 5.2088
+  type: 'test'
+  ...
+# Subtest: local undo preserves remote edits and relative anchors survive insertion
+ok 9 - local undo preserves remote edits and relative anchors survive insertion
+  ---
+  duration_ms: 12.2712
+  type: 'test'
+  ...
+# Subtest: runtime gate refuses privileged roles and incomplete forced RLS
+ok 10 - runtime gate refuses privileged roles and incomplete forced RLS
+  ---
+  duration_ms: 724.9768
+  type: 'test'
+  ...
+# Subtest: group commit authorizes each actor, deduplicates receipts and rolls back every edit on commit failure
+ok 11 - group commit authorizes each actor, deduplicates receipts and rolls back every edit on commit failure
+  ---
+  duration_ms: 608.7281
+  type: 'test'
+  ...
+# Subtest: real nonprivileged PostgreSQL: isolation, grants, durable retries, comments and history
+ok 12 - real nonprivileged PostgreSQL: isolation, grants, durable retries, comments and history
+  ---
+  duration_ms: 973.0164
+  type: 'test'
+  ...
+# Subtest: fan-out excludes restricted, suspended and revoked recipients; parent revocation fences queued writes
+ok 13 - fan-out excludes restricted, suspended and revoked recipients; parent revocation fences queued writes
+  ---
+  duration_ms: 978.3195
+  type: 'test'
+  ...
+1..13
+# tests 13
+# suites 0
+# pass 13
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 4678.7381

@@ -41,7 +41,7 @@ function start({
     }
     if (req.url === "/health/ready") {
       try {
-        await store.pool.query("SELECT 1");
+        await store.assertRuntime();
         res.writeHead(draining ? 503 : 200);
         res.end(draining ? "draining" : "ready");
       } catch {
@@ -266,11 +266,26 @@ function start({
   };
 }
 if (require.main === module) {
-  const app = start();
-  for (const signal of ["SIGINT", "SIGTERM"])
-    process.on(signal, () => {
-      app.close().then(() => process.exit(0));
-      setTimeout(() => process.exit(1), 10000).unref();
-    });
+  async function main() {
+    const store = new Store();
+    try {
+      await store.assertRuntime();
+    } catch (e) {
+      await store.close();
+      throw e;
+    }
+    const app = start({ store });
+    for (const signal of ["SIGINT", "SIGTERM"])
+      process.on(signal, () => {
+        app.close().then(() => process.exit(0));
+        setTimeout(() => process.exit(1), 10000).unref();
+      });
+  }
+  main().catch(() => {
+    console.error(
+      "Collaboration startup refused: database runtime safety check failed",
+    );
+    process.exitCode = 1;
+  });
 }
 module.exports = { start };
