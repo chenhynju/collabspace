@@ -11,7 +11,12 @@ import {
   HttpException,
   OnModuleDestroy,
   OnModuleInit,
+  UseInterceptors,
+  UploadedFile,
+  Res,
 } from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import type { Response } from "express";
 import { Store } from "@collabspace/store";
 import { OrgContextGuard } from "../../common/guards/org-context.guard";
 import {
@@ -65,6 +70,20 @@ export class DocumentsController implements OnModuleDestroy, OnModuleInit {
     @Body() b: any,
   ) {
     return this.run(o, u, "create", b.projectId, b);
+  }
+  @Post(":id/images")
+  @UseInterceptors(FileInterceptor("file", {limits:{fileSize:5*1024*1024,files:1}}))
+  imageUpload(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Param("id") id:string,@UploadedFile() file:Express.Multer.File) {
+    return this.run(o,u,"addImage",id,file?.buffer);
+  }
+  @Get(":id/images/:imageId")
+  async imageRead(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Param("id") id:string,@Param("imageId") imageId:string,@Res() res:Response) {
+    const image=await this.run(o,u,"image",id,imageId);
+    res.setHeader("Content-Type",image.mime);
+    res.setHeader("X-Content-Type-Options","nosniff");
+    res.setHeader("Cache-Control","no-store");
+    res.setHeader("Content-Disposition","inline");
+    res.send(image.bytes);
   }
   @Get(":id") detail(
     @CurrentOrg() o: OrgContext,

@@ -14,12 +14,13 @@ import { DocumentProvider, from64 } from "@/lib/document-provider";
 import { useAuthStore } from "@/store/auth";
 import { api } from "@/lib/api";
 import { BoardPreview } from '@/components/boards/Whiteboard';
+import { DocumentImage } from '@/components/documents/DocumentImage';
 const Whiteboard = dynamic(()=>import('@/components/boards/Whiteboard'),{ssr:false});
 const DocumentEditor = dynamic(
   () => import("@/components/documents/DocumentEditor"),
   { ssr: false },
 );
-function Preview({ state }: { state: string }) {
+function Preview({ state, documentId, organizationId }: { state: string; documentId:string; organizationId:string }) {
   const editor = useEditor(
     {
       immediatelyRender: false,
@@ -29,6 +30,7 @@ function Preview({ state }: { state: string }) {
         TaskList,
         TaskItem,
         LinkExtension.configure({ openOnClick: false }),
+        DocumentImage.configure({documentId,organizationId}),
       ],
       content: (() => {
         const d = new Y.Doc();
@@ -537,7 +539,7 @@ export default function DocumentPage({
                 <Dialog.Title>{preview.name} · 只读预览</Dialog.Title>
                 <Dialog.Close>关闭预览</Dialog.Close>
               </div>
-              {meta.kind==='BOARD'?<BoardPreview key={preview.id} state={preview.state}/>:<Preview state={preview.state} />}
+              {meta.kind==='BOARD'?<BoardPreview key={preview.id} state={preview.state}/>:<Preview state={preview.state} documentId={params.docId} organizationId={org || ""} />}
             </Dialog.Content>
           </Dialog.Portal>
         </Dialog.Root>

@@ -35,6 +35,23 @@ function materialize(bytes) {
   Y.applyUpdate(d, bytes);
   return d;
 }
+function imageIds(doc) {
+  const ids = new Set();
+  const visit = (node) => {
+    if (node instanceof Y.XmlElement && node.nodeName === "documentImage") {
+      const attrs = node.getAttributes();
+      try {
+        z.object({assetId:uuid,alt:z.string().max(300),caption:z.string().max(1000),width:z.union([z.literal(50),z.literal(75),z.literal(100)])}).strict().parse(attrs);
+      } catch { fail(400,"INVALID_DOCUMENT_IMAGE"); }
+      ids.add(attrs.assetId);
+    }
+    if (node instanceof Y.XmlFragment || node instanceof Y.XmlElement)
+      for (const child of node.toArray()) visit(child);
+  };
+  visit(doc.getXmlFragment("default"));
+  if (ids.size > 20) fail(400,"IMAGE_LIMIT");
+  return [...ids];
+}
 function checkBoard(doc) {
   if ([...doc.share.keys()].some((key) => !["shapes", "mermaid"].includes(key)))
     fail(400, "INVALID_BOARD");
@@ -70,6 +87,37 @@ function copyContent(bytes, kind = "DOCUMENT") {
   return result;
 }
 class Store {
+  async checkImages(c,ctx,id,doc) {
+    const ids=imageIds(doc);
+    if (!ids.length) return;
+    const result=await c.query("SELECT id FROM collab_image WHERE organization_id=$1 AND document_id=$2 AND id=ANY($3::uuid[])",[ctx.org,id,ids]);
+    if(result.rows.length!==ids.length) fail(400,"INVALID_DOCUMENT_IMAGE");
+  }
+  async addImage(ctx,id,bytes) {
+    if (!Buffer.isBuffer(bytes) || !bytes.length || bytes.length>5*1024*1024) fail(413,"IMAGE_TOO_LARGE");
+    const mime=bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))?"image/png":
+      bytes[0]===255 && bytes[1]===216 && bytes[2]===255?"image/jpeg":
+      bytes.toString("ascii",0,4)==="RIFF" && bytes.toString("ascii",8,12)==="WEBP"?"image/webp":null;
+    if(!mime) fail(400,"IMAGE_TYPE_NOT_ALLOWED");
+    return this.tx(ctx,async c=>{
+      const d=await this.access(c,ctx,id,"write");
+      if(d.kind!=="DOCUMENT") fail(400,"DOCUMENT_REQUIRED");
+      const usage=(await c.query("SELECT count(*)::int AS count,coalesce(sum(octet_length(bytes)),0)::int AS size FROM collab_image WHERE organization_id=$1 AND document_id=$2",[ctx.org,id])).rows[0];
+      if(usage.count>=20 || usage.size+bytes.length>20*1024*1024) fail(413,"IMAGE_QUOTA_EXCEEDED");
+      const key=randomUUID();
+      await c.query("INSERT INTO collab_image(organization_id,document_id,id,mime,bytes,created_by) VALUES($1,$2,$3,$4,$5,$6)",[ctx.org,id,key,mime,bytes,ctx.user]);
+      await this.audit(c,ctx,id,"document:image-upload",null,{imageId:key,mime,size:bytes.length});
+      return {id:key,mime,size:bytes.length};
+    });
+  }
+  async image(ctx,id,key) {
+    return this.tx(ctx,async c=>{
+      await this.access(c,ctx,id);
+      const result=(await c.query("SELECT mime,bytes FROM collab_image WHERE organization_id=$1 AND document_id=$2 AND id=$3",[ctx.org,id,uuid.parse(key)])).rows[0];
+      if(!result) fail(404,"NOT_FOUND");
+      return result;
+    });
+  }
   constructor(url = process.env.DATABASE_URL) {
     if (!url) throw new Error("DATABASE_URL required");
     this.pool = new Pool({
@@ -92,6 +140,7 @@ class Store {
       "collab_reply",
       "collab_version",
       "collab_restore",
+      "collab_image",
     ];
     const { rows } = await db.query(
       `
@@ -472,6 +521,7 @@ class Store {
       try {
         Y.applyUpdate(doc, bytes);
         if (d.kind === "BOARD") checkBoard(doc);
+        else await this.checkImages(c,ctx,id,doc);
         state = Buffer.from(Y.encodeStateAsUpdate(doc));
         if (state.length > 5 * 1024 * 1024) fail(413, "DOCUMENT_TOO_LARGE");
       } catch (e) {
@@ -615,7 +665,7 @@ class Store {
           const encoded = Buffer.from(Y.encodeStateAsUpdate(doc));
           if (state.kind === "BOARD") {
             checkBoard(doc);
-          }
+          } else await this.checkImages(c,first.ctx,id,doc);
           if (encoded.length > 5 * 1024 * 1024) fail(413, "DOCUMENT_TOO_LARGE");
           await c.query(
             `INSERT INTO collab_update(organization_id,document_id,update_id,seq,actor_id,checksum,bytes)
@@ -873,6 +923,16 @@ class Store {
         copyContent(v.state, d.kind),
         d.kind,
       );
+      if(d.kind==="DOCUMENT") {
+        const snapshot=materialize(v.state);
+        try {
+          const ids=imageIds(snapshot);
+          if(ids.length) {
+            const copied=await c.query("INSERT INTO collab_image(organization_id,document_id,id,mime,bytes,created_by) SELECT organization_id,$3,id,mime,bytes,$4 FROM collab_image WHERE organization_id=$1 AND document_id=$2 AND id=ANY($5::uuid[])",[ctx.org,id,result.id,ctx.user,ids]);
+            if(copied.rowCount!==ids.length) fail(409,"IMAGE_MISSING");
+          }
+        } finally {snapshot.destroy();}
+      }
       await c.query("INSERT INTO collab_restore VALUES($1,$2,$3,$4,$5,$6)", [
         key,
         ctx.org,

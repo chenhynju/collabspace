@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { Extension } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
@@ -16,6 +16,8 @@ import {
   ySyncPluginKey,
 } from "y-prosemirror";
 import { DocumentProvider, from64, to64 } from "@/lib/document-provider";
+import { api } from "@/lib/api";
+import { DocumentImage } from "./DocumentImage";
 
 function positions(provider: DocumentProvider) {
   return Extension.create({
@@ -83,13 +85,23 @@ function positions(provider: DocumentProvider) {
 export function RichEditor({
   provider,
   onSelection,
+  organizationId,
 }: {
   provider: DocumentProvider;
+  organizationId: string;
   onSelection: (
     v: { quote: string; anchor: { start: string; end: string } } | null,
   ) => void;
 }) {
   const [, render] = useState(0);
+  const [uploading,setUploading]=useState(false),[imageError,setImageError]=useState("");
+  const fileInput=useRef<HTMLInputElement>(null),mounted=useRef(true),busy=useRef(false);
+  const captionInput=useRef<HTMLInputElement>(null);
+  const captionDirty=useRef(false),captionAsset=useRef("");
+  const uploadRef=useRef<(files:File[],position?:number)=>void>(()=>{});
+  const [linkOpen,setLinkOpen]=useState(false),[link,setLink]=useState("");
+  const [imageCaption,setImageCaption]=useState("");
+  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;};},[provider]);
   const editor = useEditor(
     {
       immediatelyRender: false,
@@ -102,11 +114,23 @@ export function RichEditor({
         }),
         TaskList,
         TaskItem.configure({ nested: true }),
+        DocumentImage.configure({documentId:provider.docId,organizationId}),
         Collaboration.configure({ document: provider.doc }),
         positions(provider),
       ],
       editable: provider.writable,
       editorProps: {
+        handlePaste: (_view,event) => {
+          const files=Array.from(event.clipboardData?.files || []);
+          if(!files.length){if(/<img\b/i.test(event.clipboardData?.getData("text/html") || ""))setImageError("外链图片未插入。请复制实际图片，或使用“插入图片”上传；文字仍可正常粘贴。");return false;}
+          event.preventDefault();uploadRef.current(files);return true;
+        },
+        handleDrop: (view,event,_slice,moved) => {
+          if(moved || !event.dataTransfer?.files.length)return false;
+          event.preventDefault();
+          uploadRef.current(Array.from(event.dataTransfer.files),view.posAtCoords({left:event.clientX,top:event.clientY})?.pos);
+          return true;
+        },
         attributes: {
           class: "collab-editor",
           role: "textbox",
@@ -149,6 +173,44 @@ export function RichEditor({
     },
     [provider],
   );
+  uploadRef.current=(files,position)=>{
+    if(!editor || !provider.writable || busy.current || !files.length)return;
+    busy.current=true;setUploading(true);setImageError("");
+    const sync=ySyncPluginKey.getState(editor.state);
+    const bookmark=sync?.binding ? absolutePositionToRelativePosition(position ?? editor.state.selection.from,sync.type,sync.binding.mapping):null;
+    void (async()=>{
+      try {
+        if(files.length>5)throw Error("一次最多插入 5 张图片。");
+        const ids=[];
+        for(const file of files){
+          if(!["image/png","image/jpeg","image/webp"].includes(file.type) || file.size>5*1024*1024)throw Error("请选择 5MB 以内的 PNG、JPEG 或 WebP 图片。");
+          const bitmap=await createImageBitmap(file);
+          const pixels=bitmap.width*bitmap.height;bitmap.close();
+          if(pixels>40000000)throw Error("图片分辨率过大，请压缩到 4000 万像素以内。");
+          const body=new FormData();body.append("file",file);
+          const result=await api.post(`/documents/${provider.docId}/images`,body,{headers:{"x-organization-id":organizationId}});
+          ids.push({type:"documentImage",attrs:{assetId:result.data.id,alt:file.name.slice(0,300),caption:"",width:100}});
+        }
+        if(!mounted.current || editor.isDestroyed)return;
+        if(!provider.writable)throw Error("图片已上传，但文档已不可编辑，未插入正文。");
+        const current=ySyncPluginKey.getState(editor.state);
+        const at=bookmark && current?.binding ? relativePositionToAbsolutePosition(provider.doc,current.type,bookmark,current.binding.mapping):null;
+        if(at===null)throw Error("插入位置已被删除，请重新选择位置。图片尚未插入正文。");
+        editor.chain().focus().insertContentAt(at,[...ids,{type:"paragraph"}]).run();
+      }catch(e:any){if(mounted.current)setImageError(e.response?.status===413?"图片过大或已达到文档图片额度（20张 / 20MB）。":e.response?.status===403?"当前没有上传图片的权限。":e.message || "图片上传失败，请重试。");}
+      finally{busy.current=false;if(mounted.current)setUploading(false);}
+    })();
+  };
+  useEffect(()=>{
+    if(!editor)return;
+    const update=()=>{
+      render(n=>n+1);const attrs=editor.getAttributes("documentImage");
+      if(attrs.assetId!==captionAsset.current){captionDirty.current=false;captionAsset.current=attrs.assetId || "";}
+      if(!captionDirty.current && document.activeElement!==captionInput.current)setImageCaption(attrs.caption || "");
+    };
+    editor.on("transaction",update);
+    return()=>{editor.off("transaction",update);};
+  },[editor]);
   useEffect(
     () =>
       provider.subscribe(() => {
@@ -163,42 +225,68 @@ export function RichEditor({
   const tools: [string, () => void][] = [
     ["粗体", () => editor.chain().focus().toggleBold().run()],
     ["斜体", () => editor.chain().focus().toggleItalic().run()],
+    ["删除线", () => editor.chain().focus().toggleStrike().run()],
     ["标题", () => editor.chain().focus().toggleHeading({ level: 2 }).run()],
     ["列表", () => editor.chain().focus().toggleBulletList().run()],
+    ["有序列表", () => editor.chain().focus().toggleOrderedList().run()],
     ["任务", () => editor.chain().focus().toggleTaskList().run()],
     ["引用", () => editor.chain().focus().toggleBlockquote().run()],
     ["代码", () => editor.chain().focus().toggleCode().run()],
+    ["代码块", () => editor.chain().focus().toggleCodeBlock().run()],
+    ["分隔线", () => editor.chain().focus().setHorizontalRule().run()],
+    ["清除格式", () => editor.chain().focus().unsetAllMarks().clearNodes().run()],
     [
       "链接",
       () => {
-        const url = window.prompt("HTTPS 链接");
-        if (url && /^https?:\/\//i.test(url))
-          editor.chain().focus().setLink({ href: url }).run();
+        setLink(editor.getAttributes("link").href || "https://");setLinkOpen(v=>!v);
       },
     ],
     ["撤销", () => editor.commands.undo()],
     ["重做", () => editor.commands.redo()],
   ];
+  const active:Record<string,boolean>={"粗体":editor.isActive("bold"),"斜体":editor.isActive("italic"),"删除线":editor.isActive("strike"),"标题":editor.isActive("heading"),"列表":editor.isActive("bulletList"),"有序列表":editor.isActive("orderedList"),"任务":editor.isActive("taskList"),"引用":editor.isActive("blockquote"),"代码":editor.isActive("code"),"代码块":editor.isActive("codeBlock"),"链接":editor.isActive("link")};
   return (
     <>
       <div
-        className="flex flex-wrap gap-2 border-b p-3"
+        className="sticky top-0 z-20 flex flex-wrap gap-2 border-b bg-white p-3"
         role="toolbar"
         aria-label="正文格式"
       >
+        <select aria-label="段落样式" className="rounded border px-2 py-1 text-sm" disabled={!provider.writable}
+          value={editor.isActive("heading")?String(editor.getAttributes("heading").level):"0"}
+          onChange={e=>{const level=Number(e.target.value);if(level)editor.chain().focus().setHeading({level:level as 1|2|3}).run();else editor.chain().focus().setParagraph().run();}}>
+          <option value="0">正文</option><option value="1">一级标题</option><option value="2">二级标题</option><option value="3">三级标题</option>
+        </select>
         {tools.map(([label, action]) => (
           <button
             key={label}
             type="button"
-            className="rounded px-2 py-1 text-sm hover:bg-slate-100 disabled:opacity-40"
-            disabled={!provider.writable}
+            className={`rounded px-2 py-1 text-sm hover:bg-slate-100 disabled:opacity-40 ${active[label]?"bg-blue-100 text-blue-800":""}`}
+            aria-pressed={active[label]}
+            disabled={!provider.writable || (label==="撤销" && !editor.can().undo()) || (label==="重做" && !editor.can().redo())}
             onMouseDown={(e) => e.preventDefault()}
             onClick={action}
           >
             {label}
           </button>
         ))}
+        <button type="button" disabled={!provider.writable || uploading} onMouseDown={e=>e.preventDefault()} onClick={()=>fileInput.current?.click()} className="rounded border px-3 py-1 text-sm disabled:opacity-40">{uploading?"正在上传图片…":"插入图片"}</button>
+        <input ref={fileInput} aria-label="上传文档图片" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={e=>{uploadRef.current(Array.from(e.target.files || []));e.target.value="";}} />
       </div>
+      {linkOpen && <form className="flex flex-wrap gap-2 border-b bg-slate-50 p-3" onSubmit={e=>{e.preventDefault();try{const parsed=new URL(link);if(!["https:","http:"].includes(parsed.protocol))throw Error();editor.chain().focus().extendMarkRange("link").setLink({href:parsed.href}).run();setLinkOpen(false);setImageError("");}catch{setImageError("请输入有效的 HTTP / HTTPS 链接。");}}}>
+        <input aria-label="链接地址" className="min-w-60 flex-1 rounded border p-2 text-sm" value={link} onChange={e=>setLink(e.target.value)} />
+        <button disabled={!provider.writable} className="rounded border px-3 text-sm">应用链接</button>
+        <button type="button" disabled={!provider.writable} onClick={()=>{editor.chain().focus().extendMarkRange("link").unsetLink().run();setLinkOpen(false);}} className="px-2 text-sm">移除链接</button>
+        <button type="button" onClick={()=>setLinkOpen(false)} className="px-2 text-sm">取消</button>
+      </form>}
+      {editor.isActive("documentImage") && <div className="flex flex-wrap items-center gap-2 border-b bg-blue-50 p-3 text-sm">
+        <input ref={captionInput} aria-label="图片说明" maxLength={1000} value={imageCaption} onChange={e=>{captionDirty.current=true;setImageCaption(e.target.value);}} className="min-w-48 flex-1 rounded border p-2" disabled={!provider.writable} />
+        <button disabled={!provider.writable} onMouseDown={e=>e.preventDefault()} onClick={()=>{captionDirty.current=false;editor.chain().focus().updateAttributes("documentImage",{caption:imageCaption}).run();}}>保存图片说明</button>
+        <select aria-label="图片宽度" value={editor.getAttributes("documentImage").width || 100} disabled={!provider.writable} onChange={e=>editor.chain().focus().updateAttributes("documentImage",{width:Number(e.target.value)}).run()}><option value="50">50%</option><option value="75">75%</option><option value="100">100%</option></select>
+        <button disabled={!provider.writable} onMouseDown={e=>e.preventDefault()} onClick={()=>editor.chain().focus().deleteSelection().run()} className="text-red-700">删除图片</button>
+      </div>}
+      {imageError && <p role="alert" className="border-b bg-red-50 p-3 text-sm text-red-700">{imageError}</p>}
+      <div className="flex justify-between border-b bg-slate-50 px-4 py-2 text-xs text-slate-500"><span>直接输入正文；可粘贴或拖入图片，Markdown 输入快捷方式可用。</span><span aria-label="正文字数">{editor.getText().replace(/\s/g,"").length} 字</span></div>
       <EditorContent editor={editor} />
       <button
         type="button"
@@ -263,7 +351,7 @@ export default function DocumentEditor({
       {error}
     </p>
   ) : provider?.ready ? (
-    <RichEditor provider={provider} onSelection={onSelection} />
+    <RichEditor provider={provider} onSelection={onSelection} organizationId={org} />
   ) : (
     <p className="p-6">正在读取本地草稿…</p>
   );

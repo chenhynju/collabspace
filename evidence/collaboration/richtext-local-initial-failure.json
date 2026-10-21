@@ -1,0 +1,195 @@
+{
+  "config": {
+    "configFile": "D:\\appspace\\collaboration\\playwright.config.cjs",
+    "rootDir": "D:/appspace/collaboration/tests/browser",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/appspace/collaboration/.test-runs/richtext-browser",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "D:/appspace/collaboration/tests/browser",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 300000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "documents.spec.cjs",
+      "file": "documents.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "three users collaborate, reconnect offline edits, comment, version and recover a private copy",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 31806,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T09:07:09.511Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6dce67fb81c2d874da2f-4e82287b195a97cd1ae4",
+          "file": "documents.spec.cjs",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "richtext.spec.cjs",
+      "file": "richtext.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "rich article: formats, upload/paste/drop images, captions, collaboration, private history and image ACL",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 13468,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('alert')\nExpected substring: \u001b[32m\"PNG\"\u001b[39m\nError: strict mode violation: getByRole('alert') resolved to 2 elements:\n    1) <p role=\"alert\" class=\"border-b bg-red-50 p-3 text-sm text-red-700\">请选择 5MB 以内的 PNG、JPEG 或 WebP 图片。</p> aka getByText('请选择 5MB 以内的 PNG、JPEG 或 WebP')\n    2) <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div> aka locator('[id=\"__next-route-announcer__\"]')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('alert')\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('alert')\nExpected substring: \u001b[32m\"PNG\"\u001b[39m\nError: strict mode violation: getByRole('alert') resolved to 2 elements:\n    1) <p role=\"alert\" class=\"border-b bg-red-50 p-3 text-sm text-red-700\">请选择 5MB 以内的 PNG、JPEG 或 WebP 图片。</p> aka getByText('请选择 5MB 以内的 PNG、JPEG 或 WebP')\n    2) <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div> aka locator('[id=\"__next-route-announcer__\"]')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('alert')\u001b[22m\n\n    at D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs:39:156",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs",
+                      "column": 156,
+                      "line": 39
+                    },
+                    "snippet": "  37 |   expect((await request.post(`${api}/documents/${d.id}/images`,{headers:{Authorization:`Bearer ${viewer}`,'x-organization-id':config.TEST_ORG},multipart:{file:{name:'test.png',mimeType:'image/png',buffer:png}}})).status()).toBe(403);\n  38 |   expect((await request.get(`${api}/documents/${d.id}/images/${asset}`,{headers:{Authorization:`Bearer ${alien}`,'x-organization-id':config.TEST_OTHER_ORG}})).status()).toBe(404);\n> 39 |   await a.getByLabel('上传文档图片').setInputFiles({name:'unsafe.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg/>')});await expect(a.getByRole('alert')).toContainText('PNG');await expect(images(a)).toHaveCount(3);\n     |                                                                                                                                                            ^\n  40 |   await body(b).press('Control+End');await b.keyboard.insertText('远端成员补充的文字。');await expect(body(a)).toContainText('远端成员补充的文字。');await saved(b);\n  41 |   await a.reload();await expect(images(a)).toHaveCount(3);await expect(body(a)).toContainText('图一：协作写作的配图说明');\n  42 |   await a.getByRole('button',{name:'历史版本',exact:true}).click();await a.getByLabel('版本名称').fill('Article with images');await a.getByRole('button',{name:'创建版本',exact:true}).click();await a.getByRole('button',{name:'只读预览',exact:true}).click();"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs",
+                        "column": 156,
+                        "line": 39
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoContainText\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('alert')\nExpected substring: \u001b[32m\"PNG\"\u001b[39m\nError: strict mode violation: getByRole('alert') resolved to 2 elements:\n    1) <p role=\"alert\" class=\"border-b bg-red-50 p-3 text-sm text-red-700\">请选择 5MB 以内的 PNG、JPEG 或 WebP 图片。</p> aka getByText('请选择 5MB 以内的 PNG、JPEG 或 WebP')\n    2) <div role=\"alert\" aria-live=\"assertive\" id=\"__next-route-announcer__\"></div> aka locator('[id=\"__next-route-announcer__\"]')\n\nCall log:\n\u001b[2m  - Expect \"toContainText\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('alert')\u001b[22m\n\n\n  37 |   expect((await request.post(`${api}/documents/${d.id}/images`,{headers:{Authorization:`Bearer ${viewer}`,'x-organization-id':config.TEST_ORG},multipart:{file:{name:'test.png',mimeType:'image/png',buffer:png}}})).status()).toBe(403);\n  38 |   expect((await request.get(`${api}/documents/${d.id}/images/${asset}`,{headers:{Authorization:`Bearer ${alien}`,'x-organization-id':config.TEST_OTHER_ORG}})).status()).toBe(404);\n> 39 |   await a.getByLabel('上传文档图片').setInputFiles({name:'unsafe.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg/>')});await expect(a.getByRole('alert')).toContainText('PNG');await expect(images(a)).toHaveCount(3);\n     |                                                                                                                                                            ^\n  40 |   await body(b).press('Control+End');await b.keyboard.insertText('远端成员补充的文字。');await expect(body(a)).toContainText('远端成员补充的文字。');await saved(b);\n  41 |   await a.reload();await expect(images(a)).toHaveCount(3);await expect(body(a)).toContainText('图一：协作写作的配图说明');\n  42 |   await a.getByRole('button',{name:'历史版本',exact:true}).click();await a.getByLabel('版本名称').fill('Article with images');await a.getByRole('button',{name:'创建版本',exact:true}).click();await a.getByRole('button',{name:'只读预览',exact:true}).click();\n    at D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs:39:156"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T09:07:44.687Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-browser\\richtext-rich-article-form-fcd64-ivate-history-and-image-ACL\\test-failed-1.png"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-browser\\richtext-rich-article-form-fcd64-ivate-history-and-image-ACL\\test-failed-2.png"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-browser\\richtext-rich-article-form-fcd64-ivate-history-and-image-ACL\\test-failed-3.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\richtext-browser\\richtext-rich-article-form-fcd64-ivate-history-and-image-ACL\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs",
+                    "column": 156,
+                    "line": 39
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "17dbe3858eff00b108a2-a8a560f89982c1574da1",
+          "file": "richtext.spec.cjs",
+          "line": 3,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-21T09:07:05.606Z",
+    "duration": 54397.35600000001,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

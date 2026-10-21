@@ -375,6 +375,7 @@ model Project {
 
 // CollabSpace: raw SQL migration additionally installs FORCE RLS policies.
 model CollabDocument {
+ images CollabImage[]
  kind String @default("DOCUMENT")
  id String @id
  organizationId String @map("organization_id")
@@ -400,6 +401,19 @@ model CollabDocument {
  @@index([organizationId,projectId,updatedAt(sort: Desc)], map:"collab_document_project")
  @@map("collab_document")
 }
+model CollabImage {
+ organizationId String @map("organization_id")
+ documentId String @map("document_id")
+ id String @db.Uuid
+ mime String
+ bytes Bytes
+ createdBy String @map("created_by")
+ createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+ document CollabDocument @relation(fields:[organizationId,documentId],references:[organizationId,id],onDelete:Cascade)
+ @@id([documentId,id])
+ @@map("collab_image")
+}
+
 model CollabGrant {
  organizationId String @map("organization_id")
  documentId String @map("document_id")

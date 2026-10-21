@@ -69,9 +69,25 @@ DO $$ BEGIN
  END IF;
 END $$;
 -- Database RLS is the tenant defense; document ACL and parent state are checked
+CREATE TABLE IF NOT EXISTS collab_image (
+ organization_id text NOT NULL, document_id text NOT NULL, id uuid NOT NULL,
+ mime text NOT NULL CHECK(mime IN ('image/png','image/jpeg','image/webp')),
+ bytes bytea NOT NULL CHECK(octet_length(bytes) BETWEEN 1 AND 5242880),
+ created_by text NOT NULL, created_at timestamptz NOT NULL DEFAULT now(),
+ PRIMARY KEY(document_id,id),
+ FOREIGN KEY(organization_id,document_id) REFERENCES collab_document(organization_id,id) ON DELETE CASCADE
+);
+DO $$ BEGIN
+ IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='collab_image_mime_check') THEN
+  ALTER TABLE collab_image ADD CONSTRAINT collab_image_mime_check CHECK(mime IN ('image/png','image/jpeg','image/webp'));
+ END IF;
+ IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='collab_image_bytes_check') THEN
+  ALTER TABLE collab_image ADD CONSTRAINT collab_image_bytes_check CHECK(octet_length(bytes) BETWEEN 1 AND 5242880);
+ END IF;
+END $$;
 -- by Store transactions for every operation, including every WS read/write.
 DO $$ DECLARE t text; BEGIN
- FOREACH t IN ARRAY ARRAY['collab_document','collab_grant','collab_update','collab_ticket','collab_thread','collab_reply','collab_version','collab_restore'] LOOP
+ FOREACH t IN ARRAY ARRAY['collab_document','collab_grant','collab_update','collab_ticket','collab_thread','collab_reply','collab_version','collab_restore','collab_image'] LOOP
   EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY',t);
   EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY',t);
   EXECUTE format('DROP POLICY IF EXISTS tenant ON %I',t);
