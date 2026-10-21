@@ -108,6 +108,11 @@ jobs:
           node dist/main.js > /tmp/teamspace-api.log 2>&1 &
           for attempt in $(seq 1 30); do curl -fsS http://localhost:3001/api/v1/health/ready && break; sleep 1; done
           pnpm run test:acceptance
+      - name: OAuth browser binding and PKCE with isolated Redis
+        working-directory: apps/api
+        env:
+          OAUTH_TEST_REDIS_URL: redis://127.0.0.1:6379/14
+        run: node --test tests/oauth.test.cjs
       - name: Real collaboration database and WebSocket acceptance
         run: |
           node scripts/ci-collab-config.cjs

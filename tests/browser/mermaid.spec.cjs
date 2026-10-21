@@ -22,6 +22,7 @@ test("Mermaid authority: official graph/source views, two editors, viewer, offli
     await a.getByRole('button',{name:'流程节点 需求',exact:true}).dragTo(newNode);
     await expect(source(b)).toHaveValue(/A --> N[a-f0-9]+/);
     await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator('svg')).toContainText('拖拽交付');
+    await a.screenshot({path:'evidence/collaboration/round2-drag-flow.png',fullPage:true});
     await expect(v.getByRole('button',{name:'处理图元',exact:true})).toBeDisabled();
     await source(a).fill('mindmap\n  root((团队))\n    文档\n      评论\n    成员');
     await a.getByRole('button',{name:'思维主题 文档',exact:true}).dragTo(a.getByRole('button',{name:'思维主题 成员',exact:true}));
@@ -29,6 +30,7 @@ test("Mermaid authority: official graph/source views, two editors, viewer, offli
     await a.getByLabel('新节点名称').fill('版本');await a.getByRole('button',{name:'子主题',exact:true}).click();
     await expect(source(b)).toHaveValue(/版本/);
     await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator('svg')).toContainText('版本');
+    await a.screenshot({path:'evidence/collaboration/round2-drag-mindmap.png',fullPage:true});
     for(const value of[
       "sequenceDiagram\n  Alice->>Bob: Hello",
       "mindmap\n  root((Team))\n    Documents\n    People",
