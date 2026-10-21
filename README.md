@@ -6,6 +6,8 @@
 
 白板图表以 Mermaid 源码为主要执行标准，支持图形 / 源码 / 分屏视图，并保留自由画布。官方渲染、共享源码、版本及未来 AI 受控编辑契约见 [Mermaid 设计](docs/collaboration/MERMAID.md)；任意 Mermaid 语法的图形拖动回写尚未完成。
 
+第二轮增加受支持流程图的拖入图元/节点连线、基础思维导图子树拖动、评论/版本实时提示和离线配图。范围与验收见 [第二轮设计](docs/collaboration/ITERATION-2.md)。GitHub/Google 社交登录的供应商配置见 [操作备忘录](docs/collaboration/OAUTH-SETUP-MEMO.md)。
+
 - [需求分析](docs/collaboration/REQUIREMENTS.md)
 - [详细设计](docs/collaboration/DESIGN.md)
 - [开发 Prompt](docs/collaboration/IMPLEMENTATION_PROMPT.md)

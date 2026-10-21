@@ -24,6 +24,7 @@ export default function LoginPage() {
   const form = useForm({ resolver: zodResolver(schema) });
 
   useEffect(() => {
+    if(new URLSearchParams(location.search).has('oauth_error'))setError('第三方登录未完成，请重试或使用邮箱登录。');
     api
       .get('/auth/oauth/providers')
       .then(({ data }) => setOauthProviders({ google: !!data.google, github: !!data.github }))
@@ -59,8 +60,8 @@ export default function LoginPage() {
   };
 
   const oauth = async (provider: 'google' | 'github') => {
-    const { data } = await api.get(`/auth/oauth/${provider}/url`);
-    window.location.href = data.url;
+    try{const { data } = await api.get(`/auth/oauth/${provider}/url`);window.location.href = data.url;}
+    catch{setError('第三方登录暂不可用，请稍后重试或使用邮箱登录。');}
   };
 
   return (

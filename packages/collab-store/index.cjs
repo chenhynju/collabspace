@@ -129,6 +129,17 @@ class Store {
   close() {
     return this.pool.end();
   }
+  async metadataDelivery(ctx,id,deliver) {
+    return this.tx(ctx,async c=>{await this.access(c,ctx,id);deliver();});
+  }
+  async listenMetadata(callback) {
+    const client=await this.pool.connect();
+    const receive=notification=>{if(notification.channel==='collab_metadata')try{Promise.resolve(callback(JSON.parse(notification.payload))).catch(()=>{});}catch{}};
+    client.on('notification',receive);
+    // A connection loss is handled by the WS owner; no secrets/content in hints.
+    try{await client.query('LISTEN collab_metadata');}catch(e){client.release(true);throw e;}
+    return client;
+  }
   async assertRuntime(db = this.pool) {
     // Deployment gate, not a replacement for per-operation ACL checks.
     const names = [
@@ -274,6 +285,8 @@ class Store {
     return rest;
   }
   async audit(c, ctx, id, action, before = null, after = null) {
+    if(['document:comment','document:resolve','document:reply','document:version'].includes(action))
+      await c.query("SELECT pg_notify('collab_metadata',$1)",[JSON.stringify({org:ctx.org,docId:id})]);
     await c.query(
       "INSERT INTO sys_oper_log(id,organization_id,actor_id,title,business_type,action,resource_type,resource_id,trace_id,before_value,after_value) VALUES($1,$2,$3,$4,2,$5,$6,$7,$8,$9::jsonb,$10::jsonb)",
       [

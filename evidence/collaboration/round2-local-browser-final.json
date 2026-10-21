@@ -1,0 +1,279 @@
+{
+  "config": {
+    "configFile": "D:\\appspace\\collaboration\\playwright.config.cjs",
+    "rootDir": "D:/appspace/collaboration/tests/browser",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/appspace/collaboration/.test-runs/round2-local-browser-final",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "D:/appspace/collaboration/tests/browser",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 300000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "documents.spec.cjs",
+      "file": "documents.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "three users collaborate, reconnect offline edits, comment, version and recover a private copy",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 20869,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T15:27:06.694Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6dce67fb81c2d874da2f-4e82287b195a97cd1ae4",
+          "file": "documents.spec.cjs",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "mermaid.spec.cjs",
+      "file": "mermaid.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Mermaid authority: official graph/source views, two editors, viewer, offline, diagnostics and reload",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 49263,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"owner concurrent\"\u001b[39m\nReceived string:    \u001b[31m\"%% owner concurrnt\u001b[39m\n\u001b[31meflowchart LR\u001b[39m\n\u001b[31m  subgraph Team\u001b[39m\n\u001b[31m    A[Plan] --> B[Ship]\u001b[39m\n\u001b[31m  end\u001b[39m\n\u001b[31m%% per concurrent\"\u001b[39m\n\nCall Log:\n- Timeout 30000ms exceeded while waiting on the predicate",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"owner concurrent\"\u001b[39m\nReceived string:    \u001b[31m\"%% owner concurrnt\u001b[39m\n\u001b[31meflowchart LR\u001b[39m\n\u001b[31m  subgraph Team\u001b[39m\n\u001b[31m    A[Plan] --> B[Ship]\u001b[39m\n\u001b[31m  end\u001b[39m\n\u001b[31m%% per concurrent\"\u001b[39m\n\nCall Log:\n- Timeout 30000ms exceeded while waiting on the predicate\n    at D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs:42:5",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs",
+                      "column": 5,
+                      "line": 42
+                    },
+                    "snippet": "  40 |     const current=await source(a).inputValue();\n  41 |     await Promise.all([source(a).press(\"Control+Home\").then(()=>source(a).pressSequentially(\"%% owner concurrent\\n\")),source(b).press(\"Control+End\").then(()=>source(b).pressSequentially(\"\\n%% peer concurrent\"))]);\n> 42 |     await expect.poll(()=>source(a).inputValue()).toContain(\"owner concurrent\");await expect.poll(()=>source(a).inputValue()).toContain(\"peer concurrent\");\n     |     ^\n  43 |     await expect.poll(()=>source(b).inputValue()).toBe(await source(a).inputValue());await saved(a);await saved(b);\n  44 |     await contexts[1].setOffline(true);await source(b).press(\"Control+End\");await source(b).pressSequentially(\"\\n%% offline addition\");await contexts[1].setOffline(false);\n  45 |     await expect(source(a)).toHaveValue(/offline addition/);await saved(b);"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs",
+                        "column": 5,
+                        "line": 42
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mreceived\u001b[39m\u001b[2m).\u001b[22mtoContain\u001b[2m(\u001b[22m\u001b[32mexpected\u001b[39m\u001b[2m) // indexOf\u001b[22m\n\nExpected substring: \u001b[32m\"owner concurrent\"\u001b[39m\nReceived string:    \u001b[31m\"%% owner concurrnt\u001b[39m\n\u001b[31meflowchart LR\u001b[39m\n\u001b[31m  subgraph Team\u001b[39m\n\u001b[31m    A[Plan] --> B[Ship]\u001b[39m\n\u001b[31m  end\u001b[39m\n\u001b[31m%% per concurrent\"\u001b[39m\n\nCall Log:\n- Timeout 30000ms exceeded while waiting on the predicate\n\n  40 |     const current=await source(a).inputValue();\n  41 |     await Promise.all([source(a).press(\"Control+Home\").then(()=>source(a).pressSequentially(\"%% owner concurrent\\n\")),source(b).press(\"Control+End\").then(()=>source(b).pressSequentially(\"\\n%% peer concurrent\"))]);\n> 42 |     await expect.poll(()=>source(a).inputValue()).toContain(\"owner concurrent\");await expect.poll(()=>source(a).inputValue()).toContain(\"peer concurrent\");\n     |     ^\n  43 |     await expect.poll(()=>source(b).inputValue()).toBe(await source(a).inputValue());await saved(a);await saved(b);\n  44 |     await contexts[1].setOffline(true);await source(b).press(\"Control+End\");await source(b).pressSequentially(\"\\n%% offline addition\");await contexts[1].setOffline(false);\n  45 |     await expect(source(a)).toHaveValue(/offline addition/);await saved(b);\n    at D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs:42:5"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T15:27:28.206Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\round2-local-browser-final\\mermaid-Mermaid-authority--db07b-line-diagnostics-and-reload\\test-failed-1.png"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\round2-local-browser-final\\mermaid-Mermaid-authority--db07b-line-diagnostics-and-reload\\test-failed-2.png"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\round2-local-browser-final\\mermaid-Mermaid-authority--db07b-line-diagnostics-and-reload\\test-failed-3.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\round2-local-browser-final\\mermaid-Mermaid-authority--db07b-line-diagnostics-and-reload\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs",
+                    "column": 5,
+                    "line": 42
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "678693148c6dbbd63be4-342bf4e4e683c2d6c3ee",
+          "file": "mermaid.spec.cjs",
+          "line": 2,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "richtext.spec.cjs",
+      "file": "richtext.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "rich article: formats, upload/paste/drop images, captions, collaboration, private history and image ACL",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 20084,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T15:28:21.177Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "17dbe3858eff00b108a2-a8a560f89982c1574da1",
+          "file": "richtext.spec.cjs",
+          "line": 3,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "tenant-isolation.spec.cjs",
+      "file": "tenant-isolation.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "two tenants reject foreign document HTTP access and forged WebSocket identity",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 2056,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T15:28:41.864Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d24333467702578990f9-b2b7d2a064ebf180556d",
+          "file": "tenant-isolation.spec.cjs",
+          "line": 5,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-21T15:27:04.227Z",
+    "duration": 100426.525,
+    "expected": 3,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

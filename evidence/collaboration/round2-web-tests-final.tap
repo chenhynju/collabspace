@@ -1,0 +1,53 @@
+$ node --test tests/*.test.cjs
+TAP version 13
+# Subtest: one durable message is rendered once: POST before realtime
+ok 1 - one durable message is rendered once: POST before realtime
+  ---
+  duration_ms: 341.2677
+  type: 'test'
+  ...
+# Subtest: one durable message is rendered once: realtime before POST
+ok 2 - one durable message is rendered once: realtime before POST
+  ---
+  duration_ms: 46.296
+  type: 'test'
+  ...
+# Subtest: mindmap drag reparents the complete subtree and refuses cycles/root moves
+ok 3 - mindmap drag reparents the complete subtree and refuses cycles/root moves
+  ---
+  duration_ms: 6.6178
+  type: 'test'
+  ...
+# Subtest: drag append preserves comments, subgraphs and styling; connections validate actual defined nodes
+ok 4 - drag append preserves comments, subgraphs and styling; connections validate actual defined nodes
+  ---
+  duration_ms: 3.9745
+  type: 'test'
+  ...
+# Subtest: unsupported diagrams and unsafe labels are preserved by refusing graphical mutation
+ok 5 - unsupported diagrams and unsafe labels are preserved by refusing graphical mutation
+  ---
+  duration_ms: 1.5222
+  type: 'test'
+  ...
+# Subtest: tenant switch immediately clears cached messages and permissions; logout also clears IM
+ok 6 - tenant switch immediately clears cached messages and permissions; logout also clears IM
+  ---
+  duration_ms: 388.5398
+  type: 'test'
+  ...
+# Subtest: late response from B cannot overwrite A permissions after A-B-A switch
+ok 7 - late response from B cannot overwrite A permissions after A-B-A switch
+  ---
+  duration_ms: 63.7961
+  type: 'test'
+  ...
+1..7
+# tests 7
+# suites 0
+# pass 7
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1275.7606

@@ -12,6 +12,22 @@ function start({
   let draining = false;
   const metrics = { updates: 0, rejected: 0, connections: 0 };
   const pendingCommits = new Map();
+  let metadataClient,metadataRetry;
+  const listenMetadata=async()=>{
+    if(draining)return;
+    try{
+      metadataClient=await store.listenMetadata(async hint=>{
+        if(typeof hint.org!=='string'||typeof hint.docId!=='string')return;
+        const recipients=rooms.get(`${hint.org}:${hint.docId}`);
+        if(!recipients)return;
+        await Promise.all([...recipients].map(s=>store.metadataDelivery(s.ctx,s.docId,()=>send(s,{type:'metadata-changed'})).catch(e=>{if([401,403,404].includes(e.status))s.close(4003,'Access revoked');})));
+      });
+      const lost=()=>{if(!metadataClient)return;const c=metadataClient;metadataClient=undefined;c.release(true);if(!draining)metadataRetry=setTimeout(listenMetadata,1000);};
+      metadataClient.on('error',lost);
+      metadataClient.on('end',lost);
+    }catch{if(!draining)metadataRetry=setTimeout(listenMetadata,2000);}
+  };
+  const metadataReady=store.listenMetadata?listenMetadata():Promise.resolve();
   function commitUpdate(ctx, id, input) {
     return new Promise((resolve, reject) => {
       const key = `${ctx.org}:${id}`;
@@ -259,8 +275,11 @@ function start({
     server,
     wss,
     metrics,
+    metadataReady,
     async close() {
       draining = true;
+      clearTimeout(metadataRetry);
+      if(metadataClient){const c=metadataClient;metadataClient=undefined;await c.query('UNLISTEN collab_metadata').catch(()=>{});c.release();}
       clearInterval(timer);
       await Promise.all([...wss.clients].map((s) => s.chain));
       for (const s of wss.clients) s.close(1001, "Server restarting");

@@ -1,0 +1,339 @@
+{
+  "config": {
+    "configFile": "D:\\appspace\\collaboration\\playwright.config.cjs",
+    "rootDir": "D:/appspace/collaboration/tests/browser",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/appspace/collaboration/.test-runs/round2-local-browser",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "D:/appspace/collaboration/tests/browser",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 300000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "documents.spec.cjs",
+      "file": "documents.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "three users collaborate, reconnect offline edits, comment, version and recover a private copy",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 33469,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('textbox', { name: '协作文档正文' })\nExpected: visible\nTimeout: 30000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('textbox', { name: '协作文档正文' })\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('textbox', { name: '协作文档正文' })\nExpected: visible\nTimeout: 30000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('textbox', { name: '协作文档正文' })\u001b[22m\n\n    at client (D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs:61:7)\n    at D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs:66:15",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs",
+                      "column": 7,
+                      "line": 61
+                    },
+                    "snippet": "  59 |     await expect(\n  60 |       p.getByRole(\"textbox\", { name: \"协作文档正文\" }),\n> 61 |     ).toBeVisible();\n     |       ^\n  62 |     await expect(p.getByText(\"已保存到服务器\", { exact: false })).toBeVisible();\n  63 |     return { c, p, editor: p.getByRole(\"textbox\", { name: \"协作文档正文\" }) };\n  64 |   }"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs",
+                        "column": 7,
+                        "line": 61
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('textbox', { name: '协作文档正文' })\nExpected: visible\nTimeout: 30000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('textbox', { name: '协作文档正文' })\u001b[22m\n\n\n  59 |     await expect(\n  60 |       p.getByRole(\"textbox\", { name: \"协作文档正文\" }),\n> 61 |     ).toBeVisible();\n     |       ^\n  62 |     await expect(p.getByText(\"已保存到服务器\", { exact: false })).toBeVisible();\n  63 |     return { c, p, editor: p.getByRole(\"textbox\", { name: \"协作文档正文\" }) };\n  64 |   }\n    at client (D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs:61:7)\n    at D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs:66:15"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T15:15:55.602Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\round2-local-browser\\documents-three-users-coll-ae866--and-recover-a-private-copy\\test-failed-1.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\round2-local-browser\\documents-three-users-coll-ae866--and-recover-a-private-copy\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\documents.spec.cjs",
+                    "column": 7,
+                    "line": 61
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "6dce67fb81c2d874da2f-4e82287b195a97cd1ae4",
+          "file": "documents.spec.cjs",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "mermaid.spec.cjs",
+      "file": "mermaid.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Mermaid authority: official graph/source views, two editors, viewer, offline, diagnostics and reload",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 62581,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByLabel('协作 Mermaid 源码')\nExpected: visible\nTimeout: 60000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 60000ms\u001b[22m\n\u001b[2m  - waiting for getByLabel('协作 Mermaid 源码')\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByLabel('协作 Mermaid 源码')\nExpected: visible\nTimeout: 60000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 60000ms\u001b[22m\n\u001b[2m  - waiting for getByLabel('协作 Mermaid 源码')\u001b[22m\n\n    at client (D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs:9:392)\n    at D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs:13:13",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs",
+                      "column": 392,
+                      "line": 9
+                    },
+                    "snippet": "   7 |   const r=await request.post(api+\"/documents\",{headers,data:{projectId:config.TEST_PROJECT,title:\"Mermaid \"+randomUUID().slice(0,8),kind:\"BOARD\"}});expect(r.ok()).toBeTruthy();const d=await r.json();\n   8 |   for(const [userId,role]of[[config.TEST_MEMBER,\"EDITOR\"],[config.TEST_ADMIN,\"VIEWER\"]])expect((await request.put(`${api}/documents/${d.id}/grants`,{headers,data:{userId,role}})).ok()).toBeTruthy();\n>  9 |   const client=async(token)=>{const c=await browser.newContext();contexts.push(c);await c.addInitScript(({token,org})=>{localStorage.setItem(\"access_token\",token);localStorage.setItem(\"current_org_id\",org);},{token,org:config.TEST_ORG});const p=await c.newPage();await p.goto(`${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${d.id}`);await expect(p.getByLabel(\"协作 Mermaid 源码\")).toBeVisible({timeout:60000});return p;};\n     |                                                                                                                                                                                                                                                                                                                                                                                                        ^\n  10 |   const saved=p=>expect(p.getByRole(\"status\").filter({hasText:\"已保存到服务器\"})).toBeVisible({timeout:60000});\n  11 |   const source=p=>p.getByLabel(\"协作 Mermaid 源码\");\n  12 |   try{"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs",
+                        "column": 392,
+                        "line": 9
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByLabel('协作 Mermaid 源码')\nExpected: visible\nTimeout: 60000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 60000ms\u001b[22m\n\u001b[2m  - waiting for getByLabel('协作 Mermaid 源码')\u001b[22m\n\n\n   7 |   const r=await request.post(api+\"/documents\",{headers,data:{projectId:config.TEST_PROJECT,title:\"Mermaid \"+randomUUID().slice(0,8),kind:\"BOARD\"}});expect(r.ok()).toBeTruthy();const d=await r.json();\n   8 |   for(const [userId,role]of[[config.TEST_MEMBER,\"EDITOR\"],[config.TEST_ADMIN,\"VIEWER\"]])expect((await request.put(`${api}/documents/${d.id}/grants`,{headers,data:{userId,role}})).ok()).toBeTruthy();\n>  9 |   const client=async(token)=>{const c=await browser.newContext();contexts.push(c);await c.addInitScript(({token,org})=>{localStorage.setItem(\"access_token\",token);localStorage.setItem(\"current_org_id\",org);},{token,org:config.TEST_ORG});const p=await c.newPage();await p.goto(`${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${d.id}`);await expect(p.getByLabel(\"协作 Mermaid 源码\")).toBeVisible({timeout:60000});return p;};\n     |                                                                                                                                                                                                                                                                                                                                                                                                        ^\n  10 |   const saved=p=>expect(p.getByRole(\"status\").filter({hasText:\"已保存到服务器\"})).toBeVisible({timeout:60000});\n  11 |   const source=p=>p.getByLabel(\"协作 Mermaid 源码\");\n  12 |   try{\n    at client (D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs:9:392)\n    at D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs:13:13"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T15:16:31.361Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\round2-local-browser\\mermaid-Mermaid-authority--db07b-line-diagnostics-and-reload\\test-failed-1.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\round2-local-browser\\mermaid-Mermaid-authority--db07b-line-diagnostics-and-reload\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\mermaid.spec.cjs",
+                    "column": 392,
+                    "line": 9
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "678693148c6dbbd63be4-342bf4e4e683c2d6c3ee",
+          "file": "mermaid.spec.cjs",
+          "line": 2,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "richtext.spec.cjs",
+      "file": "richtext.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "rich article: formats, upload/paste/drop images, captions, collaboration, private history and image ACL",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 2,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 62545,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('textbox', { name: '协作文档正文' })\nExpected: visible\nTimeout: 60000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 60000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('textbox', { name: '协作文档正文' })\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('textbox', { name: '协作文档正文' })\nExpected: visible\nTimeout: 60000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 60000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('textbox', { name: '协作文档正文' })\u001b[22m\n\n    at open (D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs:12:397)\n    at D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs:17:11",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs",
+                      "column": 397,
+                      "line": 12
+                    },
+                    "snippet": "  10 |  const r=await request.post(api+'/documents',{headers,data:{projectId:config.TEST_PROJECT,title:'Rich article '+randomUUID().slice(0,8)}});expect(r.ok()).toBeTruthy();const d=await r.json();\n  11 |  for(const [userId,role]of[[config.TEST_MEMBER,'EDITOR'],[config.TEST_ADMIN,'VIEWER']])expect((await request.put(`${api}/documents/${d.id}/grants`,{headers,data:{userId,role}})).ok()).toBeTruthy();\n> 12 |  const open=async token=>{const c=await browser.newContext();contexts.push(c);await c.addInitScript(({token,org})=>{localStorage.setItem('access_token',token);localStorage.setItem('current_org_id',org);},{token,org:config.TEST_ORG});const p=await c.newPage();await p.goto(`${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${d.id}`);await expect(p.getByRole('textbox',{name:'协作文档正文'})).toBeVisible({timeout:60000});return p;};\n     |                                                                                                                                                                                                                                                                                                                                                                                                             ^\n  13 |  const body=p=>p.getByRole('textbox',{name:'协作文档正文'}),images=p=>body(p).locator('figure.document-image img');\n  14 |  const saved=p=>expect(p.getByRole('status').filter({hasText:'已保存到服务器'})).toBeVisible({timeout:60000});\n  15 |  const png=fs.readFileSync('tests/browser/fixtures/article.png');"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs",
+                        "column": 397,
+                        "line": 12
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('textbox', { name: '协作文档正文' })\nExpected: visible\nTimeout: 60000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 60000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('textbox', { name: '协作文档正文' })\u001b[22m\n\n\n  10 |  const r=await request.post(api+'/documents',{headers,data:{projectId:config.TEST_PROJECT,title:'Rich article '+randomUUID().slice(0,8)}});expect(r.ok()).toBeTruthy();const d=await r.json();\n  11 |  for(const [userId,role]of[[config.TEST_MEMBER,'EDITOR'],[config.TEST_ADMIN,'VIEWER']])expect((await request.put(`${api}/documents/${d.id}/grants`,{headers,data:{userId,role}})).ok()).toBeTruthy();\n> 12 |  const open=async token=>{const c=await browser.newContext();contexts.push(c);await c.addInitScript(({token,org})=>{localStorage.setItem('access_token',token);localStorage.setItem('current_org_id',org);},{token,org:config.TEST_ORG});const p=await c.newPage();await p.goto(`${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${d.id}`);await expect(p.getByRole('textbox',{name:'协作文档正文'})).toBeVisible({timeout:60000});return p;};\n     |                                                                                                                                                                                                                                                                                                                                                                                                             ^\n  13 |  const body=p=>p.getByRole('textbox',{name:'协作文档正文'}),images=p=>body(p).locator('figure.document-image img');\n  14 |  const saved=p=>expect(p.getByRole('status').filter({hasText:'已保存到服务器'})).toBeVisible({timeout:60000});\n  15 |  const png=fs.readFileSync('tests/browser/fixtures/article.png');\n    at open (D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs:12:397)\n    at D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs:17:11"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T15:17:36.534Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\round2-local-browser\\richtext-rich-article-form-fcd64-ivate-history-and-image-ACL\\test-failed-1.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\round2-local-browser\\richtext-rich-article-form-fcd64-ivate-history-and-image-ACL\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\richtext.spec.cjs",
+                    "column": 397,
+                    "line": 12
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "17dbe3858eff00b108a2-a8a560f89982c1574da1",
+          "file": "richtext.spec.cjs",
+          "line": 3,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "tenant-isolation.spec.cjs",
+      "file": "tenant-isolation.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "two tenants reject foreign document HTTP access and forged WebSocket identity",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 3,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 3526,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T15:18:41.472Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "d24333467702578990f9-b2b7d2a064ebf180556d",
+          "file": "tenant-isolation.spec.cjs",
+          "line": 5,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-21T15:15:53.722Z",
+    "duration": 172251.956,
+    "expected": 1,
+    "skipped": 0,
+    "unexpected": 3,
+    "flaky": 0
+  }
+}

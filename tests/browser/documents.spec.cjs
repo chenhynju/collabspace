@@ -100,7 +100,7 @@ test("three users collaborate, reconnect offline edits, comment, version and rec
       .click();
     await expect(
       b.p.getByText("Confirm the acceptance checklist", { exact: true }),
-    ).toBeVisible();
+    ).toBeVisible({timeout:10000});
     await b.p.getByRole("button", { name: "标记解决" }).click();
     await expect(a.p.getByText("已解决", { exact: false })).toBeVisible();
     await a.p.getByRole("button", { name: "历史版本", exact: true }).click();

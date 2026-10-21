@@ -2,6 +2,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import * as Y from "yjs";
 import type { DocumentProvider } from "@/lib/document-provider";
+import MermaidComposer from './MermaidComposer';
 
 const origin = "collabspace:mermaid:local";
 export const examples = {
@@ -99,6 +100,9 @@ export default function MermaidWorkspace({ provider }: { provider: DocumentProvi
   }, [text, provider.doc]);
   const edit = (next: string) => {
     if (!provider.writable || next.length > 32000) return;
+    // A fresh native input already supplies its current caret. A remote range
+    // queued before this local input must not be restored over the new keystroke.
+    restoredSelection.current = undefined;
     const old = baseline.current;
     let start = 0, end = 0;
     while (start < old.length && start < next.length && old[start] === next[start]) start++;
@@ -128,7 +132,8 @@ export default function MermaidWorkspace({ provider }: { provider: DocumentProvi
     </div>
     {!source && provider.writable && <div className="mb-3 flex flex-wrap gap-2">{Object.entries(examples).map(([name,value]) =>
       <button key={name} className="rounded border bg-white px-3 py-1 text-sm" onClick={() => { if (!text.length) edit(value); }}>{name}模板</button>)}</div>}
-    <p className="mb-3 text-xs text-slate-600">Mermaid 源码是图表的唯一内容标准，自动同步并保存。语法错误也会保存为草稿并显示诊断；图形由源码生成，当前请通过源码修改节点与关系。</p>
+    <p className="mb-3 text-xs text-slate-600">Mermaid 源码是图表的唯一内容标准，自动同步并保存。可拖入流程图元、拖动节点建立关系；语法错误也会保存草稿并显示诊断。</p>
+    <MermaidComposer source={source} writable={provider.writable} commit={(before,after)=>{if(text.toString()!==before)throw Error('收到远端修改，请基于最新图表重试。');edit(after);}} />
     <div className="flex flex-col gap-3 lg:flex-row">
       {view !== "graph" && <textarea ref={editor} aria-label="协作 Mermaid 源码" spellCheck={false} readOnly={!provider.writable} maxLength={32000} value={source}
         onCompositionStart={() => { composing.current = true; }}

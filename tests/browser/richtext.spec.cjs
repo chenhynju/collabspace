@@ -45,6 +45,12 @@ test('rich article: formats, upload/paste/drop images, captions, collaboration, 
   await a.getByLabel('上传文档图片').setInputFiles({name:'unsafe.svg',mimeType:'image/svg+xml',buffer:Buffer.from('<svg/>')});await expect(a.getByRole('alert').filter({hasText:'PNG'})).toBeVisible();await expect(images(a)).toHaveCount(3);
   await body(b).press('Control+End');await b.keyboard.insertText('远端成员补充的文字。');await expect(body(a)).toContainText('远端成员补充的文字。');await saved(b);
   await a.reload();await expect(images(a)).toHaveCount(3);await expect(body(a)).toContainText('图一：协作写作的配图说明');
+  // Remount the editor with image requests unavailable: bytes must come from IndexedDB.
+  await a.route('**/documents/*/images/*',route=>route.abort('internetdisconnected'));
+  await a.reload();await expect(images(a)).toHaveCount(3);
+  await expect.poll(()=>images(a).first().evaluate(el=>el.complete&&el.naturalWidth>0)).toBe(true);
+  await expect(body(a).getByText('离线配图',{exact:true})).toHaveCount(3);
+  await a.unroute('**/documents/*/images/*');
   await a.getByRole('button',{name:'历史版本',exact:true}).click();await a.getByLabel('版本名称').fill('Article with images');await a.getByRole('button',{name:'创建版本',exact:true}).click();await a.getByRole('button',{name:'只读预览',exact:true}).click();
   await expect(a.getByLabel('历史版本只读预览').locator('figure.document-image img')).toHaveCount(3);await a.getByRole('button',{name:'关闭预览',exact:true}).click();
   await a.screenshot({path:'evidence/collaboration/richtext-workspace.png',fullPage:true});

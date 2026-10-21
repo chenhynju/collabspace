@@ -45,6 +45,12 @@ services:
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:?required}
       JWT_ACCESS_EXPIRES_IN: 1h
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_CALLBACK_URL: https://collabspace-api.purelamp.uk/api/v1/auth/oauth/google/callback
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID:-}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET:-}
+      GITHUB_CALLBACK_URL: https://collabspace-api.purelamp.uk/api/v1/auth/oauth/github/callback
       BILLING_MODE: sandbox
       BILLING_WEBHOOK_SECRET: ${BILLING_WEBHOOK_SECRET:?required}
       EMAIL_PROVIDER: console

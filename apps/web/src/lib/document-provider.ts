@@ -19,6 +19,7 @@ export class DocumentProvider {
   role = "VIEWER";
   status = "正在连接";
   members: Member[] = [];
+  metadataRevision = 0;
   pending = new Map<string, Pending>();
   private db!: IDBDatabase;
   private ws?: WebSocket;
@@ -50,6 +51,12 @@ export class DocumentProvider {
   private setStatus(s: string) {
     this.status = s;
     this.emit();
+  }
+  private revokeImages() {
+    window.dispatchEvent(new CustomEvent('collabspace:document-revoked',{detail:{org:this.org,docId:this.docId}}));
+    if(!this.db)return;
+    const tx=this.db.transaction('data','readwrite'),store=tx.objectStore('data');
+    const r=store.openCursor();r.onsuccess=()=>{const cursor=r.result;if(!cursor)return;if(String(cursor.key).startsWith('image:'))cursor.delete();cursor.continue();};
   }
   get saved() {
     return (
@@ -247,6 +254,7 @@ export class DocumentProvider {
           this.members = m.members;
           this.emit();
         }
+          if(m.type==='metadata-changed'){this.metadataRevision++;this.emit();}
         if (m.type === "error") {
           this.synced = false;
           this.setStatus(
@@ -283,6 +291,7 @@ export class DocumentProvider {
           return;
         }
         if (e.code === 4003) {
+          this.revokeImages();
           this.blocked = true;
           this.setStatus("权限已撤销，未同步草稿可导出");
           return;
@@ -296,6 +305,7 @@ export class DocumentProvider {
     } catch (e: any) {
       if (this.stopped) return;
       if ([401, 403, 404].includes(e.response?.status)) {
+        this.revokeImages();
         this.blocked = true;
         this.setStatus("权限已撤销，未同步草稿可导出");
       } else {

@@ -385,8 +385,7 @@ export class AuthService {
 
   /** 发起 OAuth：返回授权 URL（state 存 Redis，5 分钟一次性消费） */
   async getOAuthUrl(provider: ProviderKey) {
-    const url = await this.oauth.getAuthorizeUrl(provider);
-    return { url };
+    return this.oauth.getAuthorizeUrl(provider);
   }
 
   getEnabledOAuthProviders() {
@@ -394,8 +393,8 @@ export class AuthService {
   }
 
   /** OAuth 回调：code 换资料，查找/创建用户；新用户开通个人组织 */
-  async handleOAuthCallback(provider: ProviderKey, code: string, state: string) {
-    const profile = await this.oauth.exchangeCode(provider, code, state);
+  async handleOAuthCallback(provider: ProviderKey, code: string, state: string, binding: string) {
+    const profile = await this.oauth.exchangeCode(provider, code, state, binding);
     const providerEnum = provider === 'google' ? 'GOOGLE' : 'GITHUB';
 
     const user = await this.prisma.provision(async (tx) => {
@@ -406,7 +405,7 @@ export class AuthService {
       if (existing) {
         await tx.userOAuth.update({
           where: { id: existing.id },
-          data: { accessToken: profile.accessToken, refreshToken: profile.refreshToken },
+          data: { accessToken: null, refreshToken: null },
         });
         return existing.user;
       }
@@ -445,15 +444,19 @@ export class AuthService {
           userId: u.id,
           provider: providerEnum,
           providerUserId: profile.id,
-          accessToken: profile.accessToken,
-          refreshToken: profile.refreshToken,
+          accessToken: null,
+          refreshToken: null,
         },
       });
       return u;
     });
 
+    if(user.status!=='NORMAL')throw new ForbiddenException({code:'USER_DISABLED',message:'账号不可用'});
     return this.issueToken(user);
   }
+
+  oauthHandoff(result:any,binding:string){return this.oauth.handoff(result,binding);}
+  oauthRedeem(code:string,binding:string){return this.oauth.redeem(code,binding);}
 
   private issueToken(user: { id: string; email: string; name: string }) {
     const payload = { sub: user.id, email: user.email, name: user.name };

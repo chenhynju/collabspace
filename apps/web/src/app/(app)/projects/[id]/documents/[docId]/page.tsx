@@ -15,6 +15,7 @@ import { useAuthStore } from "@/store/auth";
 import { api } from "@/lib/api";
 import { BoardPreview } from '@/components/boards/Whiteboard';
 import { DocumentImage } from '@/components/documents/DocumentImage';
+import OfflineStorage from '@/components/documents/OfflineStorage';
 const Whiteboard = dynamic(()=>import('@/components/boards/Whiteboard'),{ssr:false});
 const DocumentEditor = dynamic(
   () => import("@/components/documents/DocumentEditor"),
@@ -122,9 +123,12 @@ export default function DocumentPage({
   }, [base]);
   useEffect(() => {
     void refresh();
-    const timer = setInterval(refresh, 5000);
-    return () => clearInterval(timer);
-  }, [refresh, org]);
+    // WS invalidations fetch authoritative persisted rows; timer only repairs missed hints.
+    let revision=provider?.metadataRevision;
+    const unsubscribe=provider?.subscribe(()=>{if(provider.metadataRevision!==revision){revision=provider.metadataRevision;void refresh();}});
+    const timer = setInterval(refresh, 30000);
+    return () => {clearInterval(timer);unsubscribe?.();};
+  }, [refresh, org,provider]);
   const action = async (fn: () => Promise<void>) => {
     setBusy(true);
     try {
@@ -244,6 +248,7 @@ export default function DocumentPage({
       )}
       <div className="flex flex-1 flex-col lg:flex-row">
         <main className="mx-auto my-6 w-full max-w-4xl flex-1 rounded-xl border bg-white shadow-sm">
+          <OfflineStorage />
           {org && user && (
             <Surface
               key={`${org}:${params.docId}`}

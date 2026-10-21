@@ -36,6 +36,27 @@ function inbox(ws) {
       waiters.push(w);
     });
 }
+test('committed comments and versions invalidate authorized sockets; rollback sends no hint',{skip:!process.env.COLLAB_TEST_DATABASE_URL},async()=>{
+ const store=new Store(process.env.COLLAB_TEST_DATABASE_URL),ctx={org:process.env.TEST_ORG,user:process.env.TEST_OWNER};
+ const app=start({store,port:0,origins:['http://localhost:3010']});await once(app.server,'listening');await app.metadataReady;
+ let ws,revoked;
+ try{
+  const doc=await store.create(ctx,process.env.TEST_PROJECT,{title:'Metadata commit notification'}),ticket=await store.ticket(ctx,doc.id);
+  ws=new WebSocket(`ws://127.0.0.1:${app.server.address().port}/collab`,{origin:'http://localhost:3010'});const next=inbox(ws);await once(ws,'open');
+  ws.send(JSON.stringify({v:1,type:'auth',docSchema:2,org:ctx.org,user:ctx.user,docId:doc.id,ticket:ticket.ticket}));await next('authenticated');
+  await store.thread(ctx,doc.id,{id:randomUUID(),body:'Persist before hint'});assert.equal((await next('metadata-changed')).type,'metadata-changed');assert.equal((await store.threads(ctx,doc.id))[0].body,'Persist before hint');
+  await store.version(ctx,doc.id,{id:randomUUID(),name:'Committed version'});await next('metadata-changed');assert.equal((await store.versions(ctx,doc.id))[0].name,'Committed version');
+  const viewer={org:ctx.org,user:process.env.TEST_MEMBER};await store.grant(ctx,doc.id,{userId:viewer.user,role:'VIEWER'});
+  const vt=await store.ticket(viewer,doc.id);revoked=new WebSocket(`ws://127.0.0.1:${app.server.address().port}/collab`,{origin:'http://localhost:3010'});const vn=inbox(revoked);await once(revoked,'open');
+  revoked.send(JSON.stringify({v:1,type:'auth',docSchema:2,org:ctx.org,user:viewer.user,docId:doc.id,ticket:vt.ticket}));await vn('authenticated');
+  const forbidden=[];revoked.on('message',raw=>{if(JSON.parse(raw).type==='metadata-changed')forbidden.push(raw);});
+  await store.grant(ctx,doc.id,{userId:viewer.user,role:'REMOVE'});const closed=once(revoked,'close');
+  await store.thread(ctx,doc.id,{id:randomUUID(),body:'After revocation'});await next('metadata-changed');assert.equal((await closed)[0],4003);assert.equal(forbidden.length,0);
+  const hints=[];ws.on('message',raw=>{if(JSON.parse(raw).type==='metadata-changed')hints.push(raw);});
+  await assert.rejects(store.tx(ctx,async c=>{await c.query("SELECT pg_notify('collab_metadata',$1)",[JSON.stringify({org:ctx.org,docId:doc.id})]);throw Error('rollback');}));
+  await new Promise(r=>setTimeout(r,150));assert.equal(hints.length,0);
+ }finally{ws?.terminate();revoked?.terminate();await app.close();}
+});
 test("document schema handshake blocks legacy normalization clients; legacy boards stay compatible",{skip:!process.env.COLLAB_TEST_DATABASE_URL},async()=>{
  const store=new Store(process.env.COLLAB_TEST_DATABASE_URL),ctx={org:process.env.TEST_ORG,user:process.env.TEST_OWNER};
  const app=start({store,port:0,origins:["http://localhost:3010"]});await once(app.server,"listening");

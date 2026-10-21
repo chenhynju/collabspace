@@ -1,0 +1,125 @@
+$ node --test tests/*.test.cjs
+TAP version 13
+# Subtest: OAuth real Redis: browser binding, provider binding, PKCE, verified email, single-use state and handoff
+ok 1 - OAuth real Redis: browser binding, provider binding, PKCE, verified email, single-use state and handoff
+  ---
+  duration_ms: 100.0994
+  type: 'test'
+  ...
+# Subtest: PayPal active with verified paid state grants plan; duplicate ignored
+ok 2 - PayPal active with verified paid state grants plan; duplicate ignored
+  ---
+  duration_ms: 13.1662
+  type: 'test'
+  ...
+# Subtest: PayPal approval without payment cannot grant paid rights
+ok 3 - PayPal approval without payment cannot grant paid rights
+  ---
+  duration_ms: 1.2584
+  type: 'test'
+  ...
+# Subtest: PayPal cancellation revokes and recovery restores rights
+ok 4 - PayPal cancellation revokes and recovery restores rights
+  ---
+  duration_ms: 1.8633
+  type: 'test'
+  ...
+# Subtest: PayPal stale payload follows current provider state
+ok 5 - PayPal stale payload follows current provider state
+  ---
+  duration_ms: 1.6482
+  type: 'test'
+  ...
+# Subtest: PayPal requires transmission headers
+ok 6 - PayPal requires transmission headers
+  ---
+  duration_ms: 5.0976
+  type: 'test'
+  ...
+# Subtest: PayPal rejects failed official verification
+ok 7 - PayPal rejects failed official verification
+  ---
+  duration_ms: 1.3339
+  type: 'test'
+  ...
+# Subtest: PayPal defaults to sandbox endpoint
+ok 8 - PayPal defaults to sandbox endpoint
+  ---
+  duration_ms: 0.563
+  type: 'test'
+  ...
+# Subtest: production demo seed rejects missing or short private passwords before database access
+ok 9 - production demo seed rejects missing or short private passwords before database access
+  ---
+  duration_ms: 3544.232
+  type: 'test'
+  ...
+# Subtest: duplicate delivery does not grant twice
+ok 10 - duplicate delivery does not grant twice
+  ---
+  duration_ms: 7.4999
+  type: 'test'
+  ...
+# Subtest: old cancellation payload cannot override current active Stripe state
+ok 11 - old cancellation payload cannot override current active Stripe state
+  ---
+  duration_ms: 2.879
+  type: 'test'
+  ...
+# Subtest: past due revokes paid entitlement; recovery restores it
+ok 12 - past due revokes paid entitlement; recovery restores it
+  ---
+  duration_ms: 2.1489
+  type: 'test'
+  ...
+# Subtest: canceled subscriptions return to FREE
+ok 13 - canceled subscriptions return to FREE
+  ---
+  duration_ms: 1.3951
+  type: 'test'
+  ...
+# Subtest: unknown price fails without granting rights
+ok 14 - unknown price fails without granting rights
+  ---
+  duration_ms: 2.218
+  type: 'test'
+  ...
+# Subtest: provider outage is retryable and event is not marked processed
+ok 15 - provider outage is retryable and event is not marked processed
+  ---
+  duration_ms: 0.7383
+  type: 'test'
+  ...
+# Subtest: live events cannot enter test billing
+ok 16 - live events cannot enter test billing
+  ---
+  duration_ms: 0.8435
+  type: 'test'
+  ...
+# Subtest: official SDK rejects invalid webhook signature before DB access
+ok 17 - official SDK rejects invalid webhook signature before DB access
+  ---
+  duration_ms: 13.0279
+  type: 'test'
+  ...
+# Subtest: missing price mapping cannot open checkout
+ok 18 - missing price mapping cannot open checkout
+  ---
+  duration_ms: 1.9294
+  type: 'test'
+  ...
+# Subtest: checkout uses standard Billing even when account defaults to Managed Payments
+ok 19 - checkout uses standard Billing even when account defaults to Managed Payments
+  ---
+  duration_ms: 2.5769
+  type: 'test'
+  ...
+1..19
+# tests 19
+# suites 0
+# pass 19
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3776.7611

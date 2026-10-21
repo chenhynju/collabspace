@@ -56,8 +56,10 @@ export class AuthController {
 
   @Public()
   @Get('oauth/:provider/url')
-  oauthUrl(@Param('provider') provider: 'google' | 'github') {
-    return this.auth.getOAuthUrl(provider);
+  async oauthUrl(@Param('provider') provider: 'google' | 'github',@Res({passthrough:true}) res:Response) {
+    const result=await this.auth.getOAuthUrl(provider);
+    res.cookie('collab_oauth_binding',result.binding,{httpOnly:true,secure:process.env.NODE_ENV==='production',sameSite:'lax',path:'/api/v1/auth/oauth',maxAge:600000});
+    res.setHeader('Cache-Control','no-store');return {url:result.url};
   }
 
   @Public()
@@ -66,13 +68,22 @@ export class AuthController {
     @Param('provider') provider: 'google' | 'github',
     @Query('code') code: string,
     @Query('state') state: string,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
     return this.auth
-      .handleOAuthCallback(provider, code, state)
-      .then((result) => {
+      .handleOAuthCallback(provider, code, state, req.cookies?.collab_oauth_binding)
+      .then(async (result) => {
         const webUrl = process.env.WEB_URL || 'http://localhost:3010';
-        res.redirect(`${webUrl}/oauth/callback?token=${result.accessToken}`);
-      });
+        const handoff=await this.auth.oauthHandoff(result,req.cookies.collab_oauth_binding);
+        res.setHeader('Cache-Control','no-store');res.setHeader('Referrer-Policy','no-referrer');
+        res.redirect(`${webUrl}/oauth/callback#code=${handoff}`);
+      }).catch(()=>res.redirect(`${process.env.WEB_URL||'http://localhost:3010'}/login?oauth_error=failed`));
+  }
+  @Public()
+  @Post('oauth/exchange')
+  async exchange(@Body() body:{code:string},@Req() req:Request,@Res({passthrough:true}) res:Response){
+    const result=await this.auth.oauthRedeem(body.code,req.cookies?.collab_oauth_binding);
+    res.clearCookie('collab_oauth_binding',{path:'/api/v1/auth/oauth'});res.setHeader('Cache-Control','no-store');return result;
   }
 }
