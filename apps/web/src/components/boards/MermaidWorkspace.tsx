@@ -66,6 +66,7 @@ export default function MermaidWorkspace({ provider }: { provider: DocumentProvi
   const undo = useRef<Y.UndoManager>();
   const composing = useRef(false);
   const pendingRemote = useRef(false);
+  const compositionConflict = useRef<string>();
   const baseline = useRef(source);
   const editor = useRef<HTMLTextAreaElement>(null);
   const selection = useRef<{start: Y.RelativePosition; end: Y.RelativePosition}>();
@@ -131,8 +132,15 @@ export default function MermaidWorkspace({ provider }: { provider: DocumentProvi
     <div className="flex flex-col gap-3 lg:flex-row">
       {view !== "graph" && <textarea ref={editor} aria-label="协作 Mermaid 源码" spellCheck={false} readOnly={!provider.writable} maxLength={32000} value={source}
         onCompositionStart={() => { composing.current = true; }}
-        onCompositionEnd={e => { composing.current = false; const value=e.currentTarget.value; if (pendingRemote.current) { pendingRemote.current=false; setImeDraft(value); baseline.current=text.toString(); setSource(text.toString()); } else edit(value); }}
-        onChange={e => { if (composing.current) setSource(e.target.value); else edit(e.target.value); }}
+        onCompositionEnd={e => { composing.current = false; const value=e.currentTarget.value; if (pendingRemote.current) { pendingRemote.current=false; compositionConflict.current=value; setImeDraft(value); baseline.current=text.toString(); setSource(text.toString()); } else edit(value); }}
+        onChange={e => {
+          const value=e.target.value;
+          // Some browsers emit a final input after compositionend. Never replay
+          // that stale full value over remote edits retained by the recovery UI.
+          if (compositionConflict.current === value) { compositionConflict.current=undefined; setSource(text.toString()); return; }
+          compositionConflict.current=undefined;
+          if (composing.current) setSource(value); else edit(value);
+        }}
         className="min-h-[640px] min-w-0 flex-1 rounded border p-4 font-mono text-sm" />}
       {view !== "source" && <MermaidPreview source={source} />}
     </div>

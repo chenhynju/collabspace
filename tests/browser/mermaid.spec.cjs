@@ -43,6 +43,22 @@ test("Mermaid authority: official graph/source views, two editors, viewer, offli
     await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator("svg")).toBeVisible();
     await a.screenshot({path:"evidence/collaboration/mermaid-workspace.png",fullPage:true});
     await a.reload();await expect(source(a)).toHaveValue(current);await expect(source(v)).toHaveValue(current);
+    await source(a).evaluate(el=>{
+      el.dispatchEvent(new CompositionEvent("compositionstart",{bubbles:true}));
+      const set=Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value").set;
+      set.call(el,el.value+"\n%% 本地输入法草稿");
+      el.dispatchEvent(new InputEvent("input",{bubbles:true,inputType:"insertCompositionText",data:"草稿",isComposing:true}));
+    });
+    await source(b).press("Control+Home");await source(b).pressSequentially("%% Remote during IME\n");await saved(b);
+    await source(a).evaluate(el=>{
+      const stale=el.value;
+      el.dispatchEvent(new CompositionEvent("compositionend",{bubbles:true,data:"草稿"}));
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value").set.call(el,stale);
+      el.dispatchEvent(new InputEvent("input",{bubbles:true,inputType:"insertCompositionText",data:"草稿"}));
+    });
+    await expect(a.getByLabel("输入法待合并草稿")).toHaveValue(/本地输入法草稿/);
+    await expect(source(a)).toHaveValue(/Remote during IME/);await expect(source(a)).not.toHaveValue(/本地输入法草稿/);
+    await source(a).fill(current);await saved(a);
     await a.getByRole("button",{name:"历史版本",exact:true}).click();
     await a.getByLabel("版本名称").fill("Mermaid checkpoint");
     await a.getByRole("button",{name:"创建版本",exact:true}).click();
