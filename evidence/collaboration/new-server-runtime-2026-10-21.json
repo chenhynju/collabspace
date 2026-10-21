@@ -1,0 +1,22 @@
+{
+  "host":"43.130.127.57",
+  "date":"2026-10-21",
+  "os":"Ubuntu 24.04.4 LTS x86_64",
+  "node":"24.22.0",
+  "npm":"11.19.1",
+  "pnpm":"10.34.7",
+  "python":"3.12.3",
+  "pip":"24.0",
+  "nodeArchiveSha256Verified":true,
+  "pythonVenvSslSqlite":"PASSED",
+  "pythonPipCheck":"PASSED",
+  "nodeLoopbackHttp":"PASSED",
+  "pythonLoopbackHttp":"PASSED",
+  "temporarySmokeResourcesRemoved":true,
+  "systemState":"running",
+  "diskFree":"51GB",
+  "dockerInstalled":false,
+  "applicationMigrated":false,
+  "newPublicPortsOpened":false,
+  "credentialValuesArchived":false
+}

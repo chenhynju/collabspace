@@ -1,0 +1,114 @@
+TAP version 13
+# CollabSpace WS listening on 127.0.0.1:62608
+# CollabSpace WS listening on 127.0.0.1:51428
+# Subtest: WebSocket: commit ACK, restart recovery, viewer attack, revoked connection
+ok 1 - WebSocket: commit ACK, restart recovery, viewer attack, revoked connection
+  ---
+  duration_ms: 4179.1268
+  type: 'test'
+  ...
+# Subtest: hard-killed process retains ACKed update; deferred DB commit failure sends no ACK
+ok 2 - hard-killed process retains ACKed update; deferred DB commit failure sends no ACK
+  ---
+  duration_ms: 3900.1099
+  type: 'test'
+  ...
+# Subtest: whiteboard concurrent properties converge; delete beats offline edits; undo excludes remote operations; copies have fresh lineage
+ok 3 - whiteboard concurrent properties converge; delete beats offline edits; undo excludes remote operations; copies have fresh lineage
+  ---
+  duration_ms: 108.9795
+  type: 'test'
+  ...
+# Subtest: whiteboard payload and presence reject unbounded values
+ok 4 - whiteboard payload and presence reject unbounded values
+  ---
+  duration_ms: 31.3092
+  type: 'test'
+  ...
+# Subtest: whiteboard real RLS storage preserves kind, rejects viewers and invalid shapes, and restores a private copy
+ok 5 - whiteboard real RLS storage preserves kind, rejects viewers and invalid shapes, and restores a private copy
+  ---
+  duration_ms: 1153.4977
+  type: 'test'
+  ...
+# Subtest: concurrent, repeated and reordered Yjs updates converge semantically
+ok 6 - concurrent, repeated and reordered Yjs updates converge semantically
+  ---
+  duration_ms: 36.7138
+  type: 'test'
+  ...
+# Subtest: restoring rich text creates independent CRDT identities and content
+ok 7 - restoring rich text creates independent CRDT identities and content
+  ---
+  duration_ms: 29.8018
+  type: 'test'
+  ...
+# Subtest: reject oversized and malformed update envelopes before decode
+ok 8 - reject oversized and malformed update envelopes before decode
+  ---
+  duration_ms: 4.5105
+  type: 'test'
+  ...
+# Subtest: local undo preserves remote edits and relative anchors survive insertion
+ok 9 - local undo preserves remote edits and relative anchors survive insertion
+  ---
+  duration_ms: 12.9855
+  type: 'test'
+  ...
+# Subtest: mind maps lay out deterministically with parents to the left and siblings apart
+ok 10 - mind maps lay out deterministically with parents to the left and siblings apart
+  ---
+  duration_ms: 84.4523
+  type: 'test'
+  ...
+# Subtest: connectors follow live geometry and invalid graph references are rejected without blocking deletion
+ok 11 - connectors follow live geometry and invalid graph references are rejected without blocking deletion
+  ---
+  duration_ms: 8.0584
+  type: 'test'
+  ...
+# Subtest: bounded Mermaid flowchart and mindmap imports retain graph semantics through export
+ok 12 - bounded Mermaid flowchart and mindmap imports retain graph semantics through export
+  ---
+  duration_ms: 21.3439
+  type: 'test'
+  ...
+# Subtest: diagram persistence uses the same real ACL/version boundary and rejects a cyclic graph without commit
+ok 13 - diagram persistence uses the same real ACL/version boundary and rejects a cyclic graph without commit
+  ---
+  duration_ms: 2092.4382
+  type: 'test'
+  ...
+# Subtest: runtime gate refuses privileged roles and incomplete forced RLS
+ok 14 - runtime gate refuses privileged roles and incomplete forced RLS
+  ---
+  duration_ms: 1759.4407
+  type: 'test'
+  ...
+# Subtest: group commit authorizes each actor, deduplicates receipts and rolls back every edit on commit failure
+ok 15 - group commit authorizes each actor, deduplicates receipts and rolls back every edit on commit failure
+  ---
+  duration_ms: 1728.4407
+  type: 'test'
+  ...
+# Subtest: real nonprivileged PostgreSQL: isolation, grants, durable retries, comments and history
+ok 16 - real nonprivileged PostgreSQL: isolation, grants, durable retries, comments and history
+  ---
+  duration_ms: 1341.1563
+  type: 'test'
+  ...
+# Subtest: fan-out excludes restricted, suspended and revoked recipients; parent revocation fences queued writes
+ok 17 - fan-out excludes restricted, suspended and revoked recipients; parent revocation fences queued writes
+  ---
+  duration_ms: 1443.9066
+  type: 'test'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 17
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 10229.1418

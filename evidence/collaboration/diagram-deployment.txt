@@ -1,0 +1,30 @@
+10b6c05a7f813bca620fd92ba16dd7fc53d91e0852e19f2692084bbde35b7e6d  /opt/collabspace/shared/before-r20261021-03.dump
+ Container collabspace-api-run-4043ac0ee76b Creating 
+ Container collabspace-api-run-4043ac0ee76b Created 
+Candidate runtime role and RLS gate passed
+ Container collabspace-postgres-1 Running 
+ Container collabspace-redis-1 Running 
+ Container collabspace-collab-1 Recreate 
+ Container collabspace-api-1 Recreate 
+ Container collabspace-collab-1 Recreated 
+ Container collabspace-api-1 Recreated 
+ Container collabspace-postgres-1 Waiting 
+ Container collabspace-redis-1 Waiting 
+ Container collabspace-postgres-1 Waiting 
+ Container collabspace-redis-1 Healthy 
+ Container collabspace-postgres-1 Healthy 
+ Container collabspace-api-1 Starting 
+ Container collabspace-postgres-1 Healthy 
+ Container collabspace-collab-1 Starting 
+ Container collabspace-api-1 Started 
+ Container collabspace-collab-1 Started 
+curl: (56) Recv failure: Connection reset by peer
+curl: (52) Empty reply from server
+collabspace-api-1 collabspace-api:r20261021-03 Up 5 seconds (health: starting)
+collabspace-collab-1 collabspace-ws:r20261021-03 Up 4 seconds (health: starting)
+collabspace-postgres-1 postgres:16-alpine Up 25 hours (healthy)
+collabspace-redis-1 redis:7-alpine Up 25 hours (healthy)
+{"status":"ok","uptimeSeconds":1,"checks":{"database":"up","redis":"up"}}
+ready
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/vda2        59G   50G  7.1G  88% /

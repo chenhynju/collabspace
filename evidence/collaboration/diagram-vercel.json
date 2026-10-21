@@ -1,0 +1,18 @@
+{
+  "source": "ce67e496546d034eae90fb28c89c0e0726cd2fd1",
+  "id": "dpl_HPUu2jr9826LvKDZZBbkQTmR4GYA",
+  "url": "https://collabspace-7eaw84brq-purelamp.vercel.app",
+  "inspectorUrl": "https://vercel.com/purelamp/collabspace/HPUu2jr9826LvKDZZBbkQTmR4GYA",
+  "readyState": "READY",
+  "target": "production",
+  "deploymentApiUrl": "https://api.vercel.com/v13/deployments/dpl_HPUu2jr9826LvKDZZBbkQTmR4GYA",
+  "buildMachine": {
+    "cores": 2,
+    "memory": 8192,
+    "machine": "basic",
+    "selectionType": "fixed",
+    "selectionSource": "plan-default"
+  },
+  "alias": "https://collabspace.purelamp.uk",
+  "aliasConfirmed": true
+}

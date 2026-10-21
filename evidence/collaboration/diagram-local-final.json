@@ -1,0 +1,150 @@
+{
+  "config": {
+    "configFile": "D:\\appspace\\collaboration\\playwright.config.cjs",
+    "rootDir": "D:/appspace/collaboration/tests/browser",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/appspace/collaboration/.test-runs/diagram-browser-final",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "D:/appspace/collaboration/tests/browser",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 300000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "diagrams.spec.cjs",
+      "file": "diagrams.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "diagram workspace: bound connectors, mind branches, Mermaid preview/import, SVG export and multi-account persistence",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "timedOut",
+                  "duration": 300609,
+                  "error": {
+                    "message": "\u001b[31mTest timeout of 300000ms exceeded.\u001b[39m",
+                    "stack": "\u001b[31mTest timeout of 300000ms exceeded.\u001b[39m"
+                  },
+                  "errors": [
+                    {
+                      "message": "\u001b[31mTest timeout of 300000ms exceeded.\u001b[39m"
+                    },
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\diagrams.spec.cjs",
+                        "column": 5,
+                        "line": 169
+                      },
+                      "message": "Error: browserContext.close: Target page, context or browser has been closed\n\n  167 |     });\n  168 |   } finally {\n> 169 |     await Promise.all(contexts.map((c) => c.close()));\n      |     ^\n  170 |   }\n  171 | });\n  172 |\n    at D:\\appspace\\collaboration\\tests\\browser\\diagrams.spec.cjs:169:5"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T02:15:40.140Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\diagram-browser-final\\diagrams-diagram-workspace-a58dd-d-multi-account-persistence\\test-failed-3.png"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\diagram-browser-final\\diagrams-diagram-workspace-a58dd-d-multi-account-persistence\\test-failed-1.png"
+                    },
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\diagram-browser-final\\diagrams-diagram-workspace-a58dd-d-multi-account-persistence\\test-failed-2.png"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\diagram-browser-final\\diagrams-diagram-workspace-a58dd-d-multi-account-persistence\\error-context.md"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\diagram-browser-final\\diagrams-diagram-workspace-a58dd-d-multi-account-persistence\\trace.zip"
+                    }
+                  ]
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "9b0e38794d34c429f51b-6960d0b3048834a9a51a",
+          "file": "diagrams.spec.cjs",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-21T02:15:36.542Z",
+    "duration": 310206.566,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

@@ -1,0 +1,220 @@
+{
+  "config": {
+    "configFile": "D:\\appspace\\collaboration\\playwright.config.cjs",
+    "rootDir": "D:/appspace/collaboration/tests/browser",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "list"
+      ],
+      [
+        "json"
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "D:/appspace/collaboration/.test-runs/diagram-prod-browser",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "",
+        "name": "",
+        "testDir": "D:/appspace/collaboration/tests/browser",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 300000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.56.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "board.spec.cjs",
+      "file": "board.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "whiteboard: discover, draw, concurrent accounts, cursors, undo, offline replay, viewer and private version copy",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 33909,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: '让团队始终编辑同一份文档。' })\nExpected: visible\nTimeout: 30000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: '让团队始终编辑同一份文档。' })\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: '让团队始终编辑同一份文档。' })\nExpected: visible\nTimeout: 30000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: '让团队始终编辑同一份文档。' })\u001b[22m\n\n    at D:\\appspace\\collaboration\\tests\\browser\\board.spec.cjs:47:7",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\board.spec.cjs",
+                      "column": 7,
+                      "line": 47
+                    },
+                    "snippet": "  45 |     await expect(\n  46 |       a.getByRole(\"heading\", { name: \"让团队始终编辑同一份文档。\" }),\n> 47 |     ).toBeVisible();\n     |       ^\n  48 |     await a\n  49 |       .locator(`a[href=\"/projects/${config.TEST_PROJECT}/boards\"]`)\n  50 |       .click();"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\board.spec.cjs",
+                        "column": 7,
+                        "line": 47
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByRole('heading', { name: '让团队始终编辑同一份文档。' })\nExpected: visible\nTimeout: 30000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByRole('heading', { name: '让团队始终编辑同一份文档。' })\u001b[22m\n\n\n  45 |     await expect(\n  46 |       a.getByRole(\"heading\", { name: \"让团队始终编辑同一份文档。\" }),\n> 47 |     ).toBeVisible();\n     |       ^\n  48 |     await a\n  49 |       .locator(`a[href=\"/projects/${config.TEST_PROJECT}/boards\"]`)\n  50 |       .click();\n    at D:\\appspace\\collaboration\\tests\\browser\\board.spec.cjs:47:7"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T02:34:32.608Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\diagram-prod-browser\\board-whiteboard-discover--cd30b-er-and-private-version-copy\\test-failed-1.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\diagram-prod-browser\\board-whiteboard-discover--cd30b-er-and-private-version-copy\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\board.spec.cjs",
+                    "column": 7,
+                    "line": 47
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "60929b04aafe7b896a3a-567102d5f837f4bfc3a1",
+          "file": "board.spec.cjs",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "diagrams.spec.cjs",
+      "file": "diagrams.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "diagram workspace: bound connectors, mind branches, Mermaid preview/import, SVG export and multi-account persistence",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 180000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "failed",
+                  "duration": 34647,
+                  "error": {
+                    "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('whiteboard-canvas')\nExpected: visible\nTimeout: 30000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('whiteboard-canvas')\u001b[22m\n",
+                    "stack": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('whiteboard-canvas')\nExpected: visible\nTimeout: 30000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('whiteboard-canvas')\u001b[22m\n\n    at client (D:\\appspace\\collaboration\\tests\\browser\\diagrams.spec.cjs:61:54)\n    at D:\\appspace\\collaboration\\tests\\browser\\diagrams.spec.cjs:69:15",
+                    "location": {
+                      "file": "D:\\appspace\\collaboration\\tests\\browser\\diagrams.spec.cjs",
+                      "column": 54,
+                      "line": 61
+                    },
+                    "snippet": "  59 |       `${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${doc.id}`,\n  60 |     );\n> 61 |     await expect(p.getByTestId(\"whiteboard-canvas\")).toBeVisible();\n     |                                                      ^\n  62 |     return p;\n  63 |   };\n  64 |   const saved = (p) =>"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "D:\\appspace\\collaboration\\tests\\browser\\diagrams.spec.cjs",
+                        "column": 54,
+                        "line": 61
+                      },
+                      "message": "Error: \u001b[2mexpect(\u001b[22m\u001b[31mlocator\u001b[39m\u001b[2m).\u001b[22mtoBeVisible\u001b[2m(\u001b[22m\u001b[2m)\u001b[22m failed\n\nLocator: getByTestId('whiteboard-canvas')\nExpected: visible\nTimeout: 30000ms\nError: element(s) not found\n\nCall log:\n\u001b[2m  - Expect \"toBeVisible\" with timeout 30000ms\u001b[22m\n\u001b[2m  - waiting for getByTestId('whiteboard-canvas')\u001b[22m\n\n\n  59 |       `${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${doc.id}`,\n  60 |     );\n> 61 |     await expect(p.getByTestId(\"whiteboard-canvas\")).toBeVisible();\n     |                                                      ^\n  62 |     return p;\n  63 |   };\n  64 |   const saved = (p) =>\n    at client (D:\\appspace\\collaboration\\tests\\browser\\diagrams.spec.cjs:61:54)\n    at D:\\appspace\\collaboration\\tests\\browser\\diagrams.spec.cjs:69:15"
+                    }
+                  ],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T02:35:10.217Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\diagram-prod-browser\\diagrams-diagram-workspace-a58dd-d-multi-account-persistence\\test-failed-1.png"
+                    },
+                    {
+                      "name": "trace",
+                      "contentType": "application/zip",
+                      "path": "D:\\appspace\\collaboration\\.test-runs\\diagram-prod-browser\\diagrams-diagram-workspace-a58dd-d-multi-account-persistence\\trace.zip"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "D:\\appspace\\collaboration\\tests\\browser\\diagrams.spec.cjs",
+                    "column": 54,
+                    "line": 61
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "9b0e38794d34c429f51b-6960d0b3048834a9a51a",
+          "file": "diagrams.spec.cjs",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-10-21T02:34:29.901Z",
+    "duration": 76618.535,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 2,
+    "flaky": 0
+  }
+}
