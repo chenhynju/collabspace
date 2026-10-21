@@ -50,6 +50,7 @@ test("Mermaid authority: official graph/source views, two editors, viewer, offli
       el.dispatchEvent(new InputEvent("input",{bubbles:true,inputType:"insertCompositionText",data:"草稿",isComposing:true}));
     });
     await source(b).press("Control+Home");await source(b).pressSequentially("%% Remote during IME\n");await saved(b);
+    await expect(source(v)).toHaveValue(/Remote during IME/);
     await source(a).evaluate(el=>{
       const stale=el.value;
       el.dispatchEvent(new CompositionEvent("compositionend",{bubbles:true,data:"草稿"}));

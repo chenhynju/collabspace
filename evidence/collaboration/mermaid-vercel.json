@@ -1,0 +1,20 @@
+{
+  "source": "236de73f5fd623e325081927d74fa148004e0ea3",
+  "backendSource": "f445a1e427df2c36465bf0a9a64a8c1f2c517707",
+  "id": "dpl_7PGzRcgz5pXGDV8YXtvyXbAYjenh",
+  "url": "https://collabspace-h8k6y5utp-purelamp.vercel.app",
+  "inspectorUrl": "https://vercel.com/purelamp/collabspace/7PGzRcgz5pXGDV8YXtvyXbAYjenh",
+  "readyState": "READY",
+  "target": "production",
+  "deploymentApiUrl": "https://api.vercel.com/v13/deployments/dpl_7PGzRcgz5pXGDV8YXtvyXbAYjenh",
+  "buildMachine": {
+    "cores": 2,
+    "memory": 8192,
+    "machine": "basic",
+    "selectionType": "fixed",
+    "selectionSource": "plan-default"
+  },
+  "alias": "https://collabspace.purelamp.uk",
+  "aliasConfirmed": true,
+  "aliasEvidence": "mermaid-alias.txt"
+}
