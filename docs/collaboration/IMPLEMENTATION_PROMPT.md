@@ -1,5 +1,7 @@
 # 可直接交给开发 Agent 的 Prompt
 
+2026-10-21 用户追加图解工作区：参考 draw.io / Visio 和 Mermaid，支持流程图、绑定连接线、思维导图及基础源码交换。具体模型、交互和 DG01–DG04 见 [DIAGRAMS.md](DIAGRAMS.md)，不宣称完整格式或语法兼容；仍复用原协作、权限和离线体系。
+
 2026-10-21 07:56 续做范围：实时协作为主线，多租户/资源权限是安全支撑。Toolkit 的成熟能力按缺口采用，避免替换现有组织与认证模型。订阅计费优先复用其他项目（已定位 D:/appspace/billandcharge）；OAuth/SSO 保留为近期后续路线，不作为本轮上线条件。运行门禁与评估证据见 ../../evidence/collaboration/CONTINUATION-2026-10-21.md。
 
 2026-10-21 最新交付主线确认：多人协作文档、在线状态、评论与冲突合并；以 React、WebSocket、Yjs/CRDT 的端到端同步与一致性证据验收。白板保留为扩展，不替代或阻塞该主线；Redis 当前用于 OAuth 临时状态及 Socket.IO 广播，原生文档同步仍为单实例，不宣称已完成 Redis 跨实例正文同步。

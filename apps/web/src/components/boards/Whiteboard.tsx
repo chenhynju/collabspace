@@ -4,6 +4,10 @@ import * as Y from "yjs";
 import {
   type BoardShape,
   boardShape,
+  connectorPath,
+  layoutMindmap,
+  parseMermaid,
+  exportMermaid,
   type Member,
 } from "@collabspace/protocol";
 import { DocumentProvider, from64 } from "@/lib/document-provider";
@@ -17,6 +21,9 @@ const tools = [
   ["note", "便签"],
   ["text", "文字"],
   ["arrow", "箭头"],
+  ["diamond", "判断菱形"],
+  ["mind", "思维主题"],
+  ["connect", "连接节点"],
 ] as const;
 const colors: BoardShape["fill"][] = [
   "#fef3c7",
@@ -38,16 +45,27 @@ function read(doc: Y.Doc): Item[] {
     })
     .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
 }
+function fitItems(items: Item[]) {
+  const nodes = items.filter((s) => s.type !== "connector");
+  if (!nodes.length) return { x: 0, y: 0, zoom: 1 };
+  const x = Math.min(...nodes.map((s) => s.geometry.x)) - 50,
+    y = Math.min(...nodes.map((s) => s.geometry.y)) - 50;
+  const w = Math.max(...nodes.map((s) => s.geometry.x + s.geometry.w)) - x + 50,
+    h = Math.max(...nodes.map((s) => s.geometry.y + s.geometry.h)) - y + 50;
+  return { x, y, zoom: Math.max(0.03, Math.min(1.5, 1200 / w, 800 / h)) };
+}
 export function BoardDrawing({
   items,
   selected,
   marker,
   onSelect,
+  onEdit,
 }: {
   items: Item[];
   selected?: string;
   marker: string;
   onSelect?: (e: React.PointerEvent<SVGGElement>, item: Item) => void;
+  onEdit?: (item: Item) => void;
 }) {
   return (
     <>
@@ -63,8 +81,80 @@ export function BoardDrawing({
           <path d="M0,0 L0,6 L9,3 z" fill="#334155" />
         </marker>
       </defs>
+      {items
+        .filter((s) => s.type === "mind" && s.parent)
+        .map((s) => {
+          const parent = items.find(
+            (p) => p.id === s.parent && p.type === "mind",
+          );
+          return parent ? (
+            <path
+              key={`mind-${s.id}`}
+              data-testid="mind-branch"
+              d={connectorPath(parent.geometry, s.geometry, "curve")}
+              fill="none"
+              stroke="#6366f1"
+              strokeWidth="2"
+              pointerEvents="none"
+            />
+          ) : null;
+        })}
       {items.map((item) => {
         const { x, y, w, h } = item.geometry;
+        if (item.type === "connector") {
+          const a = items.find((s) => s.id === item.binding?.from),
+            b = items.find((s) => s.id === item.binding?.to);
+          if (!a || !b) return null;
+          const d = connectorPath(
+            { ...a.geometry, type: a.type },
+            { ...b.geometry, type: b.type },
+            item.binding?.style,
+          );
+          return (
+            <g
+              key={item.id}
+              data-testid="board-shape"
+              data-shape-id={item.id}
+              role="button"
+              aria-label={`connector: ${item.text || "连接线"}`}
+              onPointerDown={(e) => onSelect?.(e, item)}
+              onDoubleClick={() => onEdit?.(item)}
+            >
+              <path d={d} fill="none" stroke="transparent" strokeWidth="18" />
+              <path
+                data-testid="bound-connector"
+                d={d}
+                fill="none"
+                stroke={selected === item.id ? "#2563eb" : "#334155"}
+                strokeWidth="2"
+                markerEnd={`url(#${marker})`}
+                pointerEvents="none"
+              />
+              <text
+                x={
+                  (a.geometry.x +
+                    a.geometry.w / 2 +
+                    b.geometry.x +
+                    b.geometry.w / 2) /
+                  2
+                }
+                y={
+                  (a.geometry.y +
+                    a.geometry.h / 2 +
+                    b.geometry.y +
+                    b.geometry.h / 2) /
+                    2 -
+                  8
+                }
+                textAnchor="middle"
+                fontSize="13"
+                fill="#334155"
+              >
+                {item.text}
+              </text>
+            </g>
+          );
+        }
         return (
           <g
             key={item.id}
@@ -74,8 +164,15 @@ export function BoardDrawing({
             aria-label={`${item.type}: ${item.text || "未命名图形"}`}
             tabIndex={onSelect ? 0 : undefined}
             onPointerDown={(e) => onSelect?.(e, item)}
+            onDoubleClick={() => onEdit?.(item)}
           >
-            {item.type === "ellipse" ? (
+            {item.type === "diamond" ? (
+              <polygon
+                points={`${x + w / 2},${y} ${x + w},${y + h / 2} ${x + w / 2},${y + h} ${x},${y + h / 2}`}
+                fill={item.fill}
+                stroke="#64748b"
+              />
+            ) : item.type === "ellipse" ? (
               <ellipse
                 cx={x + w / 2}
                 cy={y + h / 2}
@@ -103,16 +200,16 @@ export function BoardDrawing({
                 y={y}
                 width={w}
                 height={h}
-                rx={item.type === "note" ? 2 : 10}
+                rx={item.type === "mind" ? 24 : item.type === "note" ? 2 : 10}
                 fill={item.type === "text" ? "transparent" : item.fill}
                 stroke={item.type === "text" ? "none" : "#64748b"}
               />
             )}
             <foreignObject
-              x={x + 10}
-              y={y + 8}
-              width={Math.max(10, w - 20)}
-              height={Math.max(10, h - 16)}
+              x={x + (item.type === "diamond" ? w * 0.23 : 10)}
+              y={y + (item.type === "diamond" ? h * 0.23 : 8)}
+              width={Math.max(10, item.type === "diamond" ? w * 0.54 : w - 20)}
+              height={Math.max(10, item.type === "diamond" ? h * 0.54 : h - 16)}
               pointerEvents="none"
             >
               <div
@@ -123,6 +220,19 @@ export function BoardDrawing({
                   height: "100%",
                   fontSize: 16,
                   color: "#0f172a",
+                  display: "flex",
+                  alignItems:
+                    item.type === "note" || item.type === "text"
+                      ? "flex-start"
+                      : "center",
+                  justifyContent:
+                    item.type === "note" || item.type === "text"
+                      ? "flex-start"
+                      : "center",
+                  textAlign:
+                    item.type === "note" || item.type === "text"
+                      ? "left"
+                      : "center",
                 }}
               >
                 {item.text}
@@ -185,8 +295,16 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     [view, setView] = useState({ x: 0, y: 0, zoom: 1 }),
     [members, setMembers] = useState<Member[]>([]),
     [error, setError] = useState("");
+  const [connectFrom, setConnectFrom] = useState("");
+  const [snap, setSnap] = useState(false);
+  const [sourceOpen, setSourceOpen] = useState(false),
+    [source, setSource] = useState(
+      "flowchart LR\n  A[开始] --> B{验收通过？}\n  B -->|是| C[交付]",
+    ),
+    [preview, setPreview] = useState<Item[] | null>(null);
   const [, render] = useState(0);
   const svg = useRef<SVGSVGElement>(null),
+    textEditor = useRef<HTMLTextAreaElement>(null),
     undo = useRef<Y.UndoManager>(),
     drag = useRef<{
       id?: string;
@@ -198,9 +316,17 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       view: typeof view;
     }>();
   const sentAt = useRef(0),
+    didFit = useRef(false),
     marker = useId().replace(/:/g, "");
   const shapes = provider.doc.getMap<Y.Map<unknown>>("shapes");
   const active = items.find((s) => s.id === selected);
+  const previewView = fitItems(preview || []);
+  useEffect(() => {
+    if (items.length && !didFit.current) {
+      didFit.current = true;
+      setView(fitItems(items));
+    }
+  }, [items]);
   useEffect(() => {
     const update = () => {
       setItems(
@@ -232,8 +358,14 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     p.y = e.clientY;
     const result = p.matrixTransform(svg.current!.getScreenCTM()!.inverse());
     return {
-      x: Math.max(-10000, Math.min(10000, result.x)),
-      y: Math.max(-10000, Math.min(10000, result.y)),
+      x: Math.max(
+        -10000,
+        Math.min(10000, snap ? Math.round(result.x / 20) * 20 : result.x),
+      ),
+      y: Math.max(
+        -10000,
+        Math.min(10000, snap ? Math.round(result.y / 20) * 20 : result.y),
+      ),
     };
   };
   const change = (id: string, patch: Partial<BoardShape>) => {
@@ -252,7 +384,11 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     }, origin);
     setError("");
   };
-  const create = (type: BoardShape["type"], p: { x: number; y: number }) => {
+  const create = (
+    type: BoardShape["type"],
+    p: { x: number; y: number },
+    extra: Partial<BoardShape> = {},
+  ) => {
     if (!provider.writable) return;
     if (shapes.size >= 500) {
       setError("当前白板最多 500 个图形。");
@@ -263,19 +399,133 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       shape = new Y.Map<unknown>();
     const data: BoardShape = {
       type,
-      geometry: { x: p.x, y: p.y, w: 180, h: 120 },
-      text: type === "note" ? "双击选中后，在属性中编辑便签" : "",
+      geometry: { x: p.x, y: p.y, w: 180, h: type === "mind" ? 60 : 120 },
+      text:
+        type === "mind"
+          ? "中心主题"
+          : type === "note"
+            ? "双击选中后，在属性中编辑便签"
+            : "",
       fill: type === "note" ? "#fef3c7" : "#dbeafe",
       order: Date.now(),
+      ...extra,
     };
     for (const [key, value] of Object.entries(data)) shape.set(key, value);
     provider.doc.transact(() => shapes.set(id, shape), origin);
     undo.current?.stopCapturing();
     setSelected(id);
     setTool("select");
+    return id;
+  };
+  const branch = (sibling = false) => {
+    if (!active || active.type !== "mind") return;
+    const parent = sibling ? active.parent : active.id;
+    create(
+      "mind",
+      {
+        x: Math.min(9800, active.geometry.x + (sibling ? 0 : 260)),
+        y: Math.min(9800, active.geometry.y + 100),
+      },
+      { ...(parent ? { parent } : {}), text: sibling ? "同级主题" : "子主题" },
+    );
+  };
+  const layout = () => {
+    if (!provider.writable) return;
+    let positions: ReturnType<typeof layoutMindmap>;
+    try {
+      positions = layoutMindmap(items);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "布局失败");
+      return;
+    }
+    undo.current?.stopCapturing();
+    provider.doc.transact(() => {
+      for (const [id, geometry] of Object.entries(positions))
+        shapes.get(id)?.set("geometry", geometry);
+    }, origin);
+    undo.current?.stopCapturing();
+    setView(fitItems(read(provider.doc)));
+  };
+  const template = (mind: boolean) => {
+    if (!provider.writable) return;
+    if (shapes.size + (mind ? 4 : 7) > 500) {
+      setError("模板超出白板500个图形上限。");
+      return;
+    }
+    const offsetY = items.length
+      ? Math.max(
+          ...items
+            .filter((s) => s.type !== "connector")
+            .map((s) => s.geometry.y + s.geometry.h),
+          0,
+        ) + 120
+      : 0;
+    if (offsetY > 9000) {
+      setError("模板放置空间不足，请先移动图形。");
+      return;
+    }
+    const place = (
+      type: BoardShape["type"],
+      p: { x: number; y: number },
+      extra: Partial<BoardShape> = {},
+    ) =>
+      create(
+        type,
+        { ...p, y: p.y + offsetY },
+        {
+          ...extra,
+          ...(extra.geometry
+            ? { geometry: { ...extra.geometry, y: extra.geometry.y + offsetY } }
+            : {}),
+        },
+      );
+    undo.current?.stopCapturing();
+    provider.doc.transact(() => {
+      if (mind) {
+        const root = place("mind", { x: 80, y: 240 }, { text: "项目计划" })!;
+        ["需求分析", "开发实施", "验证交付"].forEach((text, i) =>
+          place(
+            "mind",
+            { x: 380, y: 100 + i * 140 },
+            { parent: root, text, fill: colors[i] },
+          ),
+        );
+      } else {
+        const a = place(
+          "ellipse",
+          { x: 80, y: 200 },
+          { text: "开始", geometry: { x: 80, y: 200, w: 140, h: 70 } },
+        )!;
+        const b = place("rect", { x: 310, y: 180 }, { text: "处理任务" })!;
+        const c = place("diamond", { x: 600, y: 180 }, { text: "验收通过？" })!;
+        const d = place(
+          "ellipse",
+          { x: 900, y: 200 },
+          { text: "交付", geometry: { x: 900, y: 200, w: 140, h: 70 } },
+        )!;
+        [
+          [a, b, ""],
+          [b, c, ""],
+          [c, d, "是"],
+        ].forEach(([from, to, text]) =>
+          place(
+            "connector",
+            { x: 0, y: 0 },
+            { text, binding: { from, to, style: "elbow" } },
+          ),
+        );
+      }
+    }, origin);
+    undo.current?.stopCapturing();
+    setView(fitItems(read(provider.doc)));
   };
   const down = (e: React.PointerEvent<SVGSVGElement>) => {
     const p = point(e);
+    if (tool === "connect") {
+      setConnectFrom("");
+      setSelected("");
+      return;
+    }
     if (tool === "pan") {
       drag.current = {
         mode: "pan",
@@ -299,8 +549,25 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
   const select = (e: React.PointerEvent<SVGGElement>, item: Item) => {
     if (tool === "pan") return;
     e.stopPropagation();
+    svg.current?.focus({ preventScroll: true });
+    if (tool === "connect") {
+      if (!provider.writable || item.type === "connector") return;
+      if (connectFrom && connectFrom !== item.id) {
+        create(
+          "connector",
+          { x: 0, y: 0 },
+          { binding: { from: connectFrom, to: item.id, style: "elbow" } },
+        );
+        setConnectFrom("");
+      } else {
+        setConnectFrom(item.id);
+        setSelected(item.id);
+      }
+      return;
+    }
     setSelected(item.id);
     if (!provider.writable) return;
+    if (item.type === "connector") return;
     undo.current?.stopCapturing();
     drag.current = {
       id: item.id,
@@ -353,7 +620,14 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
   const remove = () => {
     if (provider.writable && selected) {
       undo.current?.stopCapturing();
-      provider.doc.transact(() => shapes.delete(selected), origin);
+      provider.doc.transact(() => {
+        shapes.delete(selected);
+        for (const [id, s] of shapes) {
+          const b = s.get("binding") as BoardShape["binding"];
+          if (b && (b.from === selected || b.to === selected))
+            shapes.delete(id);
+        }
+      }, origin);
       undo.current?.stopCapturing();
       setSelected("");
     }
@@ -365,17 +639,55 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
         role="toolbar"
         aria-label="白板工具"
       >
+        <label className="text-xs">
+          <input
+            type="checkbox"
+            checked={snap}
+            onChange={(e) => setSnap(e.target.checked)}
+          />{" "}
+          网格吸附
+        </label>
         {tools.map(([key, label]) => (
           <button
             key={key}
             aria-pressed={tool === key}
             disabled={!provider.writable && !["select", "pan"].includes(key)}
-            onClick={() => setTool(key)}
+            onClick={() => {
+              setTool(key);
+              setConnectFrom("");
+            }}
             className={`rounded border px-2 py-1 text-sm disabled:opacity-40 ${tool === key ? "bg-blue-600 text-white" : ""}`}
           >
             {label}
           </button>
         ))}
+        <button
+          disabled={!provider.writable}
+          onClick={() => template(false)}
+          className="rounded border px-2 py-1 text-sm disabled:opacity-40"
+        >
+          流程图模板
+        </button>
+        <button
+          disabled={!provider.writable}
+          onClick={() => template(true)}
+          className="rounded border px-2 py-1 text-sm disabled:opacity-40"
+        >
+          思维导图模板
+        </button>
+        <button
+          onClick={() => setSourceOpen((v) => !v)}
+          className="rounded border px-2 py-1 text-sm"
+        >
+          Mermaid 源码
+        </button>
+        <button
+          disabled={!provider.writable || !items.some((s) => s.type === "mind")}
+          onClick={layout}
+          className="rounded border px-2 py-1 text-sm disabled:opacity-40"
+        >
+          自动布局导图
+        </button>
         <button
           disabled={!provider.writable || !undo.current?.canUndo()}
           onClick={() => undo.current?.undo()}
@@ -391,6 +703,52 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           重做
         </button>
         <button
+          onClick={() => {
+            const copy = svg.current?.cloneNode(true) as
+              SVGSVGElement | undefined;
+            if (!copy) return;
+            copy
+              .querySelectorAll(
+                '[data-testid="board-resize"], [aria-label$="的白板光标"]',
+              )
+              .forEach((n) => n.remove());
+            const nodes = items.filter((s) => s.type !== "connector");
+            const x = Math.min(0, ...nodes.map((s) => s.geometry.x)) - 30,
+              y = Math.min(0, ...nodes.map((s) => s.geometry.y)) - 30;
+            const w =
+                Math.max(
+                  900,
+                  ...nodes.map((s) => s.geometry.x + s.geometry.w),
+                ) -
+                x +
+                30,
+              h =
+                Math.max(
+                  600,
+                  ...nodes.map((s) => s.geometry.y + s.geometry.h),
+                ) -
+                y +
+                30;
+            copy.setAttribute("viewBox", `${x} ${y} ${w} ${h}`);
+            copy.setAttribute("width", String(w));
+            copy.setAttribute("height", String(h));
+            copy.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+            const url = URL.createObjectURL(
+              new Blob([new XMLSerializer().serializeToString(copy)], {
+                type: "image/svg+xml",
+              }),
+            );
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "collabspace-diagram.svg";
+            a.click();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+          }}
+          className="rounded border px-2 py-1 text-sm"
+        >
+          导出 SVG
+        </button>
+        <button
           onClick={() =>
             setView((v) => ({ ...v, zoom: Math.min(3, v.zoom + 0.25) }))
           }
@@ -400,7 +758,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
         </button>
         <button
           onClick={() =>
-            setView((v) => ({ ...v, zoom: Math.max(0.25, v.zoom - 0.25) }))
+            setView((v) => ({ ...v, zoom: Math.max(0.03, v.zoom - 0.25) }))
           }
           aria-label="缩小白板"
         >
@@ -409,6 +767,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
         <button onClick={() => setView({ x: 0, y: 0, zoom: 1 })}>
           复位 {Math.round(view.zoom * 100)}%
         </button>
+        <button onClick={() => setView(fitItems(items))}>适应全部</button>
         <button
           onClick={() => {
             const blob = new Blob([JSON.stringify(shapes.toJSON(), null, 2)], {
@@ -427,17 +786,172 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
         </button>
       </div>
       <p className="px-3 py-2 text-xs text-slate-500">
-        点击工具后在画布放置图形；选择后拖动，拖动右下角调整大小。光标实时显示，拖动结果在松开时同步。每人撤销仅作用于自己的操作。
+        {tool === "connect"
+          ? connectFrom
+            ? "请选择终点节点；连接线会跟随节点移动。"
+            : "依次点击两个节点建立连接。"
+          : "放置并拖动节点；用连接工具建立流程图。选中思维主题后添加子主题（Tab）或同级主题（Enter），再自动布局。每人撤销仅作用于自己的操作。"}
       </p>
       {error && (
         <p role="alert" className="px-3 text-sm text-red-700">
           {error}
         </p>
       )}
+      {sourceOpen && (
+        <section
+          aria-label="Mermaid 基础语法"
+          className="grid gap-3 border-y bg-white p-4 md:grid-cols-2"
+        >
+          <div className="space-y-2">
+            <h3 className="font-medium">用文字创建可编辑图形</h3>
+            <p className="text-xs text-slate-500">
+              支持基础 flowchart LR/TD/TB：矩形、菱形、圆形、箭头及标签；mindmap
+              使用空格缩进。不支持 subgraph、样式指令、链接或
+              HTML。导入追加图形，不覆盖现有内容；导出保留文字和拓扑，布局与配色不保留。
+            </p>
+            <textarea
+              aria-label="Mermaid 源码输入"
+              value={source}
+              maxLength={32000}
+              onChange={(e) => {
+                setSource(e.target.value);
+                setPreview(null);
+                setError("");
+              }}
+              rows={9}
+              className="w-full rounded border p-2 font-mono text-sm"
+            />
+            <div className="flex flex-wrap gap-2">
+              <button
+                className="rounded border px-2 py-1"
+                onClick={() => {
+                  try {
+                    setPreview(parseMermaid(source));
+                    setError("");
+                  } catch (e) {
+                    setPreview(null);
+                    setError(e instanceof Error ? e.message : "源码无法解析");
+                  }
+                }}
+              >
+                解析预览
+              </button>
+              <button
+                className="rounded bg-blue-600 px-2 py-1 text-white disabled:opacity-40"
+                disabled={!provider.writable || !preview}
+                onClick={() => {
+                  if (!preview || !provider.writable) return;
+                  if (shapes.size + preview.length > 500) {
+                    setError("导入超出白板500个图形上限。");
+                    return;
+                  }
+                  if (preview.some((s) => shapes.has(s.id))) {
+                    setError("这些图形已经导入，请重新解析源码。");
+                    return;
+                  }
+                  const offsetY = items.length
+                    ? Math.max(
+                        ...items
+                          .filter((s) => s.type !== "connector")
+                          .map((s) => s.geometry.y + s.geometry.h),
+                        0,
+                      ) + 120
+                    : 0;
+                  if (preview.some((s) => s.geometry.y + offsetY > 10000)) {
+                    setError("追加区域超出画布范围，请先移动图形。");
+                    return;
+                  }
+                  undo.current?.stopCapturing();
+                  provider.doc.transact(() => {
+                    for (const { id, ...data } of preview)
+                      shapes.set(
+                        id,
+                        new Y.Map(
+                          Object.entries({
+                            ...data,
+                            geometry: {
+                              ...data.geometry,
+                              y: data.geometry.y + offsetY,
+                            },
+                          }),
+                        ),
+                      );
+                  }, origin);
+                  undo.current?.stopCapturing();
+                  setPreview(null);
+                  setView(fitItems(read(provider.doc)));
+                  setError("");
+                }}
+              >
+                追加到白板
+              </button>
+              {[false, true].map((mind) => (
+                <button
+                  key={String(mind)}
+                  className="rounded border px-2 py-1"
+                  onClick={() => {
+                    try {
+                      setSource(exportMermaid(items, mind));
+                      setPreview(null);
+                      setError("");
+                    } catch (e) {
+                      setError(e instanceof Error ? e.message : "无法导出");
+                    }
+                  }}
+                >
+                  {mind ? "导出导图源码" : "导出流程图源码"}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs text-slate-500">
+              {preview
+                ? `解析成功：${preview.filter((s) => s.type !== "connector").length} 个节点，${preview.filter((s) => s.type === "connector" || s.parent).length} 条连接；确认后追加。`
+                : "先解析预览，语法错误不会修改共享白板。"}
+            </p>
+            {preview && (
+              <svg
+                aria-label="Mermaid 导入预览"
+                viewBox={`${previewView.x} ${previewView.y} ${1200 / previewView.zoom} ${800 / previewView.zoom}`}
+                className="w-full bg-slate-50"
+              >
+                <BoardDrawing items={preview} marker={`${marker}-preview`} />
+              </svg>
+            )}
+          </div>
+        </section>
+      )}
       <svg
         ref={svg}
         data-testid="whiteboard-canvas"
         aria-label="协作白板画布"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (!provider.writable) return;
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") {
+            e.preventDefault();
+            if (e.shiftKey) undo.current?.redo();
+            else undo.current?.undo();
+            return;
+          }
+          if (
+            active?.type === "mind" &&
+            (e.key === "Tab" || e.key === "Enter")
+          ) {
+            e.preventDefault();
+            branch(e.key === "Enter");
+          }
+          if (e.key === "Delete" || e.key === "Backspace") {
+            e.preventDefault();
+            remove();
+          }
+          if (e.key === "Escape") {
+            setTool("select");
+            setConnectFrom("");
+            setSelected("");
+          }
+        }}
         viewBox={`${view.x} ${view.y} ${1200 / view.zoom} ${800 / view.zoom}`}
         className="min-h-[480px] w-full touch-none bg-slate-50"
         onPointerDown={down}
@@ -451,13 +965,39 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           if (!drag.current) provider.cursor(null);
         }}
       >
+        <defs>
+          <pattern
+            id={`${marker}-grid`}
+            width="20"
+            height="20"
+            patternUnits="userSpaceOnUse"
+          >
+            <circle cx="1" cy="1" r="1" fill="#cbd5e1" />
+          </pattern>
+        </defs>
+        <rect
+          x={view.x}
+          y={view.y}
+          width={1200 / view.zoom}
+          height={800 / view.zoom}
+          fill={`url(#${marker}-grid)`}
+          pointerEvents="none"
+        />
         <BoardDrawing
           items={items}
           selected={selected}
           marker={marker}
           onSelect={select}
+          onEdit={
+            provider.writable
+              ? (item) => {
+                  setSelected(item.id);
+                  requestAnimationFrame(() => textEditor.current?.focus());
+                }
+              : undefined
+          }
         />
-        {active && provider.writable && (
+        {active && active.type !== "connector" && provider.writable && (
           <circle
             data-testid="board-resize"
             cx={active.geometry.x + active.geometry.w}
@@ -502,10 +1042,47 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           className="flex flex-wrap gap-3 border-t p-3"
           aria-label="图形属性"
         >
+          {active.type === "mind" && (
+            <div className="flex gap-2">
+              <button disabled={!provider.writable} onClick={() => branch()}>
+                添加子主题
+              </button>
+              <button
+                disabled={!provider.writable}
+                onClick={() => branch(true)}
+              >
+                添加同级主题
+              </button>
+            </div>
+          )}
+          {active.binding && (
+            <label className="text-xs">
+              线型
+              <select
+                aria-label="连接线样式"
+                disabled={!provider.writable}
+                value={active.binding.style}
+                onChange={(e) =>
+                  change(active.id, {
+                    binding: {
+                      ...active.binding!,
+                      style: e.target.value as "straight" | "elbow" | "curve",
+                    },
+                  })
+                }
+                className="block rounded border p-2"
+              >
+                <option value="elbow">折线</option>
+                <option value="straight">直线</option>
+                <option value="curve">曲线</option>
+              </select>
+            </label>
+          )}
           <label className="flex-1 text-xs">
             文字
             <textarea
               aria-label="图形文字"
+              ref={textEditor}
               maxLength={2000}
               disabled={!provider.writable}
               value={active.text}

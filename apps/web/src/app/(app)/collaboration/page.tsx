@@ -43,7 +43,7 @@ export default function CollaborationHub() {
         <section className="rounded-xl border bg-white p-6">
           <h2 className="text-xl font-semibold">白板扩展</h2>
           <p className="mt-2 text-sm text-slate-500">
-            图形、便签、文字与箭头；多人光标、缩放平移、各自撤销和离线重连。
+            流程图、绑定连接线、思维导图与 Mermaid 基础源码；多人光标、各自撤销、版本和离线重连。
           </p>
         </section>
       </div>

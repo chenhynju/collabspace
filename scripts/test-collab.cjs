@@ -10,6 +10,7 @@ const env = {
 const tests = [
   "packages/collab-store/tests/core.test.cjs",
   "packages/collab-store/tests/board.test.cjs",
+  "packages/collab-store/tests/diagram.test.cjs",
   "packages/collab-store/tests/integration.test.cjs",
   "apps/collab/tests/server.test.cjs",
 ];
