@@ -14,6 +14,7 @@ export default function ResourceList({
   const [docs, setDocs] = useState<any[]>([]),
     [title, setTitle] = useState(""),
     [error, setError] = useState("");
+  const [format,setFormat]=useState('DOCUMENT');
   useEffect(() => {
     let active = true;
     setDocs([]);
@@ -21,7 +22,7 @@ export default function ResourceList({
       .get("/documents", { params: { projectId: params.id } })
       .then((r) => {
         if (active)
-          setDocs(r.data.filter((d: any) => (d.kind || "DOCUMENT") === kind));
+          setDocs(r.data.filter((d: any) => kind==='BOARD'?d.kind==='BOARD':d.kind!=='BOARD'));
       })
       .catch(() => {
         if (active) setError("文档加载失败，请检查项目权限。");
@@ -36,7 +37,7 @@ export default function ResourceList({
       const { data } = await api.post("/documents", {
         projectId: params.id,
         title,
-        kind,
+        kind:kind==='BOARD'?'BOARD':format,
       });
       setDocs((d) => [data, ...d]);
       setTitle("");
@@ -79,6 +80,18 @@ export default function ResourceList({
           {kind === "BOARD" ? "创建白板" : "创建文档"}
         </button>
       </form>
+      {kind!=='BOARD'&&<div className="flex flex-wrap items-center gap-3 text-sm">
+        <label>文档格式 <select aria-label="文档格式" value={format} onChange={e=>setFormat(e.target.value)} className="rounded border p-2"><option value="DOCUMENT">富文本</option><option value="MARKDOWN">Markdown (.md)</option></select></label>
+        <label className="rounded border p-2">导入 .md<input aria-label="导入 Markdown 文件" className="ml-2" type="file" accept=".md,text/markdown" onChange={async e=>{
+          const file=e.target.files?.[0];e.target.value='';if(!file)return;
+          try{
+            if(!/\.md$/i.test(file.name)||file.size>200000)throw Error('请选择200KB以内的UTF-8 .md文件。');
+            const source=new TextDecoder('utf-8',{fatal:true}).decode(await file.arrayBuffer()).replace(/\r\n?/g,'\n');
+            if(source.length>64000||source.includes('\0'))throw Error('源码最多64000字符，不能包含二进制内容。');
+            const r=await api.post('/documents',{projectId:params.id,title:file.name.slice(0,160),kind:'MARKDOWN',source});setDocs(d=>[r.data,...d]);setError('');
+          }catch(err:any){setError(err.response?.data?.message||err.message||'导入失败，请检查编码和权限。');}
+        }}/></label><span className="text-slate-500">UTF-8 · 去除BOM · 换行统一为LF · 原文件不覆盖</span>
+      </div>}
       {error && (
         <p role="alert" className="text-red-700">
           {error}
@@ -99,7 +112,7 @@ export default function ResourceList({
             <div>
               <h2 className="font-medium">{d.title}</h2>
               <p className="mt-1 text-xs text-slate-500">
-                {d.role} · {d.status === "ARCHIVED" ? "已归档" : "可协作"}
+                {d.kind==='MARKDOWN'?'Markdown · ':''}{d.role} · {d.status === "ARCHIVED" ? "已归档" : "可协作"}
               </p>
             </div>
             <span className="text-slate-400">打开 →</span>

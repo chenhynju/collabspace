@@ -16,6 +16,8 @@ import { api } from "@/lib/api";
 import { BoardPreview } from '@/components/boards/Whiteboard';
 import { DocumentImage } from '@/components/documents/DocumentImage';
 import OfflineStorage from '@/components/documents/OfflineStorage';
+import {MarkdownHistory} from '@/components/documents/MarkdownEditor';
+const MarkdownEditor=dynamic(()=>import('@/components/documents/MarkdownEditor'),{ssr:false});
 const Whiteboard = dynamic(()=>import('@/components/boards/Whiteboard'),{ssr:false});
 const DocumentEditor = dynamic(
   () => import("@/components/documents/DocumentEditor"),
@@ -181,7 +183,7 @@ export default function DocumentPage({
       </div>
     );
   const uniquePeople = [...new Map(people.map((p) => [p.userId, p])).values()];
-  const Surface = meta.kind === 'BOARD' ? Whiteboard : DocumentEditor;
+  const Surface = meta.kind === 'BOARD' ? Whiteboard : meta.kind==='MARKDOWN'?MarkdownEditor:DocumentEditor;
   return (
     <div className="flex min-h-[85vh] flex-col bg-slate-50">
       <header className="border-b bg-white px-6 py-4">
@@ -544,7 +546,7 @@ export default function DocumentPage({
                 <Dialog.Title>{preview.name} · 只读预览</Dialog.Title>
                 <Dialog.Close>关闭预览</Dialog.Close>
               </div>
-              {meta.kind==='BOARD'?<BoardPreview key={preview.id} state={preview.state}/>:<Preview state={preview.state} documentId={params.docId} organizationId={org || ""} />}
+              {meta.kind==='BOARD'?<BoardPreview key={preview.id} state={preview.state}/>:meta.kind==='MARKDOWN'?<MarkdownHistory state={preview.state}/>:<Preview state={preview.state} documentId={params.docId} organizationId={org || ""} />}
             </Dialog.Content>
           </Dialog.Portal>
         </Dialog.Root>

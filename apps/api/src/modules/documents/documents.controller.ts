@@ -57,6 +57,7 @@ export class DocumentsController implements OnModuleDestroy, OnModuleInit {
       throw e;
     }
   }
+  @Get('mine') mine(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string}){return this.run(o,u,'mine');}
   @Get() list(
     @CurrentOrg() o: OrgContext,
     @CurrentUser() u: { id: string },

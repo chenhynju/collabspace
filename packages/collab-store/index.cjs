@@ -70,7 +70,9 @@ function checkBoard(doc) {
 function copyContent(bytes, kind = "DOCUMENT") {
   const old = materialize(bytes),
     fresh = new Y.Doc();
-  if (kind === "BOARD") {
+  if(kind==='MARKDOWN'){
+    fresh.getText('markdown').insert(0,old.getText('markdown').toString());
+  } else if (kind === "BOARD") {
     fresh.getText("mermaid").insert(0, old.getText("mermaid").toString());
     for (const [id, shape] of old.getMap("shapes"))
       fresh.getMap("shapes").set(id, shape.clone());
@@ -85,6 +87,11 @@ function copyContent(bytes, kind = "DOCUMENT") {
   old.destroy();
   fresh.destroy();
   return result;
+}
+function checkMarkdown(doc){
+  if([...doc.share.keys()].some(key=>key!=='markdown'))fail(400,'INVALID_MARKDOWN');
+  const source=doc.getText('markdown');
+  if(source.length>64000||source.toString().includes('\0')||Buffer.byteLength(source.toString(),'utf8')>200000||source.toDelta().some(p=>typeof p.insert!=='string'||p.attributes))fail(400,'INVALID_MARKDOWN');
 }
 class Store {
   async checkImages(c,ctx,id,doc) {
@@ -314,16 +321,29 @@ class Store {
       ).rows;
     });
   }
+  async mine(ctx){
+    return this.tx(ctx,async c=>{
+      const candidates=(await c.query("SELECT d.id,d.title,d.kind,d.project_id,d.updated_at,g.role FROM collab_document d JOIN collab_grant g ON g.organization_id=d.organization_id AND g.document_id=d.id AND g.user_id=$2 WHERE d.organization_id=$1 AND d.kind='MARKDOWN' ORDER BY d.updated_at DESC LIMIT 100",[ctx.org,ctx.user])).rows;
+      const visible=[];
+      for(const d of candidates){try{await this.access(c,ctx,d.id);visible.push(d);}catch(e){if(![403,404].includes(e.status))throw e;}}
+      return visible;
+    });
+  }
   async create(ctx, project, input) {
     const name = title.parse(input.title);
     const kind = z
-      .enum(["DOCUMENT", "BOARD"])
+      .enum(["DOCUMENT", "BOARD", "MARKDOWN"])
       .default("DOCUMENT")
       .parse(input.kind);
     return this.tx(ctx, async (c) => {
       const { p } = await this.parent(c, ctx, project);
       if (p.status === "ARCHIVED") fail(409, "PROJECT_ARCHIVED");
-      return this.insert(c, ctx, project, name, undefined, kind);
+      let state;
+      if(kind==='MARKDOWN'){
+        const source=z.string().max(64000).default('').parse(input.source);
+        const initial=new Y.Doc();try{initial.getText('markdown').insert(0,source);checkMarkdown(initial);state=Buffer.from(Y.encodeStateAsUpdate(initial));}finally{initial.destroy();}
+      }
+      return this.insert(c, ctx, project, name, state, kind);
     });
   }
   async insert(c, ctx, project, name, state, kind = "DOCUMENT") {
@@ -534,6 +554,7 @@ class Store {
       try {
         Y.applyUpdate(doc, bytes);
         if (d.kind === "BOARD") checkBoard(doc);
+        else if(d.kind==='MARKDOWN')checkMarkdown(doc);
         else await this.checkImages(c,ctx,id,doc);
         state = Buffer.from(Y.encodeStateAsUpdate(doc));
         if (state.length > 5 * 1024 * 1024) fail(413, "DOCUMENT_TOO_LARGE");
@@ -678,7 +699,8 @@ class Store {
           const encoded = Buffer.from(Y.encodeStateAsUpdate(doc));
           if (state.kind === "BOARD") {
             checkBoard(doc);
-          } else await this.checkImages(c,first.ctx,id,doc);
+          } else if(state.kind==='MARKDOWN')checkMarkdown(doc);
+          else await this.checkImages(c,first.ctx,id,doc);
           if (encoded.length > 5 * 1024 * 1024) fail(413, "DOCUMENT_TOO_LARGE");
           await c.query(
             `INSERT INTO collab_update(organization_id,document_id,update_id,seq,actor_id,checksum,bytes)

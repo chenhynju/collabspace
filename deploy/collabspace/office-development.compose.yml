@@ -1,0 +1,31 @@
+name: collabspace-office-dev
+services:
+  documentserver:
+    image: ${OFFICE_IMAGE:?pin the verified official image digest}
+    restart: unless-stopped
+    ports: ["127.0.0.1:3390:80"]
+    environment:
+      JWT_ENABLED: "true"
+      JWT_SECRET: ${OFFICE_JWT_SECRET:?required}
+      JWT_IN_BODY: "true"
+      # Isolated development only: signed callbacks reach the SSH-tunneled app.
+      ALLOW_PRIVATE_IP_ADDRESS: "true"
+      ALLOW_META_IP_ADDRESS: "false"
+    extra_hosts: ["host.docker.internal:host-gateway"]
+    volumes:
+      - office_data:/var/www/onlyoffice/Data
+      - office_cache:/var/lib/onlyoffice
+      - office_logs:/var/log/onlyoffice
+    mem_limit: 2600m
+    cpus: 1.5
+    pids_limit: 1024
+    healthcheck:
+      test: [CMD-SHELL, "curl -fsS http://localhost/healthcheck | grep -q true"]
+      interval: 15s
+      timeout: 5s
+      retries: 40
+      start_period: 120s
+volumes:
+  office_data:
+  office_cache:
+  office_logs:

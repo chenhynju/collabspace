@@ -2,6 +2,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import * as Y from "yjs";
 import type { DocumentProvider } from "@/lib/document-provider";
+import {from64,to64} from '@/lib/document-provider';
 import MermaidComposer from './MermaidComposer';
 
 const origin = "collabspace:mermaid:local";
@@ -13,53 +14,14 @@ export const examples = {
   状态图: "stateDiagram-v2\n  [*] --> Draft\n  Draft --> Review\n  Review --> Published\n  Review --> Draft",
   ER图: "erDiagram\n  ORGANIZATION ||--o{ DOCUMENT : owns\n  DOCUMENT ||--o{ COMMENT : contains",
 };
-let renderQueue: Promise<unknown> = Promise.resolve();
-let serial = 0;
-// All diagrams, including historical snapshots, go through one pinned official
-// renderer. Never attach untrusted SVG or bind Mermaid click handlers in the app.
-export function MermaidPreview({ source }: { source: string }) {
-  const [html, setHtml] = useState("");
-  const [error, setError] = useState("");
-  useEffect(() => {
-    let alive = true;
-    setHtml("");
-    setError("");
-    const timer = setTimeout(() => {
-      renderQueue = renderQueue.catch(() => {}).then(async () => {
-        if (!alive || !source.trim()) return;
-        // Configuration is application-owned. Source directives cannot relax it.
-        if (source.length > 32000 || /%%\s*\{|^\s*---\s*$|https?:|data:|javascript:|\/\/|\bimg\s*:|url\s*\(|!\[|<\/?[a-z!]/im.test(source)) {
-          if (alive) setError("源码超过限制，或包含禁用的配置指令、外部地址 / HTML。请只输入 Mermaid 图表语法。");
-          return;
-        }
-        const { default: mermaid } = await import("mermaid");
-        mermaid.initialize({ startOnLoad: false, securityLevel: "strict", htmlLabels: false,
-          maxTextSize: 32000, maxEdges: 500, suppressErrorRendering: true,
-          secure: ["securityLevel", "startOnLoad", "maxTextSize", "maxEdges", "htmlLabels", "secure"],
-        });
-        const host = document.createElement("div");
-        host.style.cssText = "position:fixed;left:-100000px;top:0;width:1200px;visibility:hidden";
-        document.body.appendChild(host);
-        try {
-          await mermaid.parse(source);
-          const { svg } = await mermaid.render(`collabMermaid${++serial}`, source, host);
-          if (alive) setHtml(`<!doctype html><html><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; font-src data:; base-uri 'none'; form-action 'none'"><style>body{margin:16px;font-family:system-ui}svg{max-width:100%;height:auto}a{pointer-events:none}</style></head><body>${svg}</body></html>`);
-        } catch (e) {
-          if (alive) { setHtml(""); setError(e instanceof Error ? e.message.slice(0, 1000) : "图表语法无法解析"); }
-        } finally { host.remove(); }
-      }).catch(() => { if (alive) setError("图表渲染器加载失败，请重试或重新打开页面。"); });
-    }, 350);
-    return () => { alive = false; clearTimeout(timer); };
-  }, [source]);
-  return <div className="min-w-0 flex-1 rounded border bg-white p-2" aria-label="Mermaid 图形预览">
-    {error ? <pre role="alert" className="whitespace-pre-wrap break-words p-4 text-sm text-red-700">{error}</pre> :
-      html ? <iframe title="Mermaid 图表" sandbox="" referrerPolicy="no-referrer" srcDoc={html} className="h-[640px] w-full border-0" /> :
-      <p className="p-6 text-sm text-slate-500">{source.trim() ? "正在渲染 Mermaid…" : "输入 Mermaid 源码或选择模板，即可生成图表。"}</p>}
-  </div>;
-}
+import {MermaidPreview} from './MermaidPreview';
+export {MermaidPreview} from './MermaidPreview';
+import {MarkdownPreview} from '../documents/MarkdownPreview';
 
-export default function MermaidWorkspace({ provider }: { provider: DocumentProvider }) {
-  const text = provider.doc.getText("mermaid");
+export default function MermaidWorkspace({ provider, format = "mermaid",onSelection,fileName }: { provider: DocumentProvider;format?:"mermaid"|"markdown";onSelection?:(value:any)=>void;fileName?:string }) {
+  const markdown=format==='markdown';
+  const limit=markdown?64000:32000;
+  const text = provider.doc.getText(format);
   const [source, setSource] = useState(text.toString());
   const [view, setView] = useState<"split" | "source" | "graph">("split");
   const [imeDraft, setImeDraft] = useState("");
@@ -99,7 +61,7 @@ export default function MermaidWorkspace({ provider }: { provider: DocumentProvi
     return () => { provider.doc.off("beforeTransaction",before); text.unobserve(update); undo.current?.destroy(); };
   }, [text, provider.doc]);
   const edit = (next: string) => {
-    if (!provider.writable || next.length > 32000) return;
+    if (!provider.writable || next.length > limit) return;
     // A fresh native input already supplies its current caret. A remote range
     // queued before this local input must not be restored over the new keystroke.
     restoredSelection.current = undefined;
@@ -118,24 +80,26 @@ export default function MermaidWorkspace({ provider }: { provider: DocumentProvi
     }, origin);
     baseline.current = text.toString(); setSource(text.toString());
   };
-  return <section aria-label="Mermaid 工作区" className="rounded border bg-slate-50 p-3">
+  return <section aria-label={markdown?"Markdown 工作区":"Mermaid 工作区"} className="rounded border bg-slate-50 p-3">
     <div className="mb-3 flex flex-wrap items-center gap-2">
-      <strong className="mr-2">Mermaid 图表</strong>
+      <strong className="mr-2">{markdown?"Markdown 文档":"Mermaid 图表"}</strong>
       {([ ["graph", "图形视图"], ["source", "源码视图"], ["split", "分屏视图"] ] as const).map(([key,label]) =>
         <button key={key} aria-pressed={view === key} onClick={() => setView(key)} className={`rounded border px-3 py-1 text-sm ${view === key ? "bg-blue-600 text-white" : "bg-white"}`}>{label}</button>)}
       <button disabled={!provider.writable || !undo.current?.canUndo()} onClick={() => undo.current?.undo()} className="rounded border px-2 py-1 disabled:opacity-40">撤销源码</button>
       <button disabled={!provider.writable || !undo.current?.canRedo()} onClick={() => undo.current?.redo()} className="rounded border px-2 py-1 disabled:opacity-40">重做源码</button>
       <button className="rounded border px-2 py-1" onClick={() => {
         const url = URL.createObjectURL(new Blob([source], {type:"text/plain;charset=utf-8"}));
-        const a = document.createElement("a"); a.href=url; a.download="collabspace-diagram.mmd"; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
-      }}>下载 .mmd</button>
+        const a = document.createElement("a"); a.href=url; a.download=markdown?(fileName?.replace(/[\\/]/g,'_').replace(/\.md$/i,'')||'collabspace-document')+'.md':"collabspace-diagram.mmd"; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }}>{markdown?"下载 .md":"下载 .mmd"}</button>
     </div>
-    {!source && provider.writable && <div className="mb-3 flex flex-wrap gap-2">{Object.entries(examples).map(([name,value]) =>
+    {!markdown && !source && provider.writable && <div className="mb-3 flex flex-wrap gap-2">{Object.entries(examples).map(([name,value]) =>
       <button key={name} className="rounded border bg-white px-3 py-1 text-sm" onClick={() => { if (!text.length) edit(value); }}>{name}模板</button>)}</div>}
-    <p className="mb-3 text-xs text-slate-600">Mermaid 源码是图表的唯一内容标准，自动同步并保存。可拖入流程图元、拖动节点建立关系；语法错误也会保存草稿并显示诊断。</p>
-    <MermaidComposer source={source} writable={provider.writable} commit={(before,after)=>{if(text.toString()!==before)throw Error('收到远端修改，请基于最新图表重试。');edit(after);}} />
+    <p className="mb-3 text-xs text-slate-600">{markdown?'原生 Markdown 源码为内容标准，自动协作保存；支持GFM与Mermaid代码块，外部图片和原始HTML不执行。':'Mermaid 源码是图表的唯一内容标准，自动同步并保存。可拖入流程图元、拖动节点建立关系；语法错误也会保存草稿并显示诊断。'}</p>
+    {!markdown && <MermaidComposer source={source} writable={provider.writable} commit={(before,after)=>{if(text.toString()!==before)throw Error('收到远端修改，请基于最新图表重试。');edit(after);}} />}
     <div className="flex flex-col gap-3 lg:flex-row">
-      {view !== "graph" && <textarea ref={editor} aria-label="协作 Mermaid 源码" spellCheck={false} readOnly={!provider.writable} maxLength={32000} value={source}
+      {view !== "graph" && <textarea ref={editor} aria-label={markdown?"协作 Markdown 源码":"协作 Mermaid 源码"} spellCheck={false} readOnly={!provider.writable} maxLength={limit} value={source}
+        onSelect={e=>{const el=e.currentTarget,a=to64(Y.encodeRelativePosition(Y.createRelativePositionFromTypeIndex(text,el.selectionStart))),b=to64(Y.encodeRelativePosition(Y.createRelativePositionFromTypeIndex(text,el.selectionEnd)));provider.selection({anchor:a,head:b});onSelection?.(el.selectionStart===el.selectionEnd?null:{quote:text.toString().slice(el.selectionStart,el.selectionEnd).slice(0,1000),anchor:{start:a,end:b}});}}
+        onBlur={()=>provider.selection(null)}
         onCompositionStart={() => { composing.current = true; }}
         onCompositionEnd={e => { composing.current = false; const value=e.currentTarget.value; if (pendingRemote.current) { pendingRemote.current=false; compositionConflict.current=value; setImeDraft(value); baseline.current=text.toString(); setSource(text.toString()); } else edit(value); }}
         onChange={e => {
@@ -147,13 +111,14 @@ export default function MermaidWorkspace({ provider }: { provider: DocumentProvi
           if (composing.current) setSource(value); else edit(value);
         }}
         className="min-h-[640px] min-w-0 flex-1 rounded border p-4 font-mono text-sm" />}
-      {view !== "source" && <MermaidPreview source={source} />}
+      {view !== "source" && (markdown?<MarkdownPreview source={source}/>:<MermaidPreview source={source} />)}
     </div>
+    {markdown&&<div aria-label="协作者源码位置" className="my-2 flex flex-wrap gap-2 text-xs text-slate-500">{provider.members.filter(m=>m.selection).map(m=>{try{const at=Y.createAbsolutePositionFromRelativePosition(Y.decodeRelativePosition(from64(m.selection!.anchor)),provider.doc);if(!at||at.type!==text)return null;const before=source.slice(0,at.index),line=before.split('\n').length,column=at.index-before.lastIndexOf('\n');return <span key={m.sessionId}>{m.name} · {line}行{column}列</span>;}catch{return null;}})}</div>}
     {imeDraft && <div role="alert" className="mt-3 rounded border border-amber-400 bg-amber-50 p-3 text-sm">
       输入法输入期间收到远端修改。已保留你的完整输入草稿，请复制需要的文字合并到上方最新源码。
       <textarea aria-label="输入法待合并草稿" readOnly value={imeDraft} className="mt-2 h-32 w-full border p-2 font-mono" />
       <button className="mt-2 underline" onClick={() => setImeDraft("")}>已处理，关闭草稿</button>
     </div>}
-    <p className="mt-2 text-xs text-slate-500">{source.length} / 32000 字符 · {provider.writable ? "可编辑" : "只读"} · 禁用源码配置指令和外部交互</p>
+    <p className="mt-2 text-xs text-slate-500">{source.length} / {limit} 字符 · {provider.writable ? "可编辑" : "只读"} · 禁用源码配置指令和外部交互</p>
   </section>;
 }

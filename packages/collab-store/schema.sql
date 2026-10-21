@@ -11,6 +11,8 @@ CREATE TABLE IF NOT EXISTS collab_document (
 );
 CREATE INDEX IF NOT EXISTS collab_document_project ON collab_document(organization_id,project_id,updated_at DESC);
 ALTER TABLE collab_document ADD COLUMN IF NOT EXISTS kind text NOT NULL DEFAULT 'DOCUMENT' CHECK(kind IN ('DOCUMENT','BOARD'));
+ALTER TABLE collab_document DROP CONSTRAINT IF EXISTS collab_document_kind_check;
+ALTER TABLE collab_document ADD CONSTRAINT collab_document_kind_check CHECK(kind IN ('DOCUMENT','BOARD','MARKDOWN'));
 CREATE TABLE IF NOT EXISTS collab_grant (
  organization_id text NOT NULL, document_id text NOT NULL, user_id text NOT NULL REFERENCES sys_user(id),
  role text NOT NULL CHECK(role IN ('OWNER','EDITOR','COMMENTER','VIEWER')),

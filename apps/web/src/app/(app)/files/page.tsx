@@ -6,6 +6,7 @@ import {
 } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
+import Link from 'next/link';
 
 function fmtSize(big: string) {
   const n = Number(big);
@@ -17,18 +18,23 @@ function fmtSize(big: string) {
 export default function FilesGlobalPage() {
   const hasPerm = useAuthStore((s) => s.hasPerm);
   const [list, setList] = useState<any[]>([]);
+  const [markdown,setMarkdown]=useState<any[]>([]);
+  const org=useAuthStore(s=>s.currentOrgId);
   const [shareFor, setShareFor] = useState<any | null>(null);
   const [shareUrl, setShareUrl] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
-    const { data } = await api.get('/files');
-    setList(data);
-  }, []);
+    const { data } = await api.get('/files',{headers:{'x-organization-id':org}});
+    if(useAuthStore.getState().currentOrgId===org)setList(data);
+  }, [org]);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    let active=true;setList([]);setMarkdown([]);setShareFor(null);
+    void refresh().catch(()=>{if(active)setError('文件加载失败，请检查权限或网络。');});
+    void api.get('/documents/mine',{headers:{'x-organization-id':org}}).then(r=>{if(active)setMarkdown(r.data);}).catch(()=>{});
+    return ()=>{active=false;};
+  }, [refresh,org]);
 
   const download = async (f: any) => {
     const res = await api.get(`/files/${f.id}/download`, { responseType: 'blob' });
@@ -52,6 +58,7 @@ export default function FilesGlobalPage() {
   return (
     <div className="p-6">
       <PageHeader title="文件" description="组织全部交付文件，上传入口在项目详情页" />
+      {markdown.length>0&&<Card><h2 className="p-4 font-semibold">协作 Markdown 文件</h2><div className="divide-y">{markdown.map(d=><Link key={d.id} href={`/projects/${d.project_id}/documents/${d.id}`} className="flex justify-between p-4 hover:bg-slate-50"><span>{d.title}</span><span className="text-sm text-slate-500">{d.role} · 实时编辑 →</span></Link>)}</div></Card>}
 
       {list.length === 0 ? (
         <Empty text="暂无文件" />
