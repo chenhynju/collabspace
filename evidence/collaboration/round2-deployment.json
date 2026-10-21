@@ -1,0 +1,16 @@
+{
+  "source": "07bbfb1f7fd17776322fdeb2c8674a0ae174a0ff",
+  "backend": "r20261021-06",
+  "deployment": "dpl_4dyZDf1bKk1whkm8aHwtrxBHzD8F",
+  "url": "https://collabspace-733j89kus-purelamp.vercel.app",
+  "alias": "https://collabspace.purelamp.uk",
+  "aliasConfirmed": true,
+  "backup": "/opt/collabspace/shared/before-r20261021-06.dump",
+  "backupCatalogueLines": 432,
+  "fullRestore": "NOT_RUN",
+  "databaseMigration": "NONE",
+  "oauthProviders": {
+    "google": false,
+    "github": false
+  }
+}
