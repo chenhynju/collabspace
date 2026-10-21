@@ -8,9 +8,11 @@ import {
   layoutMindmap,
   parseMermaid,
   exportMermaid,
+  shapeCatalog,
   type Member,
 } from "@collabspace/protocol";
 import { DocumentProvider, from64 } from "@/lib/document-provider";
+import ShapeGlyph from "./ShapeGlyph";
 
 type Item = BoardShape & { id: string };
 const tools = [
@@ -166,7 +168,14 @@ export function BoardDrawing({
             onPointerDown={(e) => onSelect?.(e, item)}
             onDoubleClick={() => onEdit?.(item)}
           >
-            {item.type === "diamond" ? (
+            {shapeCatalog.some((s) => s.type === item.type) ? (
+              <>
+                <rect x={x} y={y} width={w} height={h} fill="transparent" />
+                <svg x={x} y={y} width={w} height={h} overflow="visible">
+                  <ShapeGlyph type={item.type} fill={item.fill} />
+                </svg>
+              </>
+            ) : item.type === "diamond" ? (
               <polygon
                 points={`${x + w / 2},${y} ${x + w},${y + h / 2} ${x + w / 2},${y + h} ${x},${y + h / 2}`}
                 fill={item.fill}
@@ -206,10 +215,44 @@ export function BoardDrawing({
               />
             )}
             <foreignObject
-              x={x + (item.type === "diamond" ? w * 0.23 : 10)}
-              y={y + (item.type === "diamond" ? h * 0.23 : 8)}
-              width={Math.max(10, item.type === "diamond" ? w * 0.54 : w - 20)}
-              height={Math.max(10, item.type === "diamond" ? h * 0.54 : h - 16)}
+              x={
+                x +
+                (["diamond", "triangle", "parallelogram"].includes(item.type)
+                  ? w * 0.23
+                  : 10)
+              }
+              y={
+                y +
+                (item.type === "actor"
+                  ? h * 0.84
+                  : item.type === "triangle"
+                    ? h * 0.48
+                    : item.type === "diamond"
+                      ? h * 0.23
+                      : item.type === "database" || item.type === "cloud"
+                        ? h * 0.32
+                        : item.type === "server"
+                          ? h * 0.37
+                          : 8)
+              }
+              width={Math.max(
+                10,
+                ["diamond", "triangle", "parallelogram"].includes(item.type)
+                  ? w * 0.54
+                  : w - 20,
+              )}
+              height={Math.max(
+                10,
+                item.type === "actor"
+                  ? h * 0.16
+                  : item.type === "server"
+                    ? h * 0.25
+                    : item.type === "database" || item.type === "cloud"
+                      ? h * 0.45
+                      : ["diamond", "triangle"].includes(item.type)
+                        ? h * 0.45
+                        : h - 16,
+              )}
               pointerEvents="none"
             >
               <div
@@ -352,7 +395,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       undo.current?.destroy();
     };
   }, [provider, shapes]);
-  const point = (e: React.PointerEvent) => {
+  const point = (e: { clientX: number; clientY: number }) => {
     const p = svg.current!.createSVGPoint();
     p.x = e.clientX;
     p.y = e.clientY;
@@ -401,11 +444,12 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       type,
       geometry: { x: p.x, y: p.y, w: 180, h: type === "mind" ? 60 : 120 },
       text:
-        type === "mind"
+        shapeCatalog.find((s) => s.type === type)?.label ||
+        (type === "mind"
           ? "中心主题"
           : type === "note"
             ? "双击选中后，在属性中编辑便签"
-            : "",
+            : ""),
       fill: type === "note" ? "#fef3c7" : "#dbeafe",
       order: Date.now(),
       ...extra,
@@ -785,6 +829,43 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           导出本地白板草稿
         </button>
       </div>
+      <details open className="border-b bg-white px-3 py-2">
+        <summary className="cursor-pointer text-sm font-medium">
+          图元库 · 拖到画布，或点击后放置
+        </summary>
+        <div
+          className="mt-2 grid grid-cols-4 gap-2 lg:grid-cols-8"
+          aria-label="图元库"
+        >
+          {shapeCatalog.map((s) => (
+            <button
+              key={s.type}
+              draggable={provider.writable}
+              disabled={!provider.writable}
+              aria-label={`图元 ${s.label}`}
+              aria-pressed={tool === s.type}
+              onDragStart={(e) => {
+                if (!provider.writable) {
+                  e.preventDefault();
+                  return;
+                }
+                e.dataTransfer.setData(
+                  "application/x-collabspace-shape",
+                  s.type,
+                );
+                e.dataTransfer.effectAllowed = "copy";
+              }}
+              onClick={() => setTool(s.type)}
+              className={`rounded border p-2 text-xs disabled:opacity-40 ${tool === s.type ? "border-blue-600 bg-blue-50" : "hover:bg-slate-50"}`}
+            >
+              <span className="mx-auto mb-1 block h-9 w-14 pointer-events-none">
+                <ShapeGlyph type={s.type} />
+              </span>
+              {s.label}
+            </button>
+          ))}
+        </div>
+      </details>
       <p className="px-3 py-2 text-xs text-slate-500">
         {tool === "connect"
           ? connectFrom
@@ -807,7 +888,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
             <p className="text-xs text-slate-500">
               支持基础 flowchart LR/TD/TB：矩形、菱形、圆形、箭头及标签；mindmap
               使用空格缩进。不支持 subgraph、样式指令、链接或
-              HTML。导入追加图形，不覆盖现有内容；导出保留文字和拓扑，布局与配色不保留。
+              HTML。导入追加图形，不覆盖现有内容；导出保留文字和拓扑，图元类型、布局与配色可能简化。
             </p>
             <textarea
               aria-label="Mermaid 源码输入"
@@ -955,6 +1036,24 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
         viewBox={`${view.x} ${view.y} ${1200 / view.zoom} ${800 / view.zoom}`}
         className="min-h-[480px] w-full touch-none bg-slate-50"
         onPointerDown={down}
+        onDragOver={(e) => {
+          if (
+            provider.writable &&
+            e.dataTransfer.types.includes("application/x-collabspace-shape")
+          ) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "copy";
+          }
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          if (!provider.writable) return;
+          const type = e.dataTransfer.getData(
+            "application/x-collabspace-shape",
+          );
+          const entry = shapeCatalog.find((s) => s.type === type);
+          if (entry) create(entry.type, point(e));
+        }}
         onPointerMove={move}
         onPointerUp={finish}
         onPointerCancel={() => {
@@ -1042,6 +1141,88 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           className="flex flex-wrap gap-3 border-t p-3"
           aria-label="图形属性"
         >
+          {!active.binding && (
+            <>
+              {active.type !== "mind" && (
+                <label className="text-xs">
+                  图元类型
+                  <select
+                    aria-label="图形类型"
+                    value={active.type}
+                    disabled={!provider.writable}
+                    onChange={(e) =>
+                      change(active.id, {
+                        type: e.target.value as BoardShape["type"],
+                      })
+                    }
+                    className="mt-1 block rounded border p-2"
+                  >
+                    <option value="rect">矩形</option>
+                    <option value="ellipse">椭圆</option>
+                    <option value="diamond">判断菱形</option>
+                    <option value="note">便签</option>
+                    <option value="text">文字</option>
+                    <option value="arrow">箭头</option>
+                    {shapeCatalog.map((s) => (
+                      <option key={s.type} value={s.type}>
+                        {s.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              {(["x", "y", "w", "h"] as const).map((key, i) => (
+                <label key={key} className="text-xs">
+                  {["X", "Y", "宽度", "高度"][i]}
+                  <input
+                    key={`${active.id}:${key}:${active.geometry[key]}`}
+                    type="number"
+                    aria-label={`图形${["X", "Y", "宽度", "高度"][i]}`}
+                    defaultValue={active.geometry[key]}
+                    min={key === "x" || key === "y" ? -10000 : 20}
+                    max={key === "x" || key === "y" ? 10000 : 2000}
+                    disabled={!provider.writable}
+                    onBlur={(e) => {
+                      const value = e.currentTarget.valueAsNumber;
+                      if (value !== active.geometry[key])
+                        change(active.id, {
+                          geometry: { ...active.geometry, [key]: value },
+                        });
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") e.currentTarget.blur();
+                    }}
+                    className="mt-1 block w-20 rounded border p-2"
+                  />
+                </label>
+              ))}
+              <button
+                disabled={!provider.writable}
+                className="text-sm text-blue-700 disabled:opacity-40"
+                onClick={() => {
+                  const { id, ...copy } = active;
+                  create(
+                    active.type,
+                    {
+                      x: Math.min(10000, active.geometry.x + 40),
+                      y: Math.min(10000, active.geometry.y + 40),
+                    },
+                    {
+                      ...copy,
+                      geometry: {
+                        ...active.geometry,
+                        x: Math.min(10000, active.geometry.x + 40),
+                        y: Math.min(10000, active.geometry.y + 40),
+                      },
+                      order: Date.now(),
+                    },
+                  );
+                }}
+              >
+                复制图形
+              </button>
+            </>
+          )}
           {active.type === "mind" && (
             <div className="flex gap-2">
               <button disabled={!provider.writable} onClick={() => branch()}>

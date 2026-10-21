@@ -21,7 +21,15 @@ export type BoardShape = {
     | "arrow"
     | "diamond"
     | "mind"
-    | "connector";
+    | "connector"
+    | "document"
+    | "parallelogram"
+    | "hexagon"
+    | "triangle"
+    | "database"
+    | "server"
+    | "cloud"
+    | "actor";
   geometry: { x: number; y: number; w: number; h: number };
   text: string;
   fill: "#fef3c7" | "#dbeafe" | "#dcfce7" | "#fce7f3" | "#ffffff";
@@ -30,6 +38,11 @@ export type BoardShape = {
   binding?: { from: string; to: string; style: "straight" | "elbow" | "curve" };
 };
 export const boardShape: z.ZodTypeAny;
+export const shapeCatalog: readonly {
+  type: BoardShape["type"];
+  label: string;
+  group: string;
+}[];
 export function validateBoard(shapes: Record<string, unknown>): void;
 export function connectorPath(
   a: BoardShape["geometry"] & { type?: BoardShape["type"] },

@@ -27,3 +27,13 @@ DG04: existing document/board/version/tenant/ACK/revocation business journeys re
 ## Deliberate boundaries
 
 This is not full draw.io/Visio or full Mermaid compatibility. No .drawio/.vsdx import, custom waypoints/ports, obstacle-avoiding routing, layers, swimlanes, BPMN/UML libraries, arbitrary grouping, rich HTML labels or collapsible/reparentable mind branches yet. Basic layout may overlap on very large/deep diagrams; maximum 500 objects and original coordinate limits remain. No new capacity or multi-instance claim.
+
+## 2026-10-21 图元库与拖动编辑（DG05）
+
+新增 8 类有界 SVG 图元：文档、输入/输出、初始化、三角形、数据库、服务器、云服务、参与者。客户端图元库及服务端类型白名单共享 catalog 定义。支持原生 HTML 拖放到画布，也支持点击图元再点击画布；按当前平移/缩放矩阵换算落点，继续遵守可写权限及网格吸附。
+
+新图元沿用拖动位置、右下角缩放、文字和配色；补充 X/Y/宽/高数字编辑（失焦或 Enter 提交）、普通图元类型转换和单图元复制。mind/connector 不可通过普通类型下拉改成非法树/绑定对象；连接线几何仍由端点派生。一次几何编辑作为原子字段提交，复制保留属性但使用新 UUID，撤销/重做继续只跟踪本机 origin。
+
+复杂图元连接线目前以外接矩形作为锚点包络；矩形/椭圆/菱形保留已有轮廓计算，不宣称任意 SVG 轮廓的精确端口吸附。Mermaid 基础导出保留文字与拓扑，新图元外形会简化，界面已明确提示。没有新增外部 SVG/图片导入或任意脚本执行。
+
+DG05：两个编辑账号与只读账号；全部 8 类原生拖放、修改属性/位置/大小/类型、复制撤销重做，另一端实时可见，刷新后仍一致。真实非特权 PG 验证所有新类型通过版本恢复副本保存且 Viewer 不得写。保留已有图解、文档、权限、离线与持久 ACK 回归。
