@@ -33,6 +33,7 @@ test("whiteboard: discover, draw, concurrent accounts, cursors, undo, offline re
     );
     const p = await c.newPage();
     await p.goto(config.WEB_URL + path);
+    if (path.includes("/documents/")) await p.getByRole("button", { name: "自由画布", exact: true }).click();
     return p;
   }
   const saved = (p) =>
@@ -52,6 +53,7 @@ test("whiteboard: discover, draw, concurrent accounts, cursors, undo, offline re
     await a.getByLabel("新白板标题").fill(title);
     await a.getByRole("button", { name: "创建白板", exact: true }).click();
     await a.getByRole("heading", { name: title, exact: true }).click();
+    await a.getByRole("button", { name: "自由画布", exact: true }).click();
     await expect(a.getByTestId("whiteboard-canvas")).toBeVisible();
     await saved(a);
     const id = a.url().split("/").pop(),

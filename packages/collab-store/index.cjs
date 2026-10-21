@@ -36,13 +36,16 @@ function materialize(bytes) {
   return d;
 }
 function checkBoard(doc) {
-  if ([...doc.share.keys()].some((key) => key !== "shapes"))
+  if ([...doc.share.keys()].some((key) => !["shapes", "mermaid"].includes(key)))
     fail(400, "INVALID_BOARD");
   const shapes = doc.getMap("shapes");
   for (const shape of shapes.values())
     if (!(shape instanceof Y.Map)) fail(400, "INVALID_BOARD");
   try {
     validateBoard(shapes.toJSON());
+    const source = doc.getText("mermaid");
+    if (source.length > 32000 || source.toDelta().some(part =>
+      typeof part.insert !== "string" || part.attributes)) throw Error("INVALID_MERMAID_SOURCE");
   } catch {
     fail(400, "INVALID_BOARD");
   }
@@ -51,6 +54,7 @@ function copyContent(bytes, kind = "DOCUMENT") {
   const old = materialize(bytes),
     fresh = new Y.Doc();
   if (kind === "BOARD") {
+    fresh.getText("mermaid").insert(0, old.getText("mermaid").toString());
     for (const [id, shape] of old.getMap("shapes"))
       fresh.getMap("shapes").set(id, shape.clone());
   } else {

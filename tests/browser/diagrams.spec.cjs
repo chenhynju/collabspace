@@ -58,6 +58,7 @@ test("diagram workspace: bound connectors, mind branches, Mermaid preview/import
     await p.goto(
       `${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${doc.id}`,
     );
+    await p.getByRole("button", { name: "自由画布", exact: true }).click();
     await expect(p.getByTestId("whiteboard-canvas")).toBeVisible();
     return p;
   };

@@ -1,5 +1,7 @@
 # CollabSpace — 详细设计 v1
 
+2026-10-21 最新决定：Mermaid 是白板图表的主要执行标准，源码为权威，支持图形 / 源码 / 分屏视图，面向后续受控 AI Agent 修改。此决定覆盖旧的基础语法交换范围；模型、迁移兼容、安全及 MM01–MM05 见 [MERMAID.md](MERMAID.md)。
+
 2026-10-21 用户追加图解工作区：参考 draw.io / Visio 和 Mermaid，支持流程图、绑定连接线、思维导图及基础源码交换。具体模型、交互和 DG01–DG04 见 [DIAGRAMS.md](DIAGRAMS.md)，不宣称完整格式或语法兼容；仍复用原协作、权限和离线体系。
 
 2026-10-21 07:56 续做范围：实时协作为主线，多租户/资源权限是安全支撑。Toolkit 的成熟能力按缺口采用，避免替换现有组织与认证模型。订阅计费优先复用其他项目（已定位 D:/appspace/billandcharge）；OAuth/SSO 保留为近期后续路线，不作为本轮上线条件。运行门禁与评估证据见 ../../evidence/collaboration/CONTINUATION-2026-10-21.md。

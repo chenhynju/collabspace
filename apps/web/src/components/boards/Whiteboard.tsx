@@ -13,6 +13,7 @@ import {
 } from "@collabspace/protocol";
 import { DocumentProvider, from64 } from "@/lib/document-provider";
 import ShapeGlyph from "./ShapeGlyph";
+import MermaidWorkspace, { MermaidPreview } from "./MermaidWorkspace";
 
 type Item = BoardShape & { id: string };
 const tools = [
@@ -301,6 +302,11 @@ export function BoardDrawing({
   );
 }
 export function BoardPreview({ state }: { state: string }) {
+  const [mermaidSource] = useState(() => {
+    const doc = new Y.Doc();
+    try { Y.applyUpdate(doc, from64(state)); return doc.getText("mermaid").toString(); }
+    finally { doc.destroy(); }
+  });
   const [items] = useState(() => {
     const d = new Y.Doc();
     try {
@@ -321,7 +327,7 @@ export function BoardPreview({ state }: { state: string }) {
       Math.max(600, ...items.map((s) => s.geometry.y + s.geometry.h)) -
       minY +
       30;
-  return (
+  return mermaidSource ? <MermaidPreview source={mermaidSource} /> : (
     <svg
       aria-label="白板历史只读预览"
       viewBox={`${minX} ${minY} ${w} ${h}`}
@@ -1303,6 +1309,17 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     </section>
   );
 }
+function BoardWorkspace({ provider }: { provider: DocumentProvider }) {
+  const [mode, setMode] = useState(() => provider.doc.getText("mermaid").length || !provider.doc.getMap("shapes").size ? "mermaid" : "canvas");
+  return <div>
+    <div className="mb-3 flex items-center gap-3">
+      <button aria-pressed={mode === "mermaid"} className="rounded border px-3 py-2" onClick={() => setMode("mermaid")}>Mermaid 图表工作区</button>
+      <button aria-pressed={mode === "canvas"} className="rounded border px-3 py-2" onClick={() => setMode("canvas")}>自由画布</button>
+      <span className="text-xs text-slate-500">图表默认使用 Mermaid；自由画布内容独立保留。</span>
+    </div>
+    {mode === "mermaid" ? <MermaidWorkspace provider={provider} /> : <Canvas provider={provider} />}
+  </div>;
+}
 export default function Whiteboard({
   docId,
   org,
@@ -1345,7 +1362,7 @@ export default function Whiteboard({
   return error ? (
     <p role="alert">{error}</p>
   ) : provider?.ready ? (
-    <Canvas provider={provider} />
+    <BoardWorkspace provider={provider} />
   ) : (
     <p className="p-6">正在读取白板…</p>
   );

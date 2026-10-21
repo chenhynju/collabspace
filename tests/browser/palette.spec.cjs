@@ -58,6 +58,7 @@ test("shape library: native drag-drop, edit/move/resize/type, duplicate/undo and
     await p.goto(
       `${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${d.id}`,
     );
+    await p.getByRole("button", { name: "自由画布", exact: true }).click();
     await expect(p.getByTestId("whiteboard-canvas")).toBeVisible({
       timeout: 60000,
     });

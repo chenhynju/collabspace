@@ -1,5 +1,7 @@
 # Diagram workspace — flowcharts and mind maps
 
+2026-10-21 最新决定：白板图表以 Mermaid 源码为主要执行标准；本文件的基础导入/导出说明仅适用于保留的自由画布。官方渲染、共享源码、双视图及后续图形回写边界以 [MERMAID.md](MERMAID.md) 为准。
+
 The collaborative whiteboard is being extended into an editable diagram workspace. References: [draw.io connectors](https://www.drawio.com/docs/manual/connectors/), [Mermaid flowcharts](https://mermaid.js.org/syntax/flowchart.html), [Mermaid mind maps](https://mermaid.js.org/syntax/mindmap.html). These are interaction and interchange references, not a claim of file-format or feature parity.
 
 ## Product contract
