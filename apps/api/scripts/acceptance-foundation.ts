@@ -32,7 +32,17 @@ async function main() {
   const g = group.body.id;
   check('cross-tenant membership rejected', (await call(`/groups/${g}/members`,owner,'POST',{ membershipId: foreignRow.id, role:'MEMBER' })).status === 400);
   check('non-manager cannot modify group', (await call(`/groups/${g}/members`,member,'POST',{ membershipId: memberRow.id, role:'MANAGER' })).status === 403);
-  const created = await call('/projects',owner,'POST',{ name:`Restricted ${suffix}`, workspaceId:workspace.id }); assert.equal(created.status,201);
+  // Repeated local runs retain synthetic projects. This checks resource ACLs,
+  // not plan quotas (covered by acceptance.ts); restore the quota immediately.
+  const entitlement = await db.entitlement.findUniqueOrThrow({where:{organizationId:org.id}});
+  let created: Awaited<ReturnType<typeof call>>;
+  try {
+    await db.entitlement.update({where:{organizationId:org.id},data:{maxProjects:-1}});
+    created = await call('/projects',owner,'POST',{ name:`Restricted ${suffix}`, workspaceId:workspace.id });
+  } finally {
+    await db.entitlement.update({where:{organizationId:org.id},data:{maxProjects:entitlement.maxProjects}});
+  }
+  assert.equal(created.status,201);
   const projectId = created.body.id;
   assert.equal((await call(`/groups/resources/projects/${projectId}`,owner,'PATCH',{ visibility:'RESTRICTED' })).status,200);
   check('restricted project hidden in list', !(await call('/projects',member)).body.some((p:any)=>p.id===projectId));
