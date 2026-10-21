@@ -29,7 +29,7 @@
     "quiet": false,
     "projects": [
       {
-        "outputDir": "D:/appspace/collaboration/.test-runs/richtext-latest-browser",
+        "outputDir": "D:/appspace/collaboration/.test-runs/richtext-schema-browser",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
@@ -54,6 +54,48 @@
   },
   "suites": [
     {
+      "title": "documents.spec.cjs",
+      "file": "documents.spec.cjs",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "three users collaborate, reconnect offline edits, comment, version and recover a private copy",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 300000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "",
+              "projectName": "",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 42912,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-21T09:40:06.661Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "6dce67fb81c2d874da2f-4e82287b195a97cd1ae4",
+          "file": "documents.spec.cjs",
+          "line": 4,
+          "column": 1
+        }
+      ]
+    },
+    {
       "title": "richtext.spec.cjs",
       "file": "richtext.spec.cjs",
       "column": 0,
@@ -75,12 +117,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 31656,
+                  "duration": 21342,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-21T09:18:28.087Z",
+                  "startTime": "2026-10-21T09:40:50.714Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -98,9 +140,9 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-10-21T09:18:22.958Z",
-    "duration": 39671.838,
-    "expected": 1,
+    "startTime": "2026-10-21T09:40:03.920Z",
+    "duration": 69446.708,
+    "expected": 2,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

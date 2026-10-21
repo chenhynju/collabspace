@@ -480,7 +480,7 @@ class Store {
         [hash(secret), ctx.org, id, ctx.user],
       );
       if (!r.rowCount) fail(401, "INVALID_TICKET");
-      return { role: d.role, name: d.userName };
+      return { role: d.role, name: d.userName, kind:d.kind };
     });
   }
   async sync(ctx, id, vector) {

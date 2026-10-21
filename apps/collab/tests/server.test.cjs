@@ -36,6 +36,21 @@ function inbox(ws) {
       waiters.push(w);
     });
 }
+test("document schema handshake blocks legacy normalization clients; legacy boards stay compatible",{skip:!process.env.COLLAB_TEST_DATABASE_URL},async()=>{
+ const store=new Store(process.env.COLLAB_TEST_DATABASE_URL),ctx={org:process.env.TEST_ORG,user:process.env.TEST_OWNER};
+ const app=start({store,port:0,origins:["http://localhost:3010"]});await once(app.server,"listening");
+ try {
+  for(const kind of ["DOCUMENT","BOARD"]){
+   const doc=await store.create(ctx,process.env.TEST_PROJECT,{title:"Schema handshake",kind}),ticket=await store.ticket(ctx,doc.id);
+   const ws=new WebSocket(`ws://127.0.0.1:${app.server.address().port}/collab`,{origin:"http://localhost:3010"}),next=inbox(ws);
+   await once(ws,"open");
+   ws.send(JSON.stringify({v:1,type:"auth",org:ctx.org,user:ctx.user,docId:doc.id,ticket:ticket.ticket}));
+   if(kind==="DOCUMENT")assert.equal((await next("error")).code,"CLIENT_UPGRADE_REQUIRED");
+   else assert.equal((await next("authenticated")).role,"OWNER");
+   ws.close();
+  }
+ } finally {await app.close();}
+});
 test(
   "WebSocket: commit ACK, restart recovery, viewer attack, revoked connection",
   { skip: !process.env.COLLAB_TEST_DATABASE_URL },
@@ -68,6 +83,7 @@ test(
         JSON.stringify({
           v: 1,
           type: "auth",
+          docSchema: 2,
           org: who.org,
           user: who.user,
           docId: d.id,
@@ -188,6 +204,7 @@ test(
         JSON.stringify({
           v: 1,
           type: "auth",
+          docSchema: 2,
           org: ctx.org,
           user: ctx.user,
           docId: d.id,

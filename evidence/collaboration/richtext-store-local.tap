@@ -1,156 +1,163 @@
 TAP version 13
-# CollabSpace WS listening on 127.0.0.1:50612
-# CollabSpace WS listening on 127.0.0.1:50627
-# Subtest: WebSocket: commit ACK, restart recovery, viewer attack, revoked connection
-ok 1 - WebSocket: commit ACK, restart recovery, viewer attack, revoked connection
+# CollabSpace WS listening on 127.0.0.1:64734
+# Subtest: document schema handshake blocks legacy normalization clients; legacy boards stay compatible
+ok 1 - document schema handshake blocks legacy normalization clients; legacy boards stay compatible
   ---
-  duration_ms: 3585.843
+  duration_ms: 1216.9355
+  type: 'test'
+  ...
+# CollabSpace WS listening on 127.0.0.1:56216
+# CollabSpace WS listening on 127.0.0.1:57948
+# Subtest: WebSocket: commit ACK, restart recovery, viewer attack, revoked connection
+ok 2 - WebSocket: commit ACK, restart recovery, viewer attack, revoked connection
+  ---
+  duration_ms: 4925.3668
   type: 'test'
   ...
 # Subtest: hard-killed process retains ACKed update; deferred DB commit failure sends no ACK
-ok 2 - hard-killed process retains ACKed update; deferred DB commit failure sends no ACK
+ok 3 - hard-killed process retains ACKed update; deferred DB commit failure sends no ACK
   ---
-  duration_ms: 2592.2578
+  duration_ms: 6062.9009
   type: 'test'
   ...
 # Subtest: whiteboard concurrent properties converge; delete beats offline edits; undo excludes remote operations; copies have fresh lineage
-ok 3 - whiteboard concurrent properties converge; delete beats offline edits; undo excludes remote operations; copies have fresh lineage
+ok 4 - whiteboard concurrent properties converge; delete beats offline edits; undo excludes remote operations; copies have fresh lineage
   ---
-  duration_ms: 66.5619
+  duration_ms: 123.514
   type: 'test'
   ...
 # Subtest: whiteboard payload and presence reject unbounded values
-ok 4 - whiteboard payload and presence reject unbounded values
+ok 5 - whiteboard payload and presence reject unbounded values
   ---
-  duration_ms: 21.9983
+  duration_ms: 26.3547
   type: 'test'
   ...
 # Subtest: whiteboard real RLS storage preserves kind, rejects viewers and invalid shapes, and restores a private copy
-ok 5 - whiteboard real RLS storage preserves kind, rejects viewers and invalid shapes, and restores a private copy
+ok 6 - whiteboard real RLS storage preserves kind, rejects viewers and invalid shapes, and restores a private copy
   ---
-  duration_ms: 871.1489
+  duration_ms: 1400.7554
   type: 'test'
   ...
 # Subtest: concurrent, repeated and reordered Yjs updates converge semantically
-ok 6 - concurrent, repeated and reordered Yjs updates converge semantically
+ok 7 - concurrent, repeated and reordered Yjs updates converge semantically
   ---
-  duration_ms: 37.2211
+  duration_ms: 45.7529
   type: 'test'
   ...
 # Subtest: restoring rich text creates independent CRDT identities and content
-ok 7 - restoring rich text creates independent CRDT identities and content
+ok 8 - restoring rich text creates independent CRDT identities and content
   ---
-  duration_ms: 19.3532
+  duration_ms: 28.6067
   type: 'test'
   ...
 # Subtest: reject oversized and malformed update envelopes before decode
-ok 8 - reject oversized and malformed update envelopes before decode
+ok 9 - reject oversized and malformed update envelopes before decode
   ---
-  duration_ms: 6.018
+  duration_ms: 5.5401
   type: 'test'
   ...
 # Subtest: local undo preserves remote edits and relative anchors survive insertion
-ok 9 - local undo preserves remote edits and relative anchors survive insertion
+ok 10 - local undo preserves remote edits and relative anchors survive insertion
   ---
-  duration_ms: 14.0874
+  duration_ms: 16.4678
   type: 'test'
   ...
 # Subtest: mind maps lay out deterministically with parents to the left and siblings apart
-ok 10 - mind maps lay out deterministically with parents to the left and siblings apart
+ok 11 - mind maps lay out deterministically with parents to the left and siblings apart
   ---
-  duration_ms: 76.4821
+  duration_ms: 85.1611
   type: 'test'
   ...
 # Subtest: connectors follow live geometry and invalid graph references are rejected without blocking deletion
-ok 11 - connectors follow live geometry and invalid graph references are rejected without blocking deletion
+ok 12 - connectors follow live geometry and invalid graph references are rejected without blocking deletion
   ---
-  duration_ms: 6.8444
+  duration_ms: 13.5023
   type: 'test'
   ...
 # Subtest: bounded Mermaid flowchart and mindmap imports retain graph semantics through export
-ok 12 - bounded Mermaid flowchart and mindmap imports retain graph semantics through export
+ok 13 - bounded Mermaid flowchart and mindmap imports retain graph semantics through export
   ---
-  duration_ms: 29.387
+  duration_ms: 84.594
   type: 'test'
   ...
 # Subtest: diagram persistence uses the same real ACL/version boundary and rejects a cyclic graph without commit
-ok 13 - diagram persistence uses the same real ACL/version boundary and rejects a cyclic graph without commit
+ok 14 - diagram persistence uses the same real ACL/version boundary and rejects a cyclic graph without commit
   ---
-  duration_ms: 1653.8805
+  duration_ms: 2102.9813
   type: 'test'
   ...
 # Subtest: parallel uploads serialize document image count quota
-ok 14 - parallel uploads serialize document image count quota
+ok 15 - parallel uploads serialize document image count quota
   ---
-  duration_ms: 2074.8788
+  duration_ms: 3297.4229
   type: 'test'
   ...
 # Subtest: document images: real ACL, tenant RLS, forged reference rejection, immutable version and private recovery
-ok 15 - document images: real ACL, tenant RLS, forged reference rejection, immutable version and private recovery
+ok 16 - document images: real ACL, tenant RLS, forged reference rejection, immutable version and private recovery
   ---
-  duration_ms: 1213.501
+  duration_ms: 1620.7084
   type: 'test'
   ...
 # Subtest: runtime gate refuses privileged roles and incomplete forced RLS
-ok 16 - runtime gate refuses privileged roles and incomplete forced RLS
+ok 17 - runtime gate refuses privileged roles and incomplete forced RLS
   ---
-  duration_ms: 2275.7574
+  duration_ms: 2475.597
   type: 'test'
   ...
 # Subtest: group commit authorizes each actor, deduplicates receipts and rolls back every edit on commit failure
-ok 17 - group commit authorizes each actor, deduplicates receipts and rolls back every edit on commit failure
+ok 18 - group commit authorizes each actor, deduplicates receipts and rolls back every edit on commit failure
   ---
-  duration_ms: 1260.8437
+  duration_ms: 2099.6578
   type: 'test'
   ...
 # Subtest: real nonprivileged PostgreSQL: isolation, grants, durable retries, comments and history
-ok 18 - real nonprivileged PostgreSQL: isolation, grants, durable retries, comments and history
+ok 19 - real nonprivileged PostgreSQL: isolation, grants, durable retries, comments and history
   ---
-  duration_ms: 1029.7722
+  duration_ms: 2537.8675
   type: 'test'
   ...
 # Subtest: fan-out excludes restricted, suspended and revoked recipients; parent revocation fences queued writes
-ok 19 - fan-out excludes restricted, suspended and revoked recipients; parent revocation fences queued writes
+ok 20 - fan-out excludes restricted, suspended and revoked recipients; parent revocation fences queued writes
   ---
-  duration_ms: 1040.1262
+  duration_ms: 2255.4947
   type: 'test'
   ...
 # Subtest: same-position source insertions converge without dropping either atomic insertion
-ok 20 - same-position source insertions converge without dropping either atomic insertion
+ok 21 - same-position source insertions converge without dropping either atomic insertion
   ---
-  duration_ms: 32.5498
+  duration_ms: 36.9685
   type: 'test'
   ...
 # Subtest: Mermaid source merges concurrent text, excludes remote undo and survives fresh history copy
-ok 21 - Mermaid source merges concurrent text, excludes remote undo and survives fresh history copy
+ok 22 - Mermaid source merges concurrent text, excludes remote undo and survives fresh history copy
   ---
-  duration_ms: 18.8672
+  duration_ms: 21.8183
   type: 'test'
   ...
 # Subtest: real PG Mermaid source obeys ACL, bounds and immutable restore-copy
-ok 22 - real PG Mermaid source obeys ACL, bounds and immutable restore-copy
+ok 23 - real PG Mermaid source obeys ACL, bounds and immutable restore-copy
   ---
-  duration_ms: 1293.8598
+  duration_ms: 1734.1872
   type: 'test'
   ...
 # Subtest: catalog entries have distinct supported types and keep the bounded schema
-ok 23 - catalog entries have distinct supported types and keep the bounded schema
+ok 24 - catalog entries have distinct supported types and keep the bounded schema
   ---
-  duration_ms: 43.0132
+  duration_ms: 41.2322
   type: 'test'
   ...
 # Subtest: all catalog shapes persist and restore through the real board permission boundary
-ok 24 - all catalog shapes persist and restore through the real board permission boundary
+ok 25 - all catalog shapes persist and restore through the real board permission boundary
   ---
-  duration_ms: 948.422
+  duration_ms: 1093.7944
   type: 'test'
   ...
-1..24
-# tests 24
+1..25
+# tests 25
 # suites 0
-# pass 24
+# pass 25
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 7349.0274
+# duration_ms 14796.8825

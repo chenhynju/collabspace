@@ -146,6 +146,10 @@ function start({
             const a = auth.parse(data);
             const ctx = { org: a.org, user: a.user };
             const info = await store.consume(ctx, a.docId, a.ticket);
+            // Old ProseMirror schemas normalize unknown image nodes away. Do
+            // not let an old document client sync or submit destructive cleanup.
+            if(info.kind==="DOCUMENT" && a.docSchema!==2)
+              throw new StoreError(409,"CLIENT_UPGRADE_REQUIRED");
             const key = `${ctx.org}:${a.docId}`;
             let r = rooms.get(key);
             if (!r) {
@@ -211,6 +215,7 @@ function start({
                 ? "INVALID_FRAME"
                 : "DATABASE_UNAVAILABLE";
           send(s, { type: "error", code });
+          if(code==="CLIENT_UPGRADE_REQUIRED") s.close(4009,"Refresh page to update document editor");
           if ([401, 403, 404].includes(e.status))
             s.close(4003, "Access revoked");
         })

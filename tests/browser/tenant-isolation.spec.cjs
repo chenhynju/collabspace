@@ -65,6 +65,7 @@ test("two tenants reject foreign document HTTP access and forged WebSocket ident
   const legitimate = {
     v: 1,
     type: "auth",
+    docSchema: 2,
     org: config.TEST_ORG,
     user: ticket.user.id,
     docId: doc.id,

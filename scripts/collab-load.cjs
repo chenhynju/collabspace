@@ -77,6 +77,7 @@ async function scenario(name, documents, seconds) {
         JSON.stringify({
           v: 1,
           type: "auth",
+          docSchema: 2,
           docId: id,
           org: ctx.org,
           user: ctx.user,

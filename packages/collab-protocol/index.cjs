@@ -8,6 +8,7 @@ const auth = z
     org: z.string().min(1).max(100),
     user: z.string().min(1).max(100),
     docId: z.string().uuid(),
+    docSchema: z.literal(2).optional(),
     ticket: z.string().regex(/^[a-f0-9]{64}$/),
   })
   .strict();

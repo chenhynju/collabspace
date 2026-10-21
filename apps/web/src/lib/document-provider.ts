@@ -190,6 +190,7 @@ export class DocumentProvider {
       ws.onopen = () =>
         this.send({
           type: "auth",
+          docSchema: 2,
           org: this.org,
           user: this.user,
           docId: this.docId,
@@ -249,16 +250,19 @@ export class DocumentProvider {
         if (m.type === "error") {
           this.synced = false;
           this.setStatus(
-            m.code === "READ_ONLY"
+            m.code === "CLIENT_UPGRADE_REQUIRED" ? "编辑器已升级，请刷新页面；本地草稿保留" : m.code === "READ_ONLY"
               ? "只读权限，草稿未上传"
               : `同步失败：${m.code}`,
           );
           if (
             [
               "READ_ONLY",
+              "CLIENT_UPGRADE_REQUIRED",
               "NOT_FOUND",
               "DOCUMENT_ARCHIVED",
               "INVALID_UPDATE",
+              "INVALID_DOCUMENT_IMAGE",
+              "IMAGE_LIMIT",
               "DOCUMENT_TOO_LARGE",
             ].includes(m.code)
           ) {
