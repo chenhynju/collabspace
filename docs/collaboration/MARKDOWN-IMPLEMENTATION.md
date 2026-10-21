@@ -14,4 +14,6 @@
 
 ## 当前验证边界
 
-本地真实 PG/WS 28/28、Web 单元 7/7、API 与 Windows Web 构建通过。完整 Markdown 浏览器流程通过，包含导入、全局文件入口、三个角色、双编辑者收敛、离线编辑导出及重连、实时评论、版本预览、私有恢复、刷新与副本隔离。既有文档/IM/Mermaid/图文/跨租户浏览器 5/5。线上发布和线上 Markdown 验收尚未执行；Office 另行隔离验证。
+本地真实 PG/WS 28/28、Web 单元 7/7、API 与 Windows Web 构建通过。完整 Markdown 浏览器流程通过，包含导入、全局文件入口、三个角色、双编辑者收敛、离线编辑导出及重连、实时评论、版本预览、私有恢复、刷新与副本隔离。既有文档/IM/Mermaid/图文/跨租户浏览器 5/5。
+
+源码 79971e61da22a0a9887857013b58ebfe617873c0 已发布：后端 r20261022-01、Vercel dpl_FfpHYzJzxLfonsn29oR27pNRG3N3。线上 Markdown 与文档/IM/Mermaid/图文/跨租户合计 6/6，通过多账号业务流程；详见 evidence/collaboration/MARKDOWN-RELEASE-2026-10-22.md。Office 仅隔离验证，尚未生产集成。
