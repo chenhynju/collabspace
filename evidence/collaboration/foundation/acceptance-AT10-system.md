@@ -1,7 +1,7 @@
 # TeamSpace 系统管理/监控验收证据（AT10）
 
-- 时间：2026-10-20T00:08:00.241Z
-- API：http://localhost:43123/api/v1
+- 时间：2026-10-21T00:07:05.162Z
+- API：http://localhost:53123/api/v1
 - 结果：50/50 通过
 
 | 检查项 | 期望 | 实际 | 结论 |
@@ -39,11 +39,11 @@
 | 登录日志分页 | 200 含 items/total | 200 total=18 | PASS |
 | 登录日志状态过滤 | 全部成功 | 5 条全成功=true | PASS |
 | 删除单条登录日志 | 200 | 200 | PASS |
-| 服务监控 | 200 含 cpu/memory/node | 200 cpu=86.3% | PASS |
-| 数据库会话监控 | 200 含 maxConnections/活动 | 200 max=100 连接=20 | PASS |
+| 服务监控 | 200 含 cpu/memory/node | 200 cpu=32.6% | PASS |
+| 数据库会话监控 | 200 含 maxConnections/活动 | 200 max=100 连接=4 | PASS |
 | 缓存监控 | 200 含 enabled 字段 | 200 enabled=true | PASS |
-| 定时任务列表 | 200 含 billing 任务 | 200 jobs=2, next=2026-10-20T08:08:00.000+08:00 | PASS |
-| 手动触发订阅扫描任务 | 201 ok | 201 {"ok":true,"firedAt":"2026-10-20T00:07:58.685Z"} | PASS |
+| 定时任务列表 | 200 含 billing 任务 | 200 jobs=2, next=2026-10-21T08:08:00.000+08:00 | PASS |
+| 手动触发订阅扫描任务 | 201 ok | 201 {"ok":true,"firedAt":"2026-10-21T00:07:03.630Z"} | PASS |
 | 在线用户列表含当前连接 | true | 200 users=1 conns=1, 含自己=true | PASS |
 | 强制下线 | 200 + 连接已消失 | 200 stillThere=false | PASS |
 | MEMBER 拒绝 /menus | 403 | 403 | PASS |

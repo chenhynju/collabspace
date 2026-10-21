@@ -1,7 +1,7 @@
 # TeamSpace 端到端验收证据（AT01–AT08）
 
-- 执行时间：2026-10-20T00:07:36.592Z
-- API：`http://localhost:43123/api/v1`
+- 执行时间：2026-10-21T00:06:47.972Z
+- API：`http://localhost:53123/api/v1`
 - 数据：合成种子数据（密码统一 Passw0rd!）
 - 结果：**33/33 通过**
 
@@ -19,14 +19,14 @@
 | - | ------ | ---- | ---- | ---- |
 | 1 | 过期邀请被拒绝 | 410 INVITE_EXPIRED | 410 INVITE_EXPIRED 邀请已过期 | PASS |
 | 2 | 已撤销邀请被拒绝 | 410 INVITE_REVOKED | 410 INVITE_REVOKED 邀请已被撤销 | PASS |
-| 3 | 待处理邀请可正常加入（正常路径） | 200 accepted=true | 201 {"accepted":true,"organizationId":"cmvfdej4n000yboezfl6f6jm0","membershipId":"cmvfxc9kw000kmtkwikbsezgp"} | PASS |
+| 3 | 待处理邀请可正常加入（正常路径） | 200 accepted=true | 201 {"accepted":true,"organizationId":"cmvfdej4n000yboezfl6f6jm0","membershipId":"cmvhcr2s1000kje5ee6qhoent"} | PASS |
 | 4 | 同一邀请不可重复使用 | 409 INVITE_USED | 409 INVITE_USED | PASS |
 
 ## AT03
 
 | # | 检查项 | 期望 | 实际 | 结果 |
 | - | ------ | ---- | ---- | ---- |
-| 1 | 未登录访客猜测内部文件 ID 被拒 | 401 | 401 {"code":"UNAUTHORIZED","message":"未登录或登录已过期","request_id":"Bj8OLPov5llOvBE9","re | PASS |
+| 1 | 未登录访客猜测内部文件 ID 被拒 | 401 | 401 {"code":"UNAUTHORIZED","message":"未登录或登录已过期","request_id":"UGozNsE9ngtnGmFU","re | PASS |
 | 2 | 有效 share 链接可免登录下载（正常路径） | 200 且内容非空 | 200，内容长度 68 字符 | PASS |
 | 3 | 过期 share 链接被拒绝 | 410 | 410 SHARE_EXPIRED 共享链接已过期 | PASS |
 
@@ -42,8 +42,8 @@
 
 | # | 检查项 | 期望 | 实际 | 结果 |
 | - | ------ | ---- | ---- | ---- |
-| 1 | 首次事件（带 HMAC 签名）施加权益 | 200 applied=ai_credits+100000，额度 100000 → 200000 | 201 {"received":true,"eventId":"evt-at05-1792454855104","applied":"ai_credits+100000"}；额度 100000 → 200000 | PASS |
-| 2 | 重复事件判重且不重复增加权益 | 200 duplicate=true，额度保持 200000 | 201 {"duplicate":true,"eventId":"evt-at05-1792454855104"}；额度 200000 → 200000 | PASS |
+| 1 | 首次事件（带 HMAC 签名）施加权益 | 200 applied=ai_credits+100000，额度 200000 → 300000 | 201 {"received":true,"eventId":"evt-at05-1792541206609","applied":"ai_credits+100000"}；额度 200000 → 300000 | PASS |
+| 2 | 重复事件判重且不重复增加权益 | 200 duplicate=true，额度保持 300000 | 201 {"duplicate":true,"eventId":"evt-at05-1792541206609"}；额度 300000 → 300000 | PASS |
 | 3 | 无签名事件被拒绝（漏洞修复证据） | 401 WEBHOOK_SIGNATURE_MISSING | 401 WEBHOOK_SIGNATURE_MISSING 缺少 webhook 签名或原始请求体 | PASS |
 | 4 | 伪造签名事件被拒绝 | 401 WEBHOOK_SIGNATURE_INVALID | 401 WEBHOOK_SIGNATURE_INVALID | PASS |
 
@@ -74,6 +74,6 @@
 | - | ------ | ---- | ---- | ---- |
 | 1 | 两成员加入后项目房间 presence 可见 | ≥2 个不同用户 | users=cmvfdehho000rboez0ml1qugj,cmvfdeip1000tboezhocx5xxx | PASS |
 | 2 | 跨租户成员无法进入他人项目房间 | ack ok=false | {"ok":false,"code":"NOT_MEMBER"} | PASS |
-| 3 | 创建任务实时广播给房间其他成员 | taskId=cmvfxcawq002jmtkwzsn160vo | cmvfxcawq002jmtkwzsn160vo | PASS |
-| 4 | 更新任务实时广播 | taskId=cmvfxcawq002jmtkwzsn160vo | cmvfxcawq002jmtkwzsn160vo | PASS |
-| 5 | 删除任务实时广播 | taskId=cmvfxcawq002jmtkwzsn160vo | cmvfxcawq002jmtkwzsn160vo | PASS |
+| 3 | 创建任务实时广播给房间其他成员 | taskId=cmvhcr403002mje5ea9ev2mae | cmvhcr403002mje5ea9ev2mae | PASS |
+| 4 | 更新任务实时广播 | taskId=cmvhcr403002mje5ea9ev2mae | cmvhcr403002mje5ea9ev2mae | PASS |
+| 5 | 删除任务实时广播 | taskId=cmvhcr403002mje5ea9ev2mae | cmvhcr403002mje5ea9ev2mae | PASS |

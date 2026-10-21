@@ -1,0 +1,9 @@
+Backup archive catalog readable
+collabspace-api-1 collabspace-api:r20261021-02 Up About a minute (healthy)
+collabspace-collab-1 collabspace-ws:r20261021-02 Up About a minute (healthy)
+collabspace-postgres-1 postgres:16-alpine Up 22 hours (healthy)
+collabspace-redis-1 redis:7-alpine Up 22 hours (healthy)
+[collabspace-api:r20261021-02] sha256:ee08c128ead40ebd61eec72336654625f5c27c359f71554bea193773f378c748
+[collabspace-ws:r20261021-02] sha256:bfb85fb8e46ae88d3b3832e7f7a847ac9ad7d937f4f33cd38913f784da001599
+3975d76cce41ec0bf7499a733466ffe7a129f3c1
+{"status":"ok","uptimeSeconds":106,"checks":{"database":"up","redis":"up"}}

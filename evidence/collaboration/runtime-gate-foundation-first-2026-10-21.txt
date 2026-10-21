@@ -1,0 +1,152 @@
+
+=== TeamSpace 验收开始 @ 2026-10-21T00:04:03.927Z ===
+API: http://localhost:53123/api/v1
+
+Acme org = cmvfdej4n000yboezfl6f6jm0 | Globex org = cmvfdejr4002aboez8vwkoywm
+
+PASS [AT01] 本组织成员可读取本组织项目（正常基线） | 期望: 200 | 实际: 200（项目数 1）
+PASS [AT01] 携带其它组织 x-organization-id 被应用层拒绝 | 期望: 403 NOT_MEMBER | 实际: 403 NOT_MEMBER 你不是该组织的成员
+PASS [AT01] RLS 防御层：globex 上下文中 acme 项目可见数为 0 | 期望: cross=0, own≥1 | 实际: cross=0, own=1
+PASS [AT02] 过期邀请被拒绝 | 期望: 410 INVITE_EXPIRED | 实际: 410 INVITE_EXPIRED 邀请已过期
+PASS [AT02] 已撤销邀请被拒绝 | 期望: 410 INVITE_REVOKED | 实际: 410 INVITE_REVOKED 邀请已被撤销
+PASS [AT02] 待处理邀请可正常加入（正常路径） | 期望: 200 accepted=true | 实际: 201 {"accepted":true,"organizationId":"cmvfdej4n000yboezfl6f6jm0","membershipId":"cmvhcnnml000koft1nmi6j8f3"}
+PASS [AT02] 同一邀请不可重复使用 | 期望: 409 INVITE_USED | 实际: 409 INVITE_USED
+PASS [AT03] 未登录访客猜测内部文件 ID 被拒 | 期望: 401 | 实际: 401 {"code":"UNAUTHORIZED","message":"未登录或登录已过期","request_id":"KMe2DG0-4mhDCqyw","re
+PASS [AT03] 有效 share 链接可免登录下载（正常路径） | 期望: 200 且内容非空 | 实际: 200，内容长度 68 字符
+PASS [AT03] 过期 share 链接被拒绝 | 期望: 410 | 实际: 410 SHARE_EXPIRED 共享链接已过期
+PASS [AT04] 停用前成员可正常访问（基线） | 期望: 200 | 实际: 200
+PASS [AT04] 停用后下一请求立即失效（守卫每请求反查） | 期望: 403 MEMBER_SUSPENDED/非 ACTIVE | 实际: 403 MEMBERSHIP_INACTIVE 成员状态无效（已暂停或移除）
+PASS [AT04] 恢复后访问重新放行（恢复路径） | 期望: 200 | 实际: 200
+PASS [AT05] 首次事件（带 HMAC 签名）施加权益 | 期望: 200 applied=ai_credits+100000，额度 100000 → 200000 | 实际: 201 {"received":true,"eventId":"evt-at05-1792541047396","applied":"ai_credits+100000"}；额度 100000 → 200000
+PASS [AT05] 重复事件判重且不重复增加权益 | 期望: 200 duplicate=true，额度保持 200000 | 实际: 201 {"duplicate":true,"eventId":"evt-at05-1792541047396"}；额度 200000 → 200000
+PASS [AT05] 无签名事件被拒绝（漏洞修复证据） | 期望: 401 WEBHOOK_SIGNATURE_MISSING | 实际: 401 WEBHOOK_SIGNATURE_MISSING 缺少 webhook 签名或原始请求体
+PASS [AT05] 伪造签名事件被拒绝 | 期望: 401 WEBHOOK_SIGNATURE_INVALID | 实际: 401 WEBHOOK_SIGNATURE_INVALID
+PASS [AT06] DEPT_AND_CHILD 可见下级部门成员（bug 修复证据） | 期望: 列表含 at06child@acme.dev | 实际: admin@acme.dev, member@acme.dev, at06child@acme.dev
+PASS [AT06] DEPT_AND_CHILD 不泄漏范围外兄弟部门 | 期望: 列表不含 at06sib@acme.dev | 实际: admin@acme.dev, member@acme.dev, at06child@acme.dev
+PASS [AT07] 生命周期执行入口可用（平台超管） | 期望: 201 scanned=3 | 实际: 201 scanned=3
+PASS [AT07] 账期到期 2 天 → PAST_DUE 进入宽限 | 期望: PAST_DUE | 实际: PAST_DUE
+PASS [AT07] 宽限期内保留 PRO 权益 | 期望: org.planId=PRO | 实际: cmvfdegyb000bboezrdfud990
+PASS [AT07] 场景B 超宽限 → CANCELED | 期望: CANCELED | 实际: CANCELED
+PASS [AT07] 场景B 超宽限 组织降回 FREE | 期望: planId=FREE | 实际: cmvfdegy9000aboezyv5a4szn
+PASS [AT07] 场景B 超宽限 权益快照重置为 FREE | 期望: seats=5 | 实际: 5
+PASS [AT07] 场景C 主动取消到期 → CANCELED | 期望: CANCELED | 实际: CANCELED
+PASS [AT07] 场景C 主动取消到期 组织降回 FREE | 期望: planId=FREE | 实际: cmvfdegy9000aboezyv5a4szn
+PASS [AT07] 场景C 主动取消到期 权益快照重置为 FREE | 期望: seats=5 | 实际: 5
+[stage] entering AT08, wsOrigin = http://localhost:53123
+[stage] three sockets created
+PASS [AT08] 两成员加入后项目房间 presence 可见 | 期望: ≥2 个不同用户 | 实际: users=cmvfdehho000rboez0ml1qugj,cmvfdeip1000tboezhocx5xxx
+PASS [AT08] 跨租户成员无法进入他人项目房间 | 期望: ack ok=false | 实际: {"ok":false,"code":"NOT_MEMBER"}
+PASS [AT08] 创建任务实时广播给房间其他成员 | 期望: taskId=cmvhcnqcf002joft1yuyp5bp6 | 实际: cmvhcnqcf002joft1yuyp5bp6
+PASS [AT08] 更新任务实时广播 | 期望: taskId=cmvhcnqcf002joft1yuyp5bp6 | 实际: cmvhcnqcf002joft1yuyp5bp6
+PASS [AT08] 删除任务实时广播 | 期望: taskId=cmvhcnqcf002joft1yuyp5bp6 | 实际: cmvhcnqcf002joft1yuyp5bp6
+
+=== 结果：33/33 通过 ===
+
+证据已写入：D:\appspace\collaboration\evidence\acceptance-AT01-AT08.md
+
+=== TeamSpace IM 验收（AT09）@ 2026-10-21T00:04:18.725Z ===
+API: http://localhost:53123/api/v1
+
+acme=cmvfdej4n000yboezfl6f6jm0 owner=cmvfdehho000rboez0ml1qugj admin=cmvfdeip1000tboezhocx5xxx member=cmvfdeil2000sboezj7axczwk
+
+PASS 私聊创建 | 期望: 201 + 会话 id | 实际: 201 {"id":"cmvfx8crz002s10qlmstc3skm"}
+PASS 私聊幂等（对端再建返回同一会话） | 期望: cmvfx8crz002s10qlmstc3skm | 实际: 201 cmvfx8crz002s10qlmstc3skm
+PASS 拒绝与自己私聊 | 期望: 400 SELF_CHAT | 实际: 400 SELF_CHAT
+PASS admin 发送文本消息 | 期望: 201 + 消息 id | 实际: 201 {"id":"cmvhcnxo50036oft1typ341sm","senderId":"cmvfdeip1000tboezhocx5xxx","senderName":"柯博文","type":"TEXT","content":"owner，方案文档看过了吗？","attachment":null,"createdAt":"2026-10-21T00:04:19.637Z"}
+PASS owner 会话列表未读数=1 且标题为对端名字 | 期望: unreadCount=1, title=柯博文 | 实际: 200 unread=1 title=柯博文
+PASS 标记已读后未读数归零 | 期望: unreadCount=0 | 实际: read=201 unread=0
+PASS 上传图片附件 | 期望: 201 + 附件 id | 实际: 201 {"id":"cmvhcnxta003ioft1wfihzews","name":"pixel.png","size":"70","mimeType":"image/png"}
+PASS 发送图片消息 | 期望: 201 + attachment | 实际: 201 {"id":"cmvhcnxuf003ooft1dc9vggdg","senderId":"cmvfdehho000rboez0ml1qugj","senderName":"陈知微","type":"IMAGE","content":"截图如下","attachment":{"id":"cmvhcnxta003ioft1wfihzews","name":"pixel.png","mimeType":"image/png","size":"70"},"createdAt":"2026-10-21T00:04:19.864Z"}
+PASS 发送文件消息 | 期望: 201 + attachment | 实际: 201 {"id":"cmvhcnxw90040oft1qa5h3igz","senderId":"cmvfdehho000rboez0ml1qugj","senderName":"陈知微","type":"FILE","content":"需求文档","attachment":{"id":"cmvhcnxvg003uoft1mw5agjv9","name":"spec.txt","mimeType":"text/plain","size":"22"},"createdAt":"2026-10-21T00:04:19.929Z"}
+PASS admin 拉取历史含 3 条消息（TEXT/IMAGE/FILE） | 期望: 3 条，类型齐全 | 实际: 200 数量=3 类型=TEXT,IMAGE,FILE
+PASS 会话成员可下载图片附件 | 期望: 200 image/png 70B | 实际: 200 image/png 70B
+PASS 创建群聊 | 期望: 201 + 会话 id | 实际: 201 {"id":"cmvhcnxy9004aoft1nza3vxja"}
+PASS 群详情含 3 名成员 | 期望: 3 | 实际: 200 成员数=3
+PASS 群成员发言 | 期望: 201 | 实际: 201 {"id":"cmvhcnxzm004loft1jmvnld6d","senderId":"cmvfdeil2000sboezj7axczwk","senderName":"陆小鹿","type":"TEXT","content":"收到，今天提测。","attachment":null,"createdAt":"2026-10-21T00:04:20.051Z"}
+PASS owner 群聊未读数=1（member 的发言） | 期望: unreadCount=1 | 实际: unread=1
+PASS 非群主移除他人被拒 | 期望: 403 NO_PERMISSION | 实际: 403 NO_PERMISSION
+PASS 被移出群的成员再发言被拒 | 期望: 403 NOT_MEMBER | 实际: 移除=200 发言=403 NOT_MEMBER
+PASS 跨组织读取消息被拒（应用层） | 期望: 403 NOT_MEMBER | 实际: 403 NOT_MEMBER
+PASS 伪造 acme 组织头被拒 | 期望: 403 NOT_MEMBER | 实际: 403 NOT_MEMBER
+PASS 跨组织下载附件被拒 | 期望: 403/404 | 实际: 404
+PASS RLS 防御层：globex 上下文直查 acme 消息 | 期望: 0 行 | 实际: 0 行
+PASS RLS 对照：owner 上下文可查本会话消息 | 期望: >0 行 | 实际: 3 行
+PASS 会话成员实时收到 im:message:new | 期望: payload 含新消息 | 实际: 收到 实时推送测试
+PASS 非会话成员收不到该消息推送 | 期望: TIMEOUT | 实际: 未收到（符合预期）
+
+=== 结果：24/24 通过 ===
+
+
+=== TeamSpace 系统管理/监控验收（AT10）@ 2026-10-21T00:04:24.738Z ===
+API: http://localhost:53123/api/v1
+
+acme=cmvfdej4n000yboezfl6f6jm0 globex=cmvfdejr4002aboez8vwkoywm
+
+PASS 菜单列表 | 期望: 200 且非空 | 实际: 200 69 条
+PASS 创建菜单 | 期望: 201 + id | 实际: 201
+PASS 创建子菜单 | 期望: 201 | 实际: 201
+PASS 编辑菜单 | 期望: 200 + 新名称 | 实际: 200 AT验收父菜单(改)
+PASS 防环：父级不能是自己 | 期望: 400 MENU_PARENT_SELF | 实际: 400 MENU_PARENT_SELF
+PASS 防环：父级不能是后代 | 期望: 400 MENU_PARENT_LOOP | 实际: 400 MENU_PARENT_LOOP
+PASS 有子菜单时删除父级 | 期望: 409 MENU_HAS_CHILD | 实际: 409 MENU_HAS_CHILD
+PASS 删除已授权菜单 | 期望: 409 MENU_IN_USE | 实际: 409 MENU_IN_USE
+PASS 删除子菜单 | 期望: 200 | 实际: 200
+PASS 删除父菜单 | 期望: 200 | 实际: 200
+PASS 创建字典类型 | 期望: 201 | 实际: 201
+PASS 字典编码格式校验 | 期望: 400 | 实际: 400
+PASS 创建字典数据 | 期望: 201 | 实际: 201
+PASS 按编码查字典数据 | 期望: 200 且含 1 条 | 实际: 200 1 条
+PASS 编辑字典数据 | 期望: 200 + 新标签 | 实际: 200
+PASS 有数据时删字典类型 | 期望: 409 DICT_HAS_DATA | 实际: 409 DICT_HAS_DATA
+PASS 删除字典数据 | 期望: 200 | 实际: 200
+PASS 删除字典类型 | 期望: 200 | 实际: 200
+PASS 创建参数 | 期望: 201 | 实际: 201
+PASS 编辑参数 | 期望: 200 + 新值 | 实际: 200
+PASS 删除参数 | 期望: 200 | 实际: 200
+PASS 删除内置参数 | 期望: 409 CONFIG_BUILTIN | 实际: 409 CONFIG_BUILTIN
+PASS 发布公告 | 期望: 201 | 实际: 201
+PASS 发布者已读状态 | 期望: readByMe=true | 实际: readByMe=true
+PASS 公告跨组织隔离 | 期望: Globex 看不到 | 实际: globex 0 条，含该公告=false
+PASS 成员可查看公告 | 期望: 200 readByMe=false | 实际: readByMe=false
+PASS 成员标记已读（幂等） | 期望: 201/201 + readByMe=true | 实际: 201/201, readByMe=true
+PASS 成员发布公告 | 期望: 403 | 实际: 403
+PASS 成员删除公告 | 期望: 403 | 实际: 403
+PASS 管理员删除公告 | 期望: 200 | 实际: 200
+PASS 登录日志分页 | 期望: 200 含 items/total | 实际: 200 total=65
+PASS 登录日志状态过滤 | 期望: 全部成功 | 实际: 5 条全成功=true
+PASS 删除单条登录日志 | 期望: 200 | 实际: 200
+PASS 服务监控 | 期望: 200 含 cpu/memory/node | 实际: 200 cpu=48.6%
+PASS 数据库会话监控 | 期望: 200 含 maxConnections/活动 | 实际: 200 max=100 连接=4
+PASS 缓存监控 | 期望: 200 含 enabled 字段 | 实际: 200 enabled=true
+PASS 定时任务列表 | 期望: 200 含 billing 任务 | 实际: 200 jobs=2, next=2026-10-21T08:05:00.000+08:00
+PASS 手动触发订阅扫描任务 | 期望: 201 ok | 实际: 201 {"ok":true,"firedAt":"2026-10-21T00:04:26.387Z"}
+PASS 在线用户列表含当前连接 | 期望: true | 实际: 200 users=1 conns=1, 含自己=true
+PASS 强制下线 | 期望: 200 + 连接已消失 | 实际: 200 stillThere=false
+PASS MEMBER 拒绝 /menus | 期望: 403 | 实际: 403
+PASS MEMBER 拒绝 /dict-types | 期望: 403 | 实际: 403
+PASS MEMBER 拒绝 /configs | 期望: 403 | 实际: 403
+PASS MEMBER 拒绝 /login-logs | 期望: 403 | 实际: 403
+PASS MEMBER 拒绝 /monitor/server | 期望: 403 | 实际: 403
+PASS MEMBER 拒绝 /monitor/database | 期望: 403 | 实际: 403
+PASS MEMBER 拒绝 /monitor/jobs | 期望: 403 | 实际: 403
+PASS MEMBER 拒绝 /monitor/online | 期望: 403 | 实际: 403
+PASS MEMBER 触发定时任务 | 期望: 403 | 实际: 403
+PASS 清空登录日志 | 期望: 201 | 实际: 201
+
+=== 结果：50/50 通过 ===
+
+PASS cross-tenant membership rejected
+PASS non-manager cannot modify group
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+409 !== 201
+
+    at main (D:\appspace\collaboration\apps\api\scripts\acceptance-foundation.ts:35:122)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  generatedMessage: true,
+  code: 'ERR_ASSERTION',
+  actual: 409,
+  expected: 201,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
