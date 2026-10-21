@@ -1,5 +1,7 @@
 # CollabSpace — 详细设计 v1
 
+用户新增必需范围：原生.md源码多人协作、.docx/.xlsx/.pptx在线共同编辑、真实编辑者显示与冲突/保存管理，以Microsoft Office文件往返验收。当前均未实现，不能用富文本快捷方式或文件上传下载充数。详见 [COLLABORATIVE-FILES.md](COLLABORATIVE-FILES.md)。
+
 2026-10-21 第二轮追加：受支持 Mermaid 流程图/基础思维导图拖拽直接修改共享源码；评论/版本提交后实时通知；账号/租户/文档隔离的离线配图；Google/GitHub 社交登录安全完善。最新契约和验收以 [ITERATION-2.md](ITERATION-2.md) 为准，配置见 [OAUTH-SETUP-MEMO.md](OAUTH-SETUP-MEMO.md)。历史未实现描述不覆盖本轮新增能力；任意语法/坐标回写、完整离线应用壳及企业SSO仍不宣称完成。
 
 2026-10-21 图文写作追加：在线文档提供知乎式富文本写作体验，格式工具、图片上传/粘贴/拖入、图片说明及宽度、图片级文档授权和带配图版本恢复；沿用 Tiptap/Yjs。新增模型、兼容发布和 RT01–RT05 验收见 [RICH_TEXT.md](RICH_TEXT.md)。
