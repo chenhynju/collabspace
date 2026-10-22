@@ -183,6 +183,7 @@ export default function DocumentPage({
       </div>
     );
   const uniquePeople = [...new Map(people.map((p) => [p.userId, p])).values()];
+  if(meta.kind==='OFFICE')return <Link href={'/office/'+params.docId}>打开 Office 文件编辑器 →</Link>;
   const Surface = meta.kind === 'BOARD' ? Whiteboard : meta.kind==='MARKDOWN'?MarkdownEditor:DocumentEditor;
   return (
     <div className="flex min-h-[85vh] flex-col bg-slate-50">

@@ -9,6 +9,7 @@ const { join } = require("node:path");
   try {
     await c.query("BEGIN");
     await c.query(readFileSync(join(__dirname, "schema.sql"), "utf8"));
+    await c.query(readFileSync(join(__dirname, "office.sql"), "utf8"));
     await c.query("COMMIT");
     console.log("CollabSpace additive migration applied");
   } catch (e) {

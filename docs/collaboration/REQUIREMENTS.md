@@ -92,3 +92,8 @@
 ## 8. 交付阶段
 
 M0 基线与安全审计；M1 两账号在线编辑+持久化；M2 离线/评论/版本；M3 撤销竞态/故障/容量/UX；M4 独立环境部署与英文作品说明。每阶段单独提供命令、数据、截图/录像、PASSED/BLOCKED/NOT_RUN，不把阶段完成称为生产发布。P1 才考虑双节点 Redis 广播、全文搜索、通知收件箱、Service Worker 离线启动和白板。
+
+
+## Office 补充范围（2026-10-22）
+
+OF 文件协作采用兼容 Office 文件路线，当前以隔离应用集成验收为里程碑。需求、权限上限、保存/恢复及上线边界见 COLLABORATIVE-FILES.md 和 OFFICE-INTEGRATION-2026-10-22.md；不以此替代既有 Markdown/Yjs 协作主线。

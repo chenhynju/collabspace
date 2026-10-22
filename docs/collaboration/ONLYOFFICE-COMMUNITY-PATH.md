@@ -16,7 +16,7 @@
 - https://github.com/ONLYOFFICE/DocumentServer
 - https://hub.docker.com/r/onlyoffice/documentserver
 
-本项目隔离验证采用官方镜像，部署模板为 `deploy/collabspace/office-development.compose.yml`，通过镜像摘要固定版本，未开放生产入口。合成账号与测试文件使用 `tests/office-dev/`；这不是 CollabSpace 生产身份、租户和文件存储集成。镜像能启动、编辑器能打开，不代表多人保存或 Microsoft Office 往返验收通过。
+本项目隔离验证采用官方镜像，部署模板为 `deploy/collabspace/office-development.compose.yml`，通过镜像摘要固定版本，未开放生产入口。最初 `tests/office-dev/` harness 之后，已完成真实 CollabSpace 登录、文件和 ACL 的隔离应用集成，三格式浏览器、最终保存/重开及 Microsoft Office 样本往返见 OFFICE-INTEGRATION-2026-10-22.md。仍未接入生产账号/文件；公开发布与源码交付准备不因技术验收通过而自动完成。
 
 ## 发布前需要形成的可审阅交付
 

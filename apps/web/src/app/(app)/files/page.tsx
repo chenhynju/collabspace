@@ -7,6 +7,7 @@ import {
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import Link from 'next/link';
+import {useRouter} from 'next/navigation';
 
 function fmtSize(big: string) {
   const n = Number(big);
@@ -16,6 +17,7 @@ function fmtSize(big: string) {
 }
 
 export default function FilesGlobalPage() {
+  const router=useRouter();
   const hasPerm = useAuthStore((s) => s.hasPerm);
   const [list, setList] = useState<any[]>([]);
   const [markdown,setMarkdown]=useState<any[]>([]);
@@ -86,10 +88,11 @@ export default function FilesGlobalPage() {
                     <td className="px-4 py-3 text-slate-500">{f.uploadedBy?.name ?? '-'}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-1.5">
+                        {/\.(docx|xlsx|pptx)$/i.test(f.name)&&<Button size="sm" onClick={async()=>{try{const r=await api.post(`/office/files/${f.id}/open`);router.push('/office/'+r.data.id)}catch(e:any){setError(e.response?.data?.code==='OFFICE_NOT_CONFIGURED'?'Office 服务尚未配置。':'无法打开；首次初始化需要上传者操作，之后由文件所有者授权。')}}}>在线编辑</Button>}
                         <Button size="sm" variant="secondary" onClick={() => download(f)}>
                           下载
                         </Button>
-                        {hasPerm('file:share') ? (
+                        {hasPerm('file:share')&&!f.officeId ? (
                           <Button
                             size="sm"
                             onClick={() => {

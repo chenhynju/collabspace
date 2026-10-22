@@ -130,3 +130,8 @@ M0 运行真实现有 scripts，检查 auth/权限/RLS/项目关联，扫描复�
 - [Yjs 离线](https://docs.yjs.dev/getting-started/allowing-offline-editing)：IndexedDB 与离线页面壳的区别。
 - [Yjs RelativePosition](https://docs.yjs.dev/api/relative-positions)：选区锚定。
 - [y-websocket](https://docs.yjs.dev/ecosystem/connection-provider/y-websocket)：独立协议与服务端 provider 参考；本设计 durable ACK 需要额外实现与测试。
+
+
+## Office 二进制协作扩展（2026-10-22）
+
+Office 引擎为细粒度编辑权威，应用为 ACL/持久版本权威；独立 generation、每客户端 lease UUID、活动 epoch、保存 receipt 与事务栅栏防止旧回调覆盖。禁止 OFFICE 资源进入 Yjs 同步/恢复路径，父项目 READ 限制所有子文档写入。详细设计与拒绝/恢复证据见 OFFICE-INTEGRATION-2026-10-22.md。

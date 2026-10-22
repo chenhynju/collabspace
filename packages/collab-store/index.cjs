@@ -233,6 +233,7 @@ class Store {
       status: locked.project_status,
       owner_id: locked.owner_id,
       visibility: locked.visibility,
+      access: 'WRITE',
     };
     if (p.visibility === "RESTRICTED" && p.owner_id !== ctx.user) {
       const admin = await c.query(
@@ -241,10 +242,11 @@ class Store {
       );
       if (!admin.rowCount) {
         const allowed = await c.query(
-          "SELECT g.id FROM org_resource_grant g JOIN org_collaboration_group u ON u.id=g.group_id AND u.organization_id=g.organization_id JOIN org_group_member gm ON gm.group_id=u.id AND gm.organization_id=u.organization_id JOIN org_membership m ON m.id=gm.membership_id WHERE g.organization_id=$1 AND g.project_id=$2 AND m.user_id=$3 AND u.archived_at IS NULL FOR SHARE OF g,u,gm",
+          "SELECT g.id,g.access FROM org_resource_grant g JOIN org_collaboration_group u ON u.id=g.group_id AND u.organization_id=g.organization_id JOIN org_group_member gm ON gm.group_id=u.id AND gm.organization_id=u.organization_id JOIN org_membership m ON m.id=gm.membership_id WHERE g.organization_id=$1 AND g.project_id=$2 AND m.user_id=$3 AND u.archived_at IS NULL FOR SHARE OF g,u,gm",
           [ctx.org, project, ctx.user],
         );
         if (!allowed.rowCount) fail(404, "NOT_FOUND");
+        if(!allowed.rows.some(g=>['WRITE','MANAGE'].includes(g.access)))p.access='READ';
       }
     }
     return { u, p };
@@ -272,6 +274,7 @@ class Store {
       )
     ).rows[0];
     if (!g) fail(404, "NOT_FOUND");
+    if(action!=='read'&&p.access==='READ')fail(403,'READ_ONLY');
     if (action !== "read" && (d.status !== "ACTIVE" || p.status === "ARCHIVED"))
       fail(409, "DOCUMENT_ARCHIVED");
     if (action === "write" && !["OWNER", "EDITOR"].includes(g.role))
@@ -281,7 +284,7 @@ class Store {
     return {
       ...d,
       role:
-        action === "read" && (d.status !== "ACTIVE" || p.status === "ARCHIVED")
+        action === "read" && (d.status !== "ACTIVE" || p.status === "ARCHIVED" || p.access==='READ')
           ? "VIEWER"
           : g.role,
       userName: u.name,
@@ -337,6 +340,7 @@ class Store {
       .parse(input.kind);
     return this.tx(ctx, async (c) => {
       const { p } = await this.parent(c, ctx, project);
+      if(p.access==='READ')fail(403,'READ_ONLY');
       if (p.status === "ARCHIVED") fail(409, "PROJECT_ARCHIVED");
       let state;
       if(kind==='MARKDOWN'){
@@ -483,6 +487,7 @@ class Store {
   async ticket(ctx, id) {
     return this.tx(ctx, async (c) => {
       const d = await this.access(c, ctx, id);
+      if(d.kind==='OFFICE')fail(409,'OFFICE_ENGINE_REQUIRED');
       const secret = randomBytes(32).toString("hex");
       await c.query(
         "DELETE FROM collab_ticket WHERE organization_id=$1 AND expires_at<now()",
@@ -889,6 +894,7 @@ class Store {
       name = title.parse(input.name);
     return this.tx(ctx, async (c) => {
       const d = await this.access(c, ctx, id, "write");
+      if(d.kind==='OFFICE')fail(409,'OFFICE_ENGINE_REQUIRED');
       const old = (
         await c.query(
           "SELECT id,name,seq,created_by FROM collab_version WHERE organization_id=$1 AND document_id=$2 AND id=$3",
@@ -928,6 +934,7 @@ class Store {
     const key = uuid.parse(input.id);
     return this.tx(ctx, async (c) => {
       const d = await this.access(c, ctx, id, "write");
+      if(d.kind==='OFFICE')fail(409,'OFFICE_ENGINE_REQUIRED');
       const prior = (
         await c.query(
           "SELECT * FROM collab_restore WHERE organization_id=$1 AND id=$2",

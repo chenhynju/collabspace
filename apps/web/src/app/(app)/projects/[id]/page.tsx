@@ -171,10 +171,11 @@ export default function ProjectDetail({ params }: { params: { id: string } }) {
                       <span className="text-xs text-slate-400 ml-1">v{f.version}</span>
                     </span>
                     <div className="flex gap-1 shrink-0">
-                      <Button size="sm" variant="ghost" onClick={() => download(f.id)}>
+                        {/\.(docx|xlsx|pptx)$/i.test(f.name)&&<Button size="sm" onClick={async()=>{try{const r=await api.post(`/office/files/${f.id}/open`);window.location.href='/office/'+r.data.id}catch{setError('无法打开 Office 文件，请检查服务配置、上传者和文件权限。')}}}>在线编辑</Button>}
+                        <Button size="sm" variant="ghost" onClick={() => download(f.id)}>
                         下载
                       </Button>
-                      {hasPerm('file:share') ? (
+                        {hasPerm('file:share')&&!f.officeId ? (
                         <Button
                           size="sm"
                           variant="ghost"

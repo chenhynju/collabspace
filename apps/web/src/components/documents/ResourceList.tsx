@@ -22,7 +22,7 @@ export default function ResourceList({
       .get("/documents", { params: { projectId: params.id } })
       .then((r) => {
         if (active)
-          setDocs(r.data.filter((d: any) => kind==='BOARD'?d.kind==='BOARD':d.kind!=='BOARD'));
+          setDocs(r.data.filter((d: any) => kind==='BOARD'?d.kind==='BOARD':['DOCUMENT','MARKDOWN'].includes(d.kind)));
       })
       .catch(() => {
         if (active) setError("文档加载失败，请检查项目权限。");

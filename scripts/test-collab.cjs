@@ -14,6 +14,7 @@ const tests = [
   "packages/collab-store/tests/palette.test.cjs",
   "packages/collab-store/tests/mermaid.test.cjs",
   "packages/collab-store/tests/markdown.test.cjs",
+  "packages/collab-store/tests/office.test.cjs",
   "packages/collab-store/tests/images.test.cjs",
   "packages/collab-store/tests/integration.test.cjs",
   "apps/collab/tests/server.test.cjs",

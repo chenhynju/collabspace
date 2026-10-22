@@ -1,5 +1,6 @@
 import { ResourceAccessGuard } from '../groups/resource-access.guard';
 import { ResourcePolicyService } from '../groups/resource-policy.service';
+import {OfficeService} from './office.service';
 import {
   Controller,
   Get,
@@ -53,13 +54,14 @@ export class FilesController {
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
     private readonly resourcePolicy: ResourcePolicyService,
+    private readonly office:OfficeService,
   ) {}
 
   /** 文件列表（可按项目过滤） */
   @Get()
   @UseGuards(OrgContextGuard, PermissionsGuard, ResourceAccessGuard)
   @RequirePermissions('file:manage')
-  async list(@CurrentOrg() org: OrgContext, @Req() accessReq: Request, @Query('projectId') projectId?: string) {
+  async list(@CurrentOrg() org: OrgContext, @Req() accessReq: Request,@CurrentUser() me:{id:string}, @Query('projectId') projectId?: string) {
     const rows = await this.prisma.withOrg(org.organizationId, (tx) =>
       tx.file.findMany({
         where: {
@@ -75,7 +77,8 @@ export class FilesController {
       }),
     );
     // size 为 BigInt，JSON 无法直接序列化
-    return rows.map(({ size, ...f }) => ({ ...f, size: size.toString() }));
+    const visible=this.office.storageReady?await this.office.visibleFiles({org:org.organizationId,user:me.id},rows):rows;
+    return visible.map(({ size, ...f }) => ({ ...f, size: size.toString() }));
   }
 
   /** 上传文件（multipart，字段名 file；同名文件自动升版本） */
@@ -158,11 +161,16 @@ export class FilesController {
   @Get(':id/download')
   @UseGuards(OrgContextGuard, PermissionsGuard, ResourceAccessGuard)
   @RequirePermissions('file:manage')
-  download(
+  async download(
     @Param('id') id: string,
     @CurrentOrg() org: OrgContext,
+    @CurrentUser() me:{id:string},
     @Res() res: Response,
   ) {
+    if(this.office.storageReady){
+      const current=await this.office.fileCurrent({org:org.organizationId,user:me.id},id);
+      if(current){res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Content-Type',current.extension==='docx'?'application/vnd.openxmlformats-officedocument.wordprocessingml.document':current.extension==='xlsx'?'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':'application/vnd.openxmlformats-officedocument.presentationml.presentation');res.setHeader('Content-Disposition',"attachment; filename*=UTF-8''"+encodeURIComponent(current.name));return res.send(current.bytes)}
+    }
     return this.prisma.withOrg(org.organizationId, async (tx) => {
       const file = await tx.file.findFirst({
         where: { id, organizationId: org.organizationId },
@@ -183,7 +191,7 @@ export class FilesController {
     @CurrentUser() me: { id: string },
     @Req() req: Request,
   ) {
-    return this.prisma.withOrg(org.organizationId, async (tx) => {
+    return this.authorizeShare(org.organizationId,me.id,id).then(()=>this.prisma.withOrg(org.organizationId, async (tx) => {
       const file = await tx.file.findFirst({
         where: { id, organizationId: org.organizationId },
       });
@@ -222,8 +230,10 @@ export class FilesController {
         url: `${webUrl}/files/shared/${share.id}`,
         expiresAt: share.expiresAt,
       };
-    });
+    }));
   }
+
+  private async authorizeShare(org:string,user:string,id:string){if(this.office.storageReady&&await this.office.shareOffice({org,user},id))throw new BadRequestException({code:'OFFICE_USE_MEMBER_GRANTS',message:'Office 文件请在编辑器内授权成员，不使用匿名共享链接。'})}
 
   /**
    * 访客凭共享 ID 下载（公开）。
@@ -262,6 +272,7 @@ export class FilesController {
 
       const file = await tx.file.findUnique({ where: { id: share.fileId } });
       if (!file) throw new NotFoundException({ code: 'NOT_FOUND', message: '文件不存在' });
+      if(this.office.storageReady&&await this.office.isOfficeFile(located.organizationId,file.id))throw new GoneException({code:'OFFICE_LINK_DISABLED',message:'此文件已启用 Office 协作，请登录并获得文件成员授权。'});
       this.streamFile(res, file);
     });
   }

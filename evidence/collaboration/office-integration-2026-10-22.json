@@ -1,0 +1,98 @@
+{
+  "recordedAt": "2026-10-22T10:50:27.875Z",
+  "scope": "Isolated CollabSpace application integration; not production Office",
+  "baseHead": "e875adc6ff82a29361a33bfb9d86c6a536d097b4",
+  "checks": {
+    "officeBrowser": {
+      "status": "PASSED",
+      "passed": 3,
+      "failed": 0
+    },
+    "finalCloseAndReopen": {
+      "status": "PASSED",
+      "passed": 2,
+      "failed": 0
+    },
+    "existingBrowserJourneys": {
+      "status": "PASSED",
+      "passed": 6,
+      "failed": 0
+    },
+    "nonprivilegedPgAndWs": {
+      "status": "PASSED",
+      "passed": 32,
+      "failed": 0,
+      "skipped": 0
+    },
+    "apiWithRealRedis": {
+      "status": "PASSED",
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0
+    },
+    "webUnits": {
+      "status": "PASSED",
+      "passed": 7,
+      "failed": 0
+    },
+    "windowsApiBuild": "PASSED",
+    "windowsWebBuild": "PASSED",
+    "ooxmlContentsAndStructure": "PASSED",
+    "microsoftSaveAndFreshInstanceReopen": "PASSED",
+    "publicOfficeDeployment": "NOT_RUN",
+    "freshBootstrapContainer": "NOT_RUN",
+    "officePermanentOffline": "NOT_RUN",
+    "fullCompatibilityAndCapacity": "NOT_RUN"
+  },
+  "microsoft": {
+    "checks": [
+      {
+        "participants": 2,
+        "version": "12.0",
+        "tables": 1,
+        "savedAndReopened": true,
+        "application": "Microsoft Word",
+        "images": 1
+      },
+      {
+        "participants": 2,
+        "version": "12.0",
+        "sheets": 2,
+        "application": "Microsoft Excel",
+        "formulaValue": 5,
+        "savedAndReopened": true
+      },
+      {
+        "participants": 2,
+        "version": "12.0",
+        "savedAndReopened": true,
+        "application": "Microsoft PowerPoint",
+        "images": 1,
+        "slides": 2
+      }
+    ],
+    "cleanupWarnings": [
+      "Word first-instance quit RPC"
+    ]
+  },
+  "files": {
+    "word": {
+      "downloadSha256": "11803b550c36b158233f8f6616134757cba9b5e1e246065b2f2044cd1d8cc962",
+      "microsoftSavedSha256": "5c562398294cd393a3ec8386bb9f58bac18a4c9a59bb4b355a86ff1b8e574f9c"
+    },
+    "sheet": {
+      "downloadSha256": "94c23028f89a93bd93060b0e53653e14d22b35d878245a8bd0ffe69d561b21f9",
+      "microsoftSavedSha256": "0e66008554983cce8e3807c7aca5672a0dcddc2a26fd57b62fbd8c07ad154ee5"
+    },
+    "slides": {
+      "downloadSha256": "2c9b3bc969f3ec556dd3eda78c5fcb4c26f152d9b6e077b05ce3452ac3d62dd7",
+      "microsoftSavedSha256": "215129b2fea522ff796feaaab98a35b69d4fd8fd8e0d57d4a382bf1f0859eb17"
+    }
+  },
+  "notes": [
+    "Public versioned SDK assets cached for slow development SSH only; documents/WS/callbacks used real engine.",
+    "Initial callback201/load/selector/coordinate failures retained in narrative; not counted as success.",
+    "Extra close tests initially blocked by exited private tunnel; after verified tunnel recovery, 2/2 passed.",
+    "No production data, public source visibility, or license changes made."
+  ]
+}
