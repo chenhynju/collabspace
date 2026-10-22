@@ -117,6 +117,7 @@ jobs:
         run: |
           node scripts/ci-collab-config.cjs
           node scripts/test-collab.cjs
+          node scripts/test-password.cjs
       - name: Upload acceptance evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -210,7 +210,7 @@ class Store {
     const locked = (
       await c.query(
         `
-      SELECT u.id,u.name,u.status AS user_status,o.status AS org_status,
+      SELECT u.id,u.name,u.password_hash,u.status AS user_status,o.status AS org_status,
              m.status AS member_status,p.id AS project_id,p.status AS project_status,p.owner_id,p.visibility
       FROM sys_user u
       JOIN org_membership m ON m.user_id=u.id AND m.organization_id=$2
@@ -227,6 +227,7 @@ class Store {
       locked.member_status !== "ACTIVE"
     )
       fail(404, "NOT_FOUND");
+    if(ctx.credentialState&&ctx.credentialState!==hash(locked.password_hash||"oauth-only"))fail(401,"SESSION_EXPIRED");
     const u = { id: locked.id, name: locked.name };
     const p = {
       id: locked.project_id,
@@ -518,7 +519,8 @@ class Store {
         [hash(secret), ctx.org, id, ctx.user],
       );
       if (!r.rowCount) fail(401, "INVALID_TICKET");
-      return { role: d.role, name: d.userName, kind:d.kind };
+      const user=(await c.query("SELECT password_hash FROM sys_user WHERE id=$1",[ctx.user])).rows[0];
+      return { role: d.role, name: d.userName, kind:d.kind,credentialState:hash(user.password_hash||"oauth-only") };
     });
   }
   async sync(ctx, id, vector) {
@@ -752,7 +754,7 @@ class Store {
     return (
       await c.query(
         `
-        SELECT g.user_id,g.role,u.name FROM collab_grant g
+        SELECT g.user_id,g.role,u.name,u.password_hash FROM collab_grant g
         JOIN org_membership m ON m.organization_id=g.organization_id AND m.user_id=g.user_id
         JOIN sys_user u ON u.id=g.user_id
         JOIN collab_document d ON d.organization_id=g.organization_id AND d.id=g.document_id
@@ -766,7 +768,7 @@ class Store {
                     WHERE rg.organization_id=$1 AND rg.project_id=p.id AND gm.membership_id=m.id AND cg.archived_at IS NULL))`,
         [ctx.org, id],
       )
-    ).rows;
+    ).rows.map(({password_hash,...r})=>({...r,credentialState:hash(password_hash||"oauth-only")}));
   }
   async threads(ctx, id) {
     return this.tx(ctx, async (c) => {

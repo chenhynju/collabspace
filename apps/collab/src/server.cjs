@@ -98,14 +98,18 @@ function start({
         (await store.audience(s.ctx, s.docId)).map((r) => [r.user_id, r]),
       );
     } catch (e) {
-      if ([401, 403, 404].includes(e.status)) s.close(4003, "Access revoked");
+      if ([401, 403, 404].includes(e.status)) {
+        s.close(4003, "Access revoked");
+        const next=[...room(s)].find(p=>p!==s&&p.readyState===WebSocket.OPEN);
+        if(next)await presence(next);
+      }
       else send(s, { type: "error", code: "DATABASE_UNAVAILABLE" });
       return;
     }
     const members = [];
     for (const p of room(s)) {
       const authorized = audience.get(p.ctx.user);
-      if (authorized) {
+      if (authorized && (!p.ctx.credentialState||p.ctx.credentialState===authorized.credentialState)) {
         members.push({
           sessionId: p.sessionId,
           userId: p.ctx.user,
@@ -162,6 +166,7 @@ function start({
             const a = auth.parse(data);
             const ctx = { org: a.org, user: a.user };
             const info = await store.consume(ctx, a.docId, a.ticket);
+            ctx.credentialState=info.credentialState;
             // Old ProseMirror schemas normalize unknown image nodes away. Do
             // not let an old document client sync or submit destructive cleanup.
             if((info.kind==="DOCUMENT" && ![2,3].includes(a.docSchema)) || (info.kind==='MARKDOWN' && a.docSchema!==3))
@@ -205,11 +210,12 @@ function start({
           metrics.updates++;
           send(s, { type: "ack", seq: ack.seq, updateId: ack.updateId });
           if (ack.duplicate) return;
-          const readers = new Map(ack.readers.map((r) => [r.user_id, r.role]));
+          const readers = new Map(ack.readers.map((r) => [r.user_id, r]));
           for (const peer of room(s)) {
             if (peer === s) continue;
-            const role = readers.get(peer.ctx.user);
-            if (!role) {
+            const reader = readers.get(peer.ctx.user);
+            const role=reader?.role;
+            if (!role||(peer.ctx.credentialState&&peer.ctx.credentialState!==reader.credentialState)) {
               peer.close(4003, "Access revoked");
               continue;
             }

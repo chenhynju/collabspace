@@ -6,6 +6,8 @@ import { LoginDto } from './dto/login.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { ResendVerificationDto } from './dto/resend-verification.dto';
 import { ForgotPasswordDto, ResetPasswordDto } from './dto/password-reset.dto';
+import {ChangePasswordDto} from './dto/change-password.dto';
+import {CurrentUser} from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 
 @Controller('auth')
@@ -35,6 +37,9 @@ export class AuthController {
   login(@Body() dto: LoginDto, @Req() req: Request) {
     return this.auth.login(dto, { traceId: req.traceId, ip: req.ip || '' });
   }
+
+  @Post('change-password')
+  changePassword(@CurrentUser() user:{id:string},@Body() dto:ChangePasswordDto,@Req() req:Request){return this.auth.changePassword(user.id,dto,{traceId:req.traceId,ip:req.ip||''});}
 
   @Public()
   @Post('forgot-password')

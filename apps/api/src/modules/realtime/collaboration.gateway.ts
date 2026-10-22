@@ -8,6 +8,7 @@ import {
   MessageBody,
   SubscribeMessage,
 } from '@nestjs/websockets';
+import {credentialMatches} from '../auth/credential-version';
 import { Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
@@ -82,16 +83,16 @@ export class CollaborationGateway
    * 就发出 project:open，因此消息处理器必须能独立完成鉴权。
    */
   private async authenticate(client: CollabSocket) {
-    if (client.data.user) return client.data.user;
+    // Recheck token and current credentials on every authenticated event.
     const raw =
       (client.handshake.auth?.token as string | undefined) ??
       (client.handshake.query?.token as string | undefined);
     if (!raw) return null;
 
-    let userId = '';
+    let userId = '';let credential:unknown;
     try {
       const payload = await this.jwt.verifyAsync(raw);
-      userId = payload.sub as string;
+      userId = payload.sub as string;credential=payload.pwd;
     } catch {
       return null;
     }
@@ -100,10 +101,10 @@ export class CollaborationGateway
     const user = await this.prisma.withUser(userId, (tx) =>
       tx.user.findFirst({
         where: { id: userId, status: 'NORMAL' },
-        select: { id: true, name: true, email: true },
+        select: { id: true, name: true, email: true,passwordHash:true },
       }),
     );
-    if (!user) return null;
+    if (!user||!credentialMatches(credential,user.passwordHash,this.config.get<string>('JWT_SECRET','dev-secret'))) return null;
 
     client.data.user = { id: user.id, name: user.name, email: user.email };
     if (!client.data.joined) client.data.joined = [];
@@ -171,6 +172,7 @@ export class CollaborationGateway
 
   @SubscribeMessage('presence:request')
   async requestPresence(@ConnectedSocket() client: CollabSocket) {
+    if(!await this.authenticate(client)){client.disconnect(true);return;}
     const r = client.data.joined?.[0];
     if (r) await this.broadcastPresence(r.organizationId, r.projectId);
     return { ok: true };
@@ -178,6 +180,7 @@ export class CollaborationGateway
 
   @SubscribeMessage('project:close')
   async closeProject(@ConnectedSocket() client: CollabSocket) {
+    if(!await this.authenticate(client)){client.disconnect(true);return;}
     for (const r of client.data.joined) {
       client.leave(RealtimeEventsService.projectRoom(r.organizationId, r.projectId));
       client.leave(RealtimeEventsService.orgRoom(r.organizationId));
@@ -190,10 +193,11 @@ export class CollaborationGateway
   /* ---------------- 光标 / presence ---------------- */
 
   @SubscribeMessage('cursor:update')
-  cursorUpdate(
+  async cursorUpdate(
     @ConnectedSocket() client: CollabSocket,
     @MessageBody() body: { x: number; y: number },
   ) {
+    if(!await this.authenticate(client)){client.disconnect(true);return;}
     const r = client.data.joined?.[0];
     if (!r || !Number.isFinite(body?.x)) return;
     client
@@ -227,6 +231,7 @@ export class CollaborationGateway
     for (const s of sockets as unknown as CollabSocket[]) {
       const data = s.data as SocketData;
       if (!data.user) continue;
+      if(!await this.authenticate(s)){s.disconnect(true);continue;}
       for (const r of data.joined) {
         const ms = await this.prisma.withUser(data.user.id, (tx) =>
           tx.membership.findFirst({

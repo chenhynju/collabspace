@@ -145,6 +145,7 @@ export default function Sidebar() {
       <div className="p-3 border-t border-slate-800">
         <div className="text-sm text-slate-200 mb-1 truncate">{user?.name}</div>
         <div className="text-xs text-slate-500 mb-2 truncate">{user?.email}</div>
+        <Link href="/account/security" className="mb-2 block text-sm text-slate-300 hover:text-white">账号安全 · 修改密码</Link>
         <button
           onClick={() => {
             logout();

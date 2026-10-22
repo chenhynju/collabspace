@@ -18,12 +18,14 @@ export default function LoginPage() {
   const setToken = useAuthStore((s) => s.setToken);
   const loadProfile = useAuthStore((s) => s.loadProfile);
   const [error, setError] = useState('');
+  const [notice,setNotice]=useState('');
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [oauthProviders, setOauthProviders] = useState<{ google: boolean; github: boolean }>({ google: false, github: false });
   const form = useForm({ resolver: zodResolver(schema) });
 
   useEffect(() => {
+    if(new URLSearchParams(location.search).has('password_changed'))setNotice('密码已修改，请使用新密码登录。');
     if(new URLSearchParams(location.search).has('oauth_error'))setError('第三方登录未完成，请重试或使用邮箱登录。');
     api
       .get('/auth/oauth/providers')
@@ -80,6 +82,7 @@ export default function LoginPage() {
           </button>
         )}
 
+        {notice&&<p role="status" className="mb-4 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700">{notice}</p>}
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1">邮箱</label>

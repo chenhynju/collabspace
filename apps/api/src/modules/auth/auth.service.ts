@@ -16,6 +16,8 @@ import { nanoid } from 'nanoid';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
+import {credentialVersion} from './credential-version';
+import {ChangePasswordDto} from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { OAuthService } from './oauth.service';
 import { ProvisioningService } from '../provisioning/provisioning.service';
@@ -308,6 +310,34 @@ export class AuthService {
     return this.issueToken(user);
   }
 
+  /** Authenticated self-service only; no target user ID is accepted from the client. */
+  async changePassword(userId:string,dto:ChangePasswordDto,meta:RequestMeta){
+    if(dto.newPassword!==dto.confirmPassword)throw new BadRequestException({code:'PASSWORD_MISMATCH',message:'两次输入的新密码不一致'});
+    if(Buffer.byteLength(dto.newPassword,'utf8')>72||Buffer.byteLength(dto.currentPassword,'utf8')>72)throw new BadRequestException({code:'PASSWORD_TOO_LONG',message:'密码的UTF-8长度最多72字节'});
+    if(dto.newPassword===dto.currentPassword)throw new BadRequestException({code:'PASSWORD_UNCHANGED',message:'新密码不能与当前密码相同'});
+    const failures=await this.prisma.loginLog.count({where:{userId,status:1,msg:'password change failed',createdAt:{gte:new Date(Date.now()-15*60*1000)}}});
+    if(failures>=5)throw new HttpException({code:'PASSWORD_RATE_LIMIT',message:'尝试过于频繁，请15分钟后重试'},HttpStatus.TOO_MANY_REQUESTS);
+    const user=await this.prisma.user.findUnique({where:{id:userId}});
+    if(!user||user.status!=='NORMAL'||!user.passwordHash)throw new ForbiddenException({code:'PASSWORD_NOT_AVAILABLE',message:'当前账号无法通过旧密码修改，请使用密码重置流程'});
+    if(!await bcrypt.compare(dto.currentPassword,user.passwordHash)){await this.audit.loginLog({userId,username:user.email,ip:meta.ip,status:1,msg:'password change failed'});throw new BadRequestException({code:'CURRENT_PASSWORD_INVALID',message:'当前密码错误'});}
+    const passwordHash=await bcrypt.hash(dto.newPassword,12);
+    await this.prisma.withUser(userId,async tx=>{
+      const changed=await tx.user.updateMany({where:{id:userId,status:'NORMAL',passwordHash:user.passwordHash},data:{passwordHash}});
+      if(changed.count!==1)throw new ConflictException({code:'CREDENTIALS_CHANGED',message:'密码已发生变化，请重新登录后重试'});
+      await tx.passwordResetToken.updateMany({where:{userId,consumedAt:null},data:{consumedAt:new Date()}});
+      const memberships=await tx.membership.findMany({where:{userId},select:{organizationId:true}});
+      const [tables]=await tx.$queryRaw<Array<{tickets:string|null;office:string|null}>>`SELECT to_regclass('collab_ticket')::text AS tickets,to_regclass('collab_office')::text AS office`;
+      for(const member of memberships){
+        const org=member.organizationId;await tx.$executeRaw`SELECT set_config('app.current_org_id', ${org}, true)`;
+        if(tables.tickets)await tx.$executeRaw`DELETE FROM collab_ticket WHERE organization_id=${org} AND user_id=${userId}`;
+        if(tables.office)await tx.$executeRaw`UPDATE collab_office_lease SET expires_at=now()-interval '1 second' WHERE organization_id=${org} AND user_id=${userId} AND expires_at>now()`;
+        await this.audit.record(tx,{organizationId:org,actorId:userId,title:'修改登录密码',businessType:BusinessType.UPDATE,action:'auth:change-password',resourceType:'User',resourceId:userId,before:{passwordConfigured:true},after:{passwordChanged:true},traceId:meta.traceId,ip:meta.ip,requestMethod:'POST'});
+      }
+      await tx.loginLog.create({data:{userId,username:user.email,ip:meta.ip,status:0,msg:'password changed; trace='+meta.traceId}});
+    });
+    return {ok:true,reauthenticate:true};
+  }
+
   /** 生成密码重置凭证（sha256 哈希入库）并发信 */
   private async issuePasswordReset(user: { id: string; email: string; name: string }) {
     const rawToken = nanoid(32);
@@ -458,8 +488,8 @@ export class AuthService {
   oauthHandoff(result:any,binding:string){return this.oauth.handoff(result,binding);}
   oauthRedeem(code:string,binding:string){return this.oauth.redeem(code,binding);}
 
-  private issueToken(user: { id: string; email: string; name: string }) {
-    const payload = { sub: user.id, email: user.email, name: user.name };
+  private issueToken(user: { id: string; email: string; name: string; passwordHash:string|null }) {
+    const payload = { sub: user.id, email: user.email, name: user.name, pwd:credentialVersion(user.passwordHash,this.config.get<string>('JWT_SECRET','change-me')) };
     const accessToken = this.jwt.sign(payload, {
       secret: this.config.get('JWT_SECRET'),
       expiresIn: this.config.get('JWT_ACCESS_EXPIRES_IN', '7d'),

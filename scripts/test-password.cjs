@@ -1,0 +1,1 @@
+const fs=require('node:fs'),{spawnSync}=require('node:child_process');const c=JSON.parse(fs.readFileSync('.test-runs/collab-local/config.json','utf8'));const r=spawnSync(process.execPath,['--test','apps/api/tests/password.test.cjs'],{env:{...process.env,...c,PASSWORD_TEST_DATABASE_URL:c.DATABASE_URL},stdio:'inherit',windowsHide:true});process.exitCode=r.status??1;
