@@ -1,5 +1,7 @@
 # CollabSpace — 详细设计 v1
 
+2026-10-22 高频业务绘图扩展：场景覆盖、24个模板/图元、源码属性操作、导入及SVG/PNG交付见 [BUSINESS-DIAGRAMS.md](BUSINESS-DIAGRAMS.md)。90%是待业务验收的目标，不是已通过比例。
+
 2026-10-22 编辑体验改进：完整 Office 工具入口、协作/设计工作区 UI、文件最近编辑人与确认保存日期，契约见 [EDITOR-EXPERIENCE.md](EDITOR-EXPERIENCE.md)。
 
 用户新增必需范围：原生.md源码多人协作、.docx/.xlsx/.pptx在线共同编辑、真实编辑者显示与冲突/保存管理，以Microsoft Office文件往返验收。原生 Markdown 与 Office 协作已上线；验收及剩余边界见 ../../evidence/collaboration/OFFICE-ONLINE-2026-10-22.md。详见 [COLLABORATIVE-FILES.md](COLLABORATIVE-FILES.md)。
