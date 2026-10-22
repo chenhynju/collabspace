@@ -1,6 +1,8 @@
 # 可直接交给开发 Agent 的 Prompt
 
-用户新增必需范围：原生.md源码多人协作、.docx/.xlsx/.pptx在线共同编辑、真实编辑者显示与冲突/保存管理，以Microsoft Office文件往返验收。当前均未实现，不能用富文本快捷方式或文件上传下载充数。详见 [COLLABORATIVE-FILES.md](COLLABORATIVE-FILES.md)。
+2026-10-22 编辑体验改进：完整 Office 工具入口、协作/设计工作区 UI、文件最近编辑人与确认保存日期，契约见 [EDITOR-EXPERIENCE.md](EDITOR-EXPERIENCE.md)。
+
+用户新增必需范围：原生.md源码多人协作、.docx/.xlsx/.pptx在线共同编辑、真实编辑者显示与冲突/保存管理，以Microsoft Office文件往返验收。原生 Markdown 与 Office 协作已上线；验收及剩余边界见 ../../evidence/collaboration/OFFICE-ONLINE-2026-10-22.md。详见 [COLLABORATIVE-FILES.md](COLLABORATIVE-FILES.md)。
 
 2026-10-21 第二轮追加：受支持 Mermaid 流程图/基础思维导图拖拽直接修改共享源码；评论/版本提交后实时通知；账号/租户/文档隔离的离线配图；Google/GitHub 社交登录安全完善。最新契约和验收以 [ITERATION-2.md](ITERATION-2.md) 为准，配置见 [OAUTH-SETUP-MEMO.md](OAUTH-SETUP-MEMO.md)。历史未实现描述不覆盖本轮新增能力；任意语法/坐标回写、完整离线应用壳及企业SSO仍不宣称完成。
 
