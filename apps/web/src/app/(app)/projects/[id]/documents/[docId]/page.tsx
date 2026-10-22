@@ -1,4 +1,5 @@
 "use client";
+import {displayDate} from "@/lib/display-date";
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -424,7 +425,7 @@ export default function DocumentPage({
                 <div key={v.id} className="my-3 rounded-lg border p-3 text-sm">
                   <p className="font-medium">{v.name}</p>
                   <p className="my-2 text-xs text-slate-400">
-                    {new Date(v.created_at).toLocaleString()}
+                    {displayDate(v.created_at)}
                   </p>
                   <button
                     className="text-blue-700"

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { ArrowUpRight, FileText, Network, FolderOpen, Users, MessageSquare, History } from "lucide-react";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
@@ -25,29 +26,19 @@ export default function CollaborationHub() {
     };
   }, [org]);
   return (
-    <div className="mx-auto max-w-6xl space-y-6 p-8">
-      <p className="text-sm text-blue-700">
-        CollabSpace / Real-time collaboration
-      </p>
-      <h1 className="text-3xl font-semibold">让团队始终编辑同一份文档。</h1>
-      <p className="max-w-3xl text-slate-500">
-        多人共同编辑、在线状态与光标、原文评论和冲突合并。选择项目，打开同一份文档，通过共享权限邀请组织成员；断线重连后继续同步。
-      </p>
+    <div className="mx-auto max-w-6xl space-y-7 p-5 sm:p-8">
+      <section className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 p-7 text-white shadow-lg sm:p-10">
+        <div className="pointer-events-none absolute -right-16 -top-24 h-80 w-80 rounded-full bg-indigo-500/20 blur-3xl" />
+        <p className="relative text-xs font-semibold uppercase tracking-[.2em] text-indigo-300">CollabSpace · Workspace</p>
+        <h1 className="relative mt-4 max-w-2xl text-3xl font-semibold leading-tight sm:text-4xl">好想法，在同一份画布上成形。</h1>
+        <p className="relative mt-4 max-w-2xl leading-7 text-slate-300">从一段文字到一张流程图，让团队的讨论、修改与交付始终保持同步。</p>
+        <div className="relative mt-7 flex flex-wrap gap-5 text-xs text-slate-300"><span className="flex items-center gap-2"><Users size={15}/>在线成员与光标</span><span className="flex items-center gap-2"><MessageSquare size={15}/>原文评论</span><span className="flex items-center gap-2"><History size={15}/>版本与离线恢复</span></div>
+      </section>
       <div className="grid gap-4 md:grid-cols-2">
-        <section className="rounded-xl border border-blue-200 bg-blue-50 p-6">
-          <h2 className="text-xl font-semibold">协作文档</h2>
-          <p className="mt-2 text-sm text-slate-500">
-            富文本、多人选区与光标、原文评论、版本和离线恢复。
-          </p>
-        </section>
-        <section className="rounded-xl border bg-white p-6">
-          <h2 className="text-xl font-semibold">白板扩展</h2>
-          <p className="mt-2 text-sm text-slate-500">
-            流程图、绑定连接线、思维导图与 Mermaid 基础源码；多人光标、各自撤销、版本和离线重连。
-          </p>
-        </section>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><span className="inline-flex rounded-xl bg-indigo-50 p-3 text-indigo-600"><FileText size={24}/></span><h2 className="mt-4 text-xl font-semibold text-slate-900">一起写，始终在同一页</h2><p className="mt-2 text-sm leading-6 text-slate-500">富文本与 Markdown，图文表达、共同编辑和原文评论。把想法写清楚，把讨论留在上下文里。</p></section>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><span className="inline-flex rounded-xl bg-teal-50 p-3 text-teal-700"><Network size={24}/></span><h2 className="mt-4 text-xl font-semibold text-slate-900">一起画，让思路看得见</h2><p className="mt-2 text-sm leading-6 text-slate-500">以 Mermaid 源码驱动图表，在画布与代码间切换。用流程图与思维导图组织团队的下一步。</p></section>
       </div>
-      <h2 className="text-lg font-semibold">选择协作项目</h2>
+      <div className="flex items-end justify-between"><div><h2 className="text-lg font-semibold text-slate-900">项目协作空间</h2><p className="mt-1 text-sm text-slate-500">选择一个项目，继续团队的创作。</p></div><Link href="/files" className="flex items-center gap-1 text-sm font-medium text-indigo-600">Office 与文件<ArrowUpRight size={16}/></Link></div>
       {error && (
         <p role="alert" className="text-red-700">
           {error}
@@ -62,23 +53,23 @@ export default function CollaborationHub() {
         {projects.map((p) => (
           <div
             key={p.id}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-white p-5"
+            className="group flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-indigo-200 hover:shadow-md"
           >
             <div>
-              <h3 className="font-medium">{p.name}</h3>
+              <h3 className="flex items-center gap-3 font-semibold text-slate-900"><FolderOpen className="text-indigo-500" size={20}/>{p.name}</h3>
               <p className="text-xs text-slate-500">
-                项目权限与协作空间权限分别校验
+                文档、图表与团队讨论的共享空间
               </p>
             </div>
             <div className="flex gap-3">
               <Link
-                className="rounded bg-blue-600 px-4 py-2 text-sm text-white"
+                className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-700"
                 href={`/projects/${p.id}/documents`}
               >
                 打开协作文档
               </Link>
               <Link
-                className="rounded border px-4 py-2 text-sm"
+                className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                 href={`/projects/${p.id}/boards`}
               >
                 打开实时白板

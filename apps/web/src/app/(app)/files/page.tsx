@@ -1,5 +1,6 @@
 'use client';
 import { Fragment, useEffect, useState, useCallback } from 'react';
+import {displayDate} from '@/lib/display-date';
 import PageHeader from '@/components/PageHeader';
 import {
   Card, Button, Modal, Input, Field, Empty, InlineError,
@@ -64,7 +65,8 @@ export default function FilesGlobalPage() {
 
   return (
     <div className="p-6">
-      <PageHeader title="文件" description="组织全部交付文件，上传入口在项目详情页" />
+      <PageHeader title="团队文件" description="集中管理交付文件与在线 Office；上传入口在项目详情页。编辑时间为北京时间的已确认保存日期。" />
+      <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">在线编辑支持 .docx、.xlsx、.pptx。表格公式与工作表管理、幻灯片图片与图形，均在编辑器顶部原生工具栏中。旧 .xls 请先转换为 .xlsx。</div>
       {markdownError&&<div role="alert"><InlineError message={markdownError}/><Button onClick={()=>setReload(v=>v+1)}>重新加载文档列表</Button></div>}
       {markdown.length>0&&<Card><h2 className="p-4 font-semibold">协作 Markdown 文件</h2><div className="divide-y">{markdown.map(d=><Link key={d.id} href={`/projects/${d.project_id}/documents/${d.id}`} className="flex justify-between p-4 hover:bg-slate-50"><span>{d.title}</span><span className="text-sm text-slate-500">{d.role} · 实时编辑 →</span></Link>)}</div></Card>}
 
@@ -72,14 +74,14 @@ export default function FilesGlobalPage() {
         <Empty text="暂无文件" />
       ) : (
         <Card>
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto"><table className="w-full text-sm">
             <thead>
               <tr className="text-left text-xs text-slate-500 border-b border-slate-100">
                 <th className="px-4 py-3 font-medium">文件名</th>
                 <th className="px-4 py-3 font-medium">所属项目</th>
                 <th className="px-4 py-3 font-medium">版本</th>
                 <th className="px-4 py-3 font-medium">大小</th>
-                <th className="px-4 py-3 font-medium">上传人</th>
+                <th className="px-4 py-3 font-medium">上传人</th><th className="px-4 py-3 font-medium">最近编辑人</th><th className="px-4 py-3 font-medium">编辑时间</th>
                 <th className="px-4 py-3 font-medium text-right">操作</th>
               </tr>
             </thead>
@@ -89,9 +91,9 @@ export default function FilesGlobalPage() {
                   <tr className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
                     <td className="px-4 py-3 text-slate-700">{f.name}</td>
                     <td className="px-4 py-3 text-slate-500">{f.project?.name ?? '-'}</td>
-                    <td className="px-4 py-3 text-slate-500">v{f.version}</td>
+                    <td className="px-4 py-3 text-slate-500">v{f.officeRevision ?? f.version}</td>
                     <td className="px-4 py-3 text-slate-500">{fmtSize(f.size)}</td>
-                    <td className="px-4 py-3 text-slate-500">{f.uploadedBy?.name ?? '-'}</td>
+                    <td className="px-4 py-3 text-slate-500">{f.uploadedBy?.name ?? '-'}</td><td className="px-4 py-3 text-slate-500">{f.officeId ? (f.lastEditor?.name || (f.officeRevision > 1 ? '历史作者未记录' : f.uploadedBy?.name || '—')) : (f.uploadedBy?.name || '—')}</td><td className="px-4 py-3 whitespace-nowrap text-slate-500" title="北京时间；Office 显示已确认保存时间，其余文件显示上传时间">{displayDate(f.lastEditedAt || f.createdAt)}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end gap-1.5">
                         {/\.(docx|xlsx|pptx)$/i.test(f.name)&&<Button size="sm" onClick={async()=>{try{const r=await api.post(`/office/files/${f.id}/open`);router.push('/office/'+r.data.id)}catch(e:any){setError(e.response?.data?.code==='OFFICE_NOT_CONFIGURED'?'Office 服务尚未配置。':'无法打开；首次初始化需要上传者操作，之后由文件所有者授权。')}}}>在线编辑</Button>}
@@ -116,7 +118,7 @@ export default function FilesGlobalPage() {
                 </Fragment>
               ))}
             </tbody>
-          </table>
+          </table></div>
         </Card>
       )}
 

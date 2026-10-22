@@ -64,9 +64,11 @@ test('Office real nonprivileged PG: shared key, tenant/role, saved receipt and r
   store.command=async()=>({error:0});await store.force(ctx,id);await assert.rejects(store.force(ctx,id),{code:'OFFICE_SAVE_PENDING'});
   await store.tx(ctx,c=>c.query('UPDATE collab_office SET issued=0 WHERE organization_id=$1 AND document_id=$2',[ctx.org,id]));store.command=async()=>({error:4});await store.force(ctx,id);assert.equal((await store.tx(ctx,c=>store.head(c,ctx,id))).issued,0);
   await store.tx(ctx,c=>c.query('UPDATE collab_office SET issued=2 WHERE organization_id=$1 AND document_id=$2',[ctx.org,id]));
-  const payload={key:a.config.document.key,status:6,url:'http://localhost:3390/cache/files/synthetic',userdata:generation+':2'};
+  const payload={key:a.config.document.key,status:6,users:[b.sessionId],url:'http://localhost:3390/cache/files/synthetic',userdata:generation+':2'};
   const callback=body=>store.callback(cap,sign(body,'synthetic-engine-secret'),body);
   assert.deepEqual(await callback(payload),{error:0});assert.deepEqual(await callback(payload),{error:0});assert.equal((await store.heartbeat(ctx,id)).revision,2);
+  const listed=await store.visibleFiles(ctx,[{id:fileId}]);assert.equal(listed[0].officeRevision,2);assert.equal(listed[0].lastEditor.id,peer.user);assert.ok(listed[0].lastEditedAt);
+  const foreignFiles=await store.visibleFiles({org:randomUUID(),user:peer.user},[{id:fileId}]);assert.equal(foreignFiles[0].officeId,undefined);
   assert.deepEqual(await callback({...payload,userdata:generation+':1'}),{error:1});assert.equal((await store.heartbeat(ctx,id)).phase,'FROZEN');
   assert.deepEqual((await store.fileCurrent(ctx,fileId)).bytes,bytes);
   assert.equal(await store.shareOffice(ctx,fileId),true);await assert.rejects(store.shareOffice(peer,fileId),{code:'OWNER_REQUIRED'});

@@ -120,9 +120,9 @@ class OfficeStore extends Store{
  async isOfficeFile(org,file){return this.tx({org,user:'office-share-check'},async c=>(await c.query('SELECT document_id FROM collab_office WHERE organization_id=$1 AND file_id=$2',[org,file])).rowCount>0)}
  async shareOffice(ctx,file){return this.tx(ctx,async c=>{const row=(await c.query('SELECT document_id FROM collab_office WHERE organization_id=$1 AND file_id=$2',[ctx.org,file])).rows[0];if(!row)return false;await this.access(c,ctx,row.document_id,'owner');return true})}
  async visibleFiles(ctx,files){return this.tx(ctx,async c=>{
-  const maps=(await c.query('SELECT file_id,document_id FROM collab_office WHERE organization_id=$1 AND file_id=ANY($2::text[]) ORDER BY document_id',[ctx.org,files.map(f=>f.id)])).rows,hidden=new Set();
+  const maps=(await c.query(`SELECT o.file_id,o.document_id,o.revision,v.created_at AS last_edited_at,a.after_value->'lastEditor' AS last_editor FROM collab_office o JOIN collab_office_version v ON v.organization_id=o.organization_id AND v.document_id=o.document_id AND v.revision=o.revision LEFT JOIN LATERAL (SELECT after_value FROM sys_oper_log WHERE organization_id=o.organization_id AND resource_id=o.document_id AND action='office:save' AND after_value->>'revision'=o.revision::text ORDER BY created_at DESC LIMIT 1) a ON true WHERE o.organization_id=$1 AND o.file_id=ANY($2::text[]) ORDER BY o.document_id`,[ctx.org,files.map(f=>f.id)])).rows,hidden=new Set();
   for(const m of maps)try{await this.access(c,ctx,m.document_id)}catch(e){if([403,404,409].includes(e.status))hidden.add(m.file_id);else throw e}
-  const map=new Map(maps.map(m=>[m.file_id,m.document_id]));return files.filter(f=>!hidden.has(f.id)).map(f=>({...f,officeId:map.get(f.id)}));
+  const map=new Map(maps.map(m=>[m.file_id,m]));return files.filter(f=>!hidden.has(f.id)).map(f=>{const m=map.get(f.id);return {...f,officeId:m?.document_id,officeRevision:m?.revision,lastEditedAt:m?.last_edited_at,lastEditor:m?.last_editor}});
  })}
  async restoreOffice(ctx,id,version,requestId){
   const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -185,7 +185,8 @@ class OfficeStore extends Store{
    await c.query('INSERT INTO collab_office_version VALUES($1,$2,$3,$4,$5,$6,$7,now())',[ctx.org,id,randomUUID(),fresh?h.revision+1:null,claim.generation,receipt,data]);
    if(!fresh){await c.query("UPDATE collab_office SET phase=CASE WHEN generation=$3 THEN 'FROZEN' ELSE phase END,error='SAVE_QUARANTINED' WHERE organization_id=$1 AND document_id=$2",[ctx.org,id,claim.generation]);return {error:1}}
    await c.query("UPDATE collab_office SET revision=revision+1,saved=$3,phase=$4,users=CASE WHEN $4='CLOSED' THEN '[]'::jsonb ELSE users END,error=NULL,updated_at=now() WHERE organization_id=$1 AND document_id=$2",[ctx.org,id,p.status===6?seq:h.saved,p.status===2?'CLOSED':h.phase]);
-   await this.audit(c,{org:ctx.org,user:null},id,'office:save',{revision:h.revision},{revision:h.revision+1,checksum:hash(data),actor:'office-engine',users:h.users});return {error:0};
+   const lastEditor=Array.isArray(p.users)&&p.users.length===1?(await c.query("SELECT u.id,u.name FROM collab_office_lease l JOIN sys_user u ON u.id=l.user_id WHERE l.organization_id=$1 AND l.document_id=$2 AND l.generation=$3 AND l.id::text=$4 AND l.role IN ('OWNER','EDITOR')",[ctx.org,id,claim.generation,p.users[0]])).rows[0]||null:null;
+   await this.audit(c,{org:ctx.org,user:null},id,'office:save',{revision:h.revision},{revision:h.revision+1,checksum:hash(data),actor:'office-engine',users:h.users,lastEditor});return {error:0};
   });
  }
  async restart(ctx,id,generation){return this.tx(ctx,async c=>{await this.access(c,ctx,id,'owner');const h=await this.head(c,ctx,id);if(h.phase!=='FROZEN'||h.generation!==generation)fail(409,'OFFICE_SESSION_CHANGED');await c.query("UPDATE collab_office SET generation=$3,phase='CLOSED',users='[]',error=NULL WHERE organization_id=$1 AND document_id=$2",[ctx.org,id,randomUUID()]);await this.audit(c,ctx,id,'office:restart',null,{revision:h.revision});return {revision:h.revision}})}
