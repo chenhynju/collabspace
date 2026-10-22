@@ -3,6 +3,14 @@ collabspace-api.purelamp.uk {
     request_body {
         max_size 20MB
     }
+    handle_path /office-engine/* {
+        @private_command path /command /coauthoring/CommandService.ashx
+        respond @private_command 404
+        reverse_proxy 127.0.0.1:3396 {
+            header_up X-Forwarded-Proto https
+            header_up X-Forwarded-Host collabspace-api.purelamp.uk/office-engine
+        }
+    }
     handle /collab {
         reverse_proxy 127.0.0.1:3322
     }

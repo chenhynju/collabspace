@@ -55,6 +55,13 @@ services:
       BILLING_WEBHOOK_SECRET: ${BILLING_WEBHOOK_SECRET:?required}
       EMAIL_PROVIDER: console
       UPLOAD_ROOT: /app/uploads
+      OFFICE_PUBLIC_URL: ${OFFICE_PUBLIC_URL:-}
+      OFFICE_INTERNAL_URL: ${OFFICE_INTERNAL_URL:-}
+      OFFICE_CALLBACK_BASE: ${OFFICE_CALLBACK_BASE:-}
+      OFFICE_JWT_SECRET: ${OFFICE_JWT_SECRET:-}
+      OFFICE_CAPABILITY_SECRET: ${OFFICE_CAPABILITY_SECRET:-}
+      OFFICE_REGISTRY_FILE: /app/uploads/.office/registry.json
+    extra_hosts: ["host.docker.internal:host-gateway"]
     ports: ["127.0.0.1:3321:3001"]
     volumes: ["uploads:/app/uploads"]
     mem_limit: 384m

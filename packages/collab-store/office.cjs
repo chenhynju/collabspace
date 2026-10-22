@@ -147,9 +147,11 @@ class OfficeStore extends Store{
  async candidate(url,ext){
   let u;try{u=new URL(url)}catch{fail(400,'OFFICE_SAVE_URL')}
   const base=new URL(this.setting('OFFICE_INTERNAL_URL'));
-  const publicOrigin=new URL(this.setting('OFFICE_PUBLIC_URL')).origin;
-  if(![base.origin,publicOrigin].includes(u.origin)||u.username||u.password||u.hash||!u.pathname.startsWith('/cache/files/')||/%2e|\.\./i.test(u.pathname))fail(400,'OFFICE_SAVE_URL');
-  const target=new URL(u.pathname+u.search,base);
+  const publicBase=new URL(this.setting('OFFICE_PUBLIC_URL'));
+  const source=[publicBase,base].find(b=>u.origin===b.origin&&u.pathname.startsWith(b.pathname.replace(/\/$/,'')+'/cache/files/'));
+  if(!source||u.username||u.password||u.hash||/%2e|%25|%2f|%5c|\.\./i.test(u.pathname))fail(400,'OFFICE_SAVE_URL');
+  const relative=u.pathname.slice(source.pathname.replace(/\/$/,'').length);
+  const target=new URL(base.pathname.replace(/\/$/,'')+relative+u.search,base);
   const r=await fetch(target,{redirect:'error',signal:AbortSignal.timeout(20000)});if(!r.ok)fail(502,'OFFICE_SAVE_FETCH');
   let size=0;const parts=[];for await(const part of r.body){size+=part.length;if(size>20*1024*1024){await r.body.cancel().catch(()=>{});fail(413,'OFFICE_SIZE')}parts.push(part)}return validate(Buffer.concat(parts),ext);
  }

@@ -9,6 +9,10 @@ test('Office signatures, unsafe package and SSRF boundaries',async()=>{
  assert.throws(()=>validate(fixture({'word/vbaProject.bin':strToU8('bad')}),'docx'),{code:'OFFICE_INVALID_ARCHIVE'});
  assert.throws(()=>validate(fixture({'word/_rels/document.xml.rels':strToU8('<Relationship TargetMode="External" Target="http://169.254.169.254/"/>')}),'docx'),{code:'OFFICE_EXTERNAL_RESOURCE'});
  const store=new OfficeStore('postgres://unused:unused@localhost/unused',{OFFICE_INTERNAL_URL:'http://localhost:3390',OFFICE_PUBLIC_URL:'https://office.example.test'});
+ const originalFetch=global.fetch;let fetched;
+ store.options.OFFICE_PUBLIC_URL='https://office.example.test/office-engine';
+ global.fetch=async target=>{fetched=String(target);return new Response(fixture())};
+ try{await store.candidate('https://office.example.test/office-engine/cache/files/result.docx?sig=synthetic','docx');assert.equal(fetched,'http://localhost:3390/cache/files/result.docx?sig=synthetic');await assert.rejects(store.candidate('https://office.example.test/cache/files/result.docx','docx'),{code:'OFFICE_SAVE_URL'});await assert.rejects(store.candidate('https://office.example.test/office-engine/cache/files/%252e%252e/private','docx'),{code:'OFFICE_SAVE_URL'})}finally{global.fetch=originalFetch}
  try{for(const url of ['http://169.254.169.254/cache/files/x','http://localhost:3390/command','http://localhost:3390@evil.test/cache/files/x'])await assert.rejects(store.candidate(url,'docx'),{code:'OFFICE_SAVE_URL'})}finally{await store.close()}
 });
 test('Office close/reopen epochs, failed commit retry, mid-download revocation and direct RLS',{skip:!process.env.COLLAB_TEST_DATABASE_URL},async()=>{
