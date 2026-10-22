@@ -1,0 +1,14 @@
+{
+  "deployedSource": "2b509d7b952d62b0efcbae52cd4b3d799d1603e4",
+  "deployment": "dpl_BVAueNybqwR3GJwLUNSpLpKbjFAg",
+  "unitPassed": 11,
+  "localTemplatesPassed": 24,
+  "localCatalogShapesPassed": 24,
+  "onlineTemplatesPassed": 24,
+  "onlineBusinessJourneysPassed": 2,
+  "pngDimensions": [
+    720,
+    112
+  ],
+  "marketCoveragePercent": null
+}
