@@ -21,6 +21,6 @@ test('business diagrams: shared properties, labeled edges, stale template guard,
   for(const format of ['SVG','PNG']){const[d]=await Promise.all([a.waitForEvent('download'),a.getByRole('button',{name:'导出 '+format,exact:true}).click()]);await d.saveAs(out+'/business.'+format.toLowerCase())}
   expect(fs.readFileSync(out+'/business.svg','utf8')).toContain('支付确认');expect(fs.readFileSync(out+'/business.png').subarray(0,8).toString('hex')).toBe('89504e470d0a1a0a');
   await a.screenshot({path:'evidence/collaboration/business-diagrams-online-owner.png',fullPage:true});await b.screenshot({path:'evidence/collaboration/business-diagrams-online-peer.png',fullPage:true});
-  await source(a).fill('flowchart LR\n Bad[');await expect(a.getByLabel('Mermaid 图形预览').getByRole('alert')).toBeVisible();await expect(a.getByRole('button',{name:'导出 SVG',exact:true})).toBeDisabled();console.log('All business-diagram collaboration checks passed; document',doc.id);
+  await source(a).fill('flowchart LR\n Bad[');await expect(a.getByLabel('Mermaid 图形预览').getByRole('alert')).toBeVisible();await expect(a.getByRole('button',{name:'导出 SVG',exact:true})).toBeDisabled();await source(a).fill('flowchart LR\n  Order[订单] --> Paid[支付确认]');await saved(a);console.log('All business-diagram collaboration checks passed; document',doc.id);
  }finally{for(const c of contexts)await c.close()}
 });
