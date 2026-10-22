@@ -12,7 +12,8 @@ test('native Markdown import, GFM/Mermaid preview, two-editor convergence, offli
   await a.getByLabel('导入 Markdown 文件').setInputFiles({name:filename,mimeType:'text/markdown',buffer:Buffer.from('\ufeff'+initial.replaceAll('\n','\r\n'))});
   await a.getByRole('link').filter({hasText:filename}).click();await expect(source(a)).toHaveValue(initial);await saved(a);
   const id=a.url().split('/').pop();
-  await a.goto(config.WEB_URL+'/files');await a.getByRole('link').filter({hasText:filename}).click();await expect(source(a)).toHaveValue(initial);await saved(a);
+  let listRequests=0;const mineRoute=api+'/documents/mine';await a.route(mineRoute,r=>{listRequests++;return listRequests===1?r.abort():r.continue();});
+  await a.goto(config.WEB_URL+'/files');await a.getByRole('link').filter({hasText:filename}).click();expect(listRequests).toBeGreaterThan(1);await a.unroute(mineRoute);await expect(source(a)).toHaveValue(initial);await saved(a);
   for(const [userId,role]of[[config.TEST_MEMBER,'EDITOR'],[config.TEST_ADMIN,'VIEWER']])expect((await request.put(`${api}/documents/${id}/grants`,{headers,data:{userId,role}})).ok()).toBeTruthy();
   const b=await client(peer),v=await client(viewer);await b.goto(a.url());await v.goto(a.url());await saved(b);await saved(v);
   await expect(source(v)).toHaveAttribute('readonly','');await expect(a.getByLabel('Markdown 安全预览').locator('table')).toContainText('完成');

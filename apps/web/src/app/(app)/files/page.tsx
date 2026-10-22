@@ -21,6 +21,7 @@ export default function FilesGlobalPage() {
   const hasPerm = useAuthStore((s) => s.hasPerm);
   const [list, setList] = useState<any[]>([]);
   const [markdown,setMarkdown]=useState<any[]>([]);
+  const [markdownError,setMarkdownError]=useState(''),[reload,setReload]=useState(0);
   const org=useAuthStore(s=>s.currentOrgId);
   const [shareFor, setShareFor] = useState<any | null>(null);
   const [shareUrl, setShareUrl] = useState('');
@@ -32,11 +33,15 @@ export default function FilesGlobalPage() {
   }, [org]);
 
   useEffect(() => {
-    let active=true;setList([]);setMarkdown([]);setShareFor(null);
+    let active=true;let retry:ReturnType<typeof setTimeout>|undefined;setList([]);setMarkdown([]);setMarkdownError('');setShareFor(null);
     void refresh().catch(()=>{if(active)setError('文件加载失败，请检查权限或网络。');});
-    void api.get('/documents/mine',{headers:{'x-organization-id':org}}).then(r=>{if(active)setMarkdown(r.data);}).catch(()=>{});
-    return ()=>{active=false;};
-  }, [refresh,org]);
+    const loadMarkdown=async(attempt=0)=>{
+      try{const r=await api.get('/documents/mine',{headers:{'x-organization-id':org}});if(active){setMarkdown(r.data);setMarkdownError('');}}
+      catch(e:any){if(!active)return;const status=e.response?.status;if(attempt<2&&(!status||status>=500)){retry=setTimeout(()=>void loadMarkdown(attempt+1),1000*(attempt+1));}else setMarkdownError('协作 Markdown 列表加载失败，请重新加载。');}
+    };
+    void loadMarkdown();
+    return ()=>{active=false;clearTimeout(retry);};
+  }, [refresh,org,reload]);
 
   const download = async (f: any) => {
     const res = await api.get(`/files/${f.id}/download`, { responseType: 'blob' });
@@ -60,6 +65,7 @@ export default function FilesGlobalPage() {
   return (
     <div className="p-6">
       <PageHeader title="文件" description="组织全部交付文件，上传入口在项目详情页" />
+      {markdownError&&<div role="alert"><InlineError message={markdownError}/><Button onClick={()=>setReload(v=>v+1)}>重新加载文档列表</Button></div>}
       {markdown.length>0&&<Card><h2 className="p-4 font-semibold">协作 Markdown 文件</h2><div className="divide-y">{markdown.map(d=><Link key={d.id} href={`/projects/${d.project_id}/documents/${d.id}`} className="flex justify-between p-4 hover:bg-slate-50"><span>{d.title}</span><span className="text-sm text-slate-500">{d.role} · 实时编辑 →</span></Link>)}</div></Card>}
 
       {list.length === 0 ? (

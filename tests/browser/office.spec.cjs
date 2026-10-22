@@ -1,9 +1,10 @@
 const {test,expect}=require('@playwright/test'),config=require('./config.cjs'),fs=require('node:fs'),{randomUUID}=require('node:crypto');
+test.use({actionTimeout:20000,...(process.env.COLLAB_BROWSER_HTTP1==='1'?{launchOptions:{args:['--disable-http2','--disable-quic']}}:{})});
 test.describe('authenticated Office file collaboration',()=>{
- test.skip(!process.env.OFFICE_BROWSER_TEST,'Requires isolated Office engine and API configuration');
+ test.skip(!process.env.OFFICE_BROWSER_TEST,'Requires configured Office engine and dedicated acceptance accounts');
  test.setTimeout(600000);
- test.use({actionTimeout:20000});
  for(const format of ['word','sheet','slides'])test(format+': upload, native editors, read-only, persistent checkpoint and history',async({browser,request})=>{
+  const results=process.env.OFFICE_RESULTS_DIR||'.test-runs/office-integrated/results',evidencePrefix=process.env.OFFICE_EVIDENCE_PREFIX||'office-integrated';
   const ext={word:'docx',sheet:'xlsx',slides:'pptx'}[format],contexts=[],api=config.NEXT_PUBLIC_API_URL,writes=new WeakMap();
   const login=async email=>{const r=await request.post(api+'/auth/login',{data:{email,password:config.TEST_PASSWORD}});expect(r.ok()).toBeTruthy();return (await r.json()).accessToken};
   const owner=await login(config.TEST_OWNER_EMAIL),peer=await login(config.TEST_MEMBER_EMAIL),viewer=await login(config.TEST_ADMIN_EMAIL),headers={Authorization:'Bearer '+owner,'x-organization-id':config.TEST_ORG};
@@ -31,8 +32,8 @@ test.describe('authenticated Office file collaboration',()=>{
    await a.waitForTimeout(3000);await a.getByRole('button',{name:'保存到服务器',exact:true}).click();await expect.poll(async()=>{const r=await request.get(api+'/office/'+id+'/state',{headers});return (await r.json()).revision},{timeout:90000}).toBe(2);
    const state=await(await request.get(api+'/office/'+id+'/state',{headers})).json();expect(state.versions.length).toBe(2);
    expect((await request.get(api+'/files/'+file.id+'/download',{headers})).ok()).toBeTruthy();console.log(format,'persistent revision',state.revision);
-   fs.mkdirSync('.test-runs/office-integrated/results',{recursive:true});fs.writeFileSync('.test-runs/office-integrated/results/'+format+'.'+ext,await(await request.get(api+'/office/'+id+'/download',{headers})).body());fs.writeFileSync('.test-runs/office-integrated/results/'+format+'-markers.json',JSON.stringify(markers));
-   await a.screenshot({path:'evidence/collaboration/office-integrated-'+format+'.png',fullPage:true});
+   fs.mkdirSync(results,{recursive:true});fs.writeFileSync(results+'/'+format+'.'+ext,await(await request.get(api+'/office/'+id+'/download',{headers})).body());fs.writeFileSync(results+'/'+format+'-markers.json',JSON.stringify(markers));
+   await a.screenshot({path:'evidence/collaboration/'+evidencePrefix+'-'+format+'.png',fullPage:true});await b.screenshot({path:'evidence/collaboration/'+evidencePrefix+'-'+format+'-peer.png',fullPage:true});
    const readerHeaders={Authorization:'Bearer '+viewer,'x-organization-id':config.TEST_ORG};expect((await request.post(api+'/office/'+id+'/save',{headers:readerHeaders})).status()).toBe(403);
    if(format==='word'){
     const foreign={Authorization:'Bearer '+peer,'x-organization-id':config.TEST_ORG};await expect.poll(()=>writes.get(b),{timeout:15000}).toBeGreaterThan(0);
@@ -42,14 +43,14 @@ test.describe('authenticated Office file collaboration',()=>{
     await expect.poll(async()=>{const r=await request.get(api+'/office/'+id+'/state',{headers});return (await r.json()).phase},{timeout:30000}).toBe('FROZEN');expect((await request.post(api+'/office/'+id+'/config',{headers:foreign})).status()).toBe(404);
     // The engine presents its own blocking access/save warning even while the
     // application heartbeat is suppressed. Do not click through that warning.
-    await expect(fb.getByText(/这份文件无法保存/).first()).toBeVisible({timeout:30000});await b.screenshot({path:'evidence/collaboration/office-integrated-revoked.png',fullPage:true});const before=writes.get(b);await b.keyboard.type('REVOKED-MUST-NOT-WRITE',{delay:80});await b.waitForTimeout(5000);expect(writes.get(b)).toBe(before);await b.unroute(stateRoute);await expect(b.getByRole('alert').filter({hasText:'访问已撤销'})).toContainText('访问已撤销');
+    await expect(fb.getByText(/这份文件无法保存/).first()).toBeVisible({timeout:30000});await b.screenshot({path:'evidence/collaboration/'+evidencePrefix+'-revoked.png',fullPage:true});const before=writes.get(b);await b.keyboard.type('REVOKED-MUST-NOT-WRITE',{delay:80});await b.waitForTimeout(5000);expect(writes.get(b)).toBe(before);await b.unroute(stateRoute);await expect(b.getByRole('alert').filter({hasText:'访问已撤销'})).toContainText('访问已撤销');
     expect((await(await request.get(api+'/office/'+id+'/state',{headers})).json()).revision).toBe(2);
     const confirmed=state.versions.find(x=>x.revision===2);await a.getByText('已保存版本与恢复候选',{exact:true}).click();await a.locator('[data-office-version="'+confirmed.id+'"]').getByRole('button',{name:'恢复为私有副本',exact:true}).click();await expect(a).not.toHaveURL(new RegExp(id+'$'));const copy=a.url().split('/').pop();await frame(a);expect((await request.post(api+'/office/'+copy+'/config',{headers:foreign})).status()).toBe(404);await a.reload();await frame(a);await expect.poll(async()=>{const r=await request.get(api+'/office/'+copy+'/state',{headers});return (await r.json()).phase}).toBe('OPEN');
    }else{
     await v.close();await b.close();await a.close();
     await expect.poll(async()=>{const r=await request.get(api+'/office/'+id+'/state',{headers});return (await r.json()).phase},{timeout:90000}).toBe('CLOSED');
     const closed=await(await request.get(api+'/office/'+id+'/state',{headers})).json();expect(closed.revision).toBeGreaterThanOrEqual(2);expect(closed.users).toHaveLength(0);
-    fs.writeFileSync('.test-runs/office-integrated/results/'+format+'.'+ext,await(await request.get(api+'/office/'+id+'/download',{headers})).body());
+    fs.writeFileSync(results+'/'+format+'.'+ext,await(await request.get(api+'/office/'+id+'/download',{headers})).body());
     const reopened=await pageFor(owner);await reopened.goto(config.WEB_URL+'/office/'+id);await frame(reopened);console.log(format,'final save and reopen verified');
    }
   }finally{for(const c of contexts)await c.close()}
