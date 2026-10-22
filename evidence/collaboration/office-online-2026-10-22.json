@@ -1,0 +1,140 @@
+{
+  "recordedAt": "2026-10-22T12:41:37.896Z",
+  "environment": "Production canonical HTTPS domains; synthetic demo accounts only",
+  "backend": {
+    "release": "r20261022-02",
+    "source": "641693ba873e180ef0474b73829f1306df3c4117",
+    "healthy": true
+  },
+  "frontend": {
+    "source": "c40b2ae0a052f7e2d0bb9e6aea3c4f4092d5cdef",
+    "deployment": "dpl_Gac3sEtHxoWCgvHXJtqjwxWZh2iy",
+    "url": "https://collabspace.purelamp.uk",
+    "originalOfficeAcceptanceDeployment": "dpl_9bm9izyZWh5b1SYPToAqaXE12V6K",
+    "latestTwoAccountNativeEditorSmoke": "PASSED"
+  },
+  "checks": {
+    "officeThreeFormats": {
+      "passed": 3,
+      "failed": 0,
+      "cohort": "two editors and one viewer",
+      "includes": [
+        "upload and native editors",
+        "real participants",
+        "persistent checkpoint and downloads",
+        "read-only rejection",
+        "Word engine-level revoke and private restore",
+        "Excel/PPT final close and reopen"
+      ]
+    },
+    "originalProductJourneys": {
+      "firstRun": {
+        "passed": 4,
+        "failed": 2
+      },
+      "followUpDocuments": "PASSED with measured slow-network startup allowance",
+      "followUpMarkdown": "PASSED including injected first-list request failure",
+      "finalCoveredJourneys": 6
+    },
+    "officeOoxmlDownload": "PASSED",
+    "microsoftSaveFreshInstanceReopen": "PASSED",
+    "microsoftSavedOoxml": "PASSED",
+    "sourceCi": {
+      "source": "c40b2ae0a052f7e2d0bb9e6aea3c4f4092d5cdef",
+      "run": 39779178202,
+      "conclusion": "success"
+    }
+  },
+  "network": {
+    "browser": "Microsoft Edge",
+    "transport": "HTTPS HTTP/1.1 and WSS",
+    "note": "Default browser transport initially ERR_CONNECTION_CLOSED; HTTP1 selected without bypassing TLS/auth; HTTP2/cross-browser not accepted by this run"
+  },
+  "backups": {
+    "databaseArchiveBytes": 486384,
+    "uploadsArchiveBytes": 353,
+    "catalogVerified": true,
+    "location": "Private shared directory on existing server",
+    "fullRestoreDrill": "NOT_RUN"
+  },
+  "disk": {
+    "oldServerAvailableKiB": 1226480,
+    "capacity": "98%",
+    "note": "Build on new server; transport archive removed after verified load; existing images/releases/data retained"
+  },
+  "microsoft": {
+    "checks": [
+      {
+        "participants": 2,
+        "version": "12.0",
+        "tables": 1,
+        "savedAndReopened": true,
+        "application": "Microsoft Word",
+        "images": 1
+      },
+      {
+        "participants": 2,
+        "version": "12.0",
+        "sheets": 2,
+        "application": "Microsoft Excel",
+        "formulaValue": 5,
+        "savedAndReopened": true
+      },
+      {
+        "participants": 2,
+        "version": "12.0",
+        "savedAndReopened": true,
+        "application": "Microsoft PowerPoint",
+        "images": 1,
+        "slides": 2
+      }
+    ],
+    "cleanupWarnings": [
+      "Word first-instance quit RPC"
+    ]
+  },
+  "files": {
+    "word": {
+      "downloadSha256": "7eeb9aaf70451681df02a17602f94a48b4e958745cc852c94e113f8194e9bbea",
+      "microsoftSavedSha256": "0f60f78e0b5f75e22b747c6205454a63df22b336b5afd2746c7507becb69248f"
+    },
+    "sheet": {
+      "downloadSha256": "32e2e0da30eb58af72ab0ca856d4c5b0347be2038c35e706378b967437a7d132",
+      "microsoftSavedSha256": "f033ee344f10403ae917bd1fc6ff0a37c9d00f511aaccd32099d2e4f9009a0b7"
+    },
+    "slides": {
+      "downloadSha256": "1713b46d4715b09f98ac3f366d39080ac6789373fde9986e6a9b6abbabae4777",
+      "microsoftSavedSha256": "30972f439c39d50c7601508ee795609799359124a952acb18dcdfa7ad941d7d8"
+    }
+  },
+  "demo": {
+    "word": {
+      "id": "b0787d59-71a0-4f50-9bee-3befda8945f2",
+      "name": "Office-12673b95.docx",
+      "url": "https://collabspace.purelamp.uk/office/b0787d59-71a0-4f50-9bee-3befda8945f2",
+      "revision": 2,
+      "phase": "CLOSED"
+    },
+    "sheet": {
+      "id": "622bad13-0825-4e6c-815b-fcc19d136539",
+      "name": "Office-e280759c.xlsx",
+      "url": "https://collabspace.purelamp.uk/office/622bad13-0825-4e6c-815b-fcc19d136539",
+      "revision": 3,
+      "phase": "CLOSED"
+    },
+    "slides": {
+      "id": "04d5b690-7eeb-4764-8688-e369f43665eb",
+      "name": "Office-a60b9406.pptx",
+      "url": "https://collabspace.purelamp.uk/office/04d5b690-7eeb-4764-8688-e369f43665eb",
+      "revision": 3,
+      "phase": "CLOSED"
+    }
+  },
+  "notRun": [
+    "full Office format compatibility",
+    "20-user Office load/HA",
+    "permanent Office offline editing",
+    "full disaster recovery drill",
+    "community source/license delivery completion"
+  ]
+}

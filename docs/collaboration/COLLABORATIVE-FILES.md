@@ -4,7 +4,7 @@
 
 ## 状态索引（2026-10-22）
 
-Markdown 已上线，见 MARKDOWN-RELEASE-2026-10-22.md。Office 已完成应用集成的隔离开发验收：真实 CollabSpace 登录/文件入口/ACL、三格式多人编辑、确认版本与下载；不是只有独立引擎 harness。见 OFFICE-INTEGRATION-2026-10-22.md 及对应证据。Office 尚未公开部署，不能把本地隧道结果称为生产验收。
+Markdown 已上线，见 MARKDOWN-RELEASE-2026-10-22.md。Office 已完成应用集成的隔离开发验收：真实 CollabSpace 登录/文件入口/ACL、三格式多人编辑、确认版本与下载；不是只有独立引擎 harness。见 OFFICE-INTEGRATION-2026-10-22.md 及对应证据。Office 随后已按用户明确要求公开上线并完成正式域名三格式3/3、多账号及既有业务复测，见 evidence/collaboration/OFFICE-ONLINE-2026-10-22.md；此前隔离证据仍仅证明其当时环境。
 
 以下三项为需求提出时的历史差距，保留用于追溯：
 

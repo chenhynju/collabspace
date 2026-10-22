@@ -1,5 +1,15 @@
 # CollabSpace 独立部署
 
+2026-10-22 Office 已按用户要求上线。当前后端 r20261022-02 / 641693b；前端 c40b2ae，正式域名保持不变。线上多账号证据与回滚边界见 `evidence/collaboration/OFFICE-ONLINE-2026-10-22.md`；以下早期发布步骤不能直接当本轮升级脚本重跑。
+
+Office 引擎独立位于新机，原始3390仅回环。`office-link.service.example` 为旧机到新机的持续连接；`office-link-sshd.conf.example` 限定远端无特权账号仅本地转发到3390，禁止远程监听/终端/命令。旧机仅监听127.0.0.1及Docker私网3396，API使用 `http://host.docker.internal:3396`；浏览器使用 `https://collabspace-api.purelamp.uk/office-engine`。公网路径剥除前缀并设置官方要求的Forwarded headers，不开放引擎command端点。主机指纹必须预先核实固定，不能自动接受未知主机。
+
+Office runtime 变量从服务器0600私密环境注入；PUBLIC_URL允许受控子路径，INTERNAL_URL使用原始引擎根origin。后端callback基址是正式API v1，registry在上传持久卷的`.office`目录。SQL升级必须以管理连接事务执行`schema.sql`和`office.sql`，向实际非特权角色显式授予三张附加表CRUD，不能授予表所有权/BYPASSRLS。
+
+本轮旧机空间紧张，镜像在新机独立目录构建后传输，SHA256校验再加载；没有在旧机构建或清理其他项目。旧机只保留约1.2GB空间，尚未证明持续容量。下一轮优先迁移运行服务/缩减运行镜像；不同Docker存储后端的image Size口径不同，不能只按新机压缩Size估算旧机解包空间。不能盲目prune或删除仍需回滚的镜像/数据。
+
+切回旧前端可保留新API的Office存储ACL层；已有Office文件后，不得直接回退到不知道Office ACL的旧API。需冻结并撤销活动会话、停Office入口且保留新读取授权层。数据库自动回退不能代替数据恢复审核。备份文件已验证目录但未完整演练恢复，不能宣称灾备通过。
+
 前端：Vercel 项目 `purelamp/collabspace`，Root Directory `apps/web`，Node 22，域名 `collabspace.purelamp.uk`。后端：腾讯云弗吉尼亚 `170.106.161.82`，独立目录 `/opt/collabspace`，Compose project `collabspace`，API/WS 仅绑定 `127.0.0.1:3321/3322`。Caddy 专用站点 `collabspace-api.purelamp.uk`，`/collab` 转发独立 WS，其余转发 API（含原有 Socket.IO）。
 
 ## 初始化边界

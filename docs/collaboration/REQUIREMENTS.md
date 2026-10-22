@@ -97,3 +97,8 @@ M0 基线与安全审计；M1 两账号在线编辑+持久化；M2 离线/评论
 ## Office 补充范围（2026-10-22）
 
 OF 文件协作采用兼容 Office 文件路线，当前以隔离应用集成验收为里程碑。需求、权限上限、保存/恢复及上线边界见 COLLABORATIVE-FILES.md 和 OFFICE-INTEGRATION-2026-10-22.md；不以此替代既有 Markdown/Yjs 协作主线。
+
+
+## Office 线上交付（2026-10-22）
+
+Office现已正式上线，沿用协作主线与现有身份/租户授权，不新增商业化范围。正式多账号验收见 evidence/collaboration/OFFICE-ONLINE-2026-10-22.md。

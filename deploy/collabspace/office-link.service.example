@@ -1,0 +1,18 @@
+[Unit]
+Description=CollabSpace dedicated Office engine link
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+# Local private key is root-readable. Remote identity is the restricted,
+# nonprivileged collabspace-office-link account, not a remote root shell.
+ExecStart=/usr/bin/ssh -NT -i /opt/collabspace/shared/office_tunnel -o UserKnownHostsFile=/opt/collabspace/shared/office_known_hosts -o StrictHostKeyChecking=yes -o BatchMode=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -L127.0.0.1:3396:127.0.0.1:3390 -L172.17.0.1:3396:127.0.0.1:3390 collabspace-office-link@43.130.127.57
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+
+[Install]
+WantedBy=multi-user.target

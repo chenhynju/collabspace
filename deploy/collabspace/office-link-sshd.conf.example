@@ -1,0 +1,12 @@
+# On the engine host only. Validate with sshd -t before reloading.
+# Give this account a nologin shell, no sudo, and its dedicated public key.
+# authorized_keys: restrict,port-forwarding,permitopen="127.0.0.1:3390",command="/bin/false" <PUBLIC_KEY>
+Match User collabspace-office-link
+    AllowTcpForwarding local
+    PermitOpen 127.0.0.1:3390
+    PermitListen none
+    AllowAgentForwarding no
+    X11Forwarding no
+    PermitTTY no
+    ForceCommand /bin/false
+Match all
