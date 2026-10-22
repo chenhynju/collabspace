@@ -25,7 +25,7 @@ export default function LoginPage() {
   const form = useForm({ resolver: zodResolver(schema) });
 
   useEffect(() => {
-    if(new URLSearchParams(location.search).has('password_changed'))setNotice('密码已修改，请使用新密码登录。');
+    if(new URLSearchParams(location.search).has('password_changed')||sessionStorage.getItem('collabspace:password-changed')==='1'){setNotice('密码已修改，请使用新密码登录。');sessionStorage.removeItem('collabspace:password-changed');}
     if(new URLSearchParams(location.search).has('oauth_error'))setError('第三方登录未完成，请重试或使用邮箱登录。');
     api
       .get('/auth/oauth/providers')
