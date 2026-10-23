@@ -28,3 +28,12 @@
 
 :root { color-scheme: light; }
 body { @apply bg-slate-50 text-slate-900; }
+
+@layer base {
+ body { @apply antialiased; }
+ ::selection { @apply bg-indigo-100 text-indigo-950; }
+ :focus-visible { outline: 2px solid #6366f1; outline-offset: 3px; }
+}
+@media (prefers-reduced-motion: reduce) {
+ *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}

@@ -13,6 +13,7 @@ import {
 } from "@collabspace/protocol";
 import { DocumentProvider, from64 } from "@/lib/document-provider";
 import ShapeGlyph from "./ShapeGlyph";
+import {Button} from "@/components/ui";
 import MermaidWorkspace, { MermaidPreview } from "./MermaidWorkspace";
 
 type Item = BoardShape & { id: string };
@@ -1312,9 +1313,9 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
 function BoardWorkspace({ provider }: { provider: DocumentProvider }) {
   const [mode, setMode] = useState(() => provider.doc.getText("mermaid").length || !provider.doc.getMap("shapes").size ? "mermaid" : "canvas");
   return <div>
-    <div className="mb-3 flex items-center gap-3">
-      <button aria-pressed={mode === "mermaid"} className="rounded border px-3 py-2" onClick={() => setMode("mermaid")}>Mermaid 图表工作区</button>
-      <button aria-pressed={mode === "canvas"} className="rounded border px-3 py-2" onClick={() => setMode("canvas")}>自由画布</button>
+    <div className="mb-5 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+      <Button variant={mode === "mermaid" ? "primary" : "ghost"} aria-pressed={mode === "mermaid"} onClick={() => setMode("mermaid")}>Mermaid 图表工作区</Button>
+      <Button variant={mode === "canvas" ? "primary" : "ghost"} aria-pressed={mode === "canvas"} onClick={() => setMode("canvas")}>自由画布</Button>
       <span className="text-xs text-slate-500">图表默认使用 Mermaid；自由画布内容独立保留。</span>
     </div>
     {mode === "mermaid" ? <MermaidWorkspace provider={provider} /> : <Canvas provider={provider} />}

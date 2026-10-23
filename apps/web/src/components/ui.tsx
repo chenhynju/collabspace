@@ -16,20 +16,20 @@ export function Button({
   ...props
 }: ButtonProps) {
   const variants: Record<string, string> = {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-300',
-    secondary: 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50',
+    primary: 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20 hover:bg-indigo-700 disabled:bg-indigo-300',
+    secondary: 'bg-white text-slate-700 border border-slate-200 shadow-sm hover:border-indigo-200 hover:bg-indigo-50/50',
     danger: 'bg-red-600 text-white hover:bg-red-700 disabled:bg-red-300',
     success: 'bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-emerald-300',
     ghost: 'text-slate-600 hover:bg-slate-100',
   };
   const sizes: Record<string, string> = {
-    sm: 'px-2.5 py-1 text-xs',
-    md: 'px-3.5 py-2 text-sm',
+    sm: 'px-3 py-1.5 text-xs',
+    md: 'px-4 py-2.5 text-sm',
   };
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-colors disabled:cursor-not-allowed',
+        'inline-flex items-center justify-center gap-2 rounded-xl font-medium transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60',
         variants[variant],
         sizes[size],
         className,
@@ -46,7 +46,7 @@ export function Card({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('bg-white rounded-xl border border-slate-200 shadow-sm', className)}
+      className={cn('bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_12px_-6px_rgba(15,23,42,0.12)]', className)}
       {...props}
     />
   );
@@ -86,7 +86,7 @@ export function Badge({
 
 /* ---------------- Inputs ---------------- */
 export const inputCls =
-  'w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
+  'w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-sm text-slate-800 shadow-sm placeholder:text-slate-400 transition focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 disabled:bg-slate-50 disabled:text-slate-400';
 
 export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
   return <input {...props} className={cn(inputCls, props.className)} />;
@@ -135,16 +135,16 @@ export function Modal({
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/40" onClick={onClose} />
+      <div className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm" onClick={onClose} />
       <div
         className={cn(
-          'relative bg-white rounded-xl shadow-xl w-full max-h-[90vh] overflow-y-auto',
+          'relative bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-h-[90vh] overflow-y-auto',
           wide ? 'max-w-2xl' : 'max-w-md',
         )}
       >
         <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 sticky top-0 bg-white">
           <h3 className="font-semibold text-slate-800">{title}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+          <button aria-label="关闭弹窗" onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus-visible:ring-2 focus-visible:ring-indigo-500">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -157,7 +157,7 @@ export function Modal({
 /* ---------------- Empty ---------------- */
 export function Empty({ text }: { text: string }) {
   return (
-    <div className="text-center py-12 text-sm text-slate-400 border border-dashed border-slate-200 rounded-xl">
+    <div className="text-center px-6 py-16 text-sm leading-6 text-slate-500 bg-slate-50/60 border border-dashed border-slate-300 rounded-2xl">
       {text}
     </div>
   );

@@ -10,12 +10,12 @@ export default function PageHeader({
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 mb-6">
+    <div className="flex flex-wrap items-start justify-between gap-4 mb-8">
       <div>
-        <h1 className="text-xl font-semibold text-slate-800">{title}</h1>
-        {description ? <p className="text-sm text-slate-500 mt-1">{description}</p> : null}
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">{title}</h1>
+        {description ? <p className="text-sm leading-6 text-slate-500 mt-2">{description}</p> : null}
       </div>
-      {children ? <div className="flex items-center gap-2 shrink-0">{children}</div> : null}
+      {children ? <div className="flex flex-wrap items-center gap-2">{children}</div> : null}
     </div>
   );
 }

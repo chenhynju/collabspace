@@ -87,11 +87,11 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="w-64 bg-slate-900 text-slate-100 min-h-screen flex flex-col shrink-0">
-      <div className="p-4 border-b border-slate-800">
+    <aside className="w-64 bg-[#101827] text-slate-100 h-dvh flex flex-col shrink-0 border-r border-white/5">
+      <div className="px-5 py-6 border-b border-white/5">
         <div className="flex items-center gap-2">
-          <Building2 className="w-6 h-6 text-blue-400" />
-          <span className="font-bold text-lg">CollabSpace</span>
+          <Building2 className="w-6 h-6 text-indigo-400" />
+          <span className="font-semibold text-xl tracking-tight">CollabSpace</span>
         </div>
       </div>
 
@@ -100,7 +100,7 @@ export default function Sidebar() {
         <select
           value={currentOrgId || ''}
           onChange={(e) => switchOrg(e.target.value)}
-          className="w-full bg-slate-800 text-white text-sm rounded px-2 py-1.5 border border-slate-700"
+          className="w-full bg-white/5 text-slate-200 text-sm rounded-xl px-3 py-2.5 border border-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-400"
         >
           {organizations.map((o) => (
             <option key={o.id} value={o.id}>{o.name}</option>
@@ -120,16 +120,17 @@ export default function Sidebar() {
                 </p>
               )}
               {items.map((item) => {
-                const active = pathname === item.href;
+                const active = pathname === item.href || pathname.startsWith(item.href + "/");
                 const Icon = item.icon;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                    aria-current={active ? "page" : undefined}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors focus-visible:ring-2 focus-visible:ring-indigo-400 ${
                       active
-                        ? 'bg-blue-600 text-white'
-                        : 'text-slate-300 hover:bg-slate-800 hover:text-white'
+                        ? 'bg-indigo-500/20 text-indigo-200 ring-1 ring-inset ring-indigo-400/20'
+                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
                     }`}
                   >
                     <Icon className="w-4 h-4 shrink-0" />
