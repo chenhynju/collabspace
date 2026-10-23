@@ -1,4 +1,5 @@
 'use client';
+import {usePersonalNotifications} from '@/lib/use-personal-notifications';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
@@ -72,6 +73,7 @@ const GROUPS: NavGroup[] = [
 ];
 
 export default function Sidebar() {
+  const {count}=usePersonalNotifications();
   const pathname = usePathname();
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
@@ -109,6 +111,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 px-2 py-3 space-y-4 overflow-y-auto">
+        <Link href="/notifications" aria-current={pathname==='/notifications'?'page':undefined} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm ${pathname==='/notifications'?'bg-indigo-600 text-white':'text-slate-300 hover:bg-white/5'}`}><Bell className="h-4 w-4"/>通知中心{count>0&&<span className="ml-auto rounded-full bg-indigo-500 px-2 py-0.5 text-xs text-white">{count>99?'99+':count}</span>}</Link>
         {GROUPS.map((group, gi) => {
           const items = group.items.filter((item) => hasPerm(item.perm));
           if (!items.length) return null;
@@ -116,7 +119,7 @@ export default function Sidebar() {
             <details key={gi} open={gi<2?true:undefined} className="group space-y-0.5">
               {!group.label&&<summary className="hidden">概览</summary>}
               {group.label && (
-                <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-slate-400">
+                <summary className="cursor-pointer rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 transition-colors hover:bg-white/5 hover:text-slate-200">
                   {group.label}
                 </summary>
               )}

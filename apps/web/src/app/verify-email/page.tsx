@@ -9,6 +9,7 @@ function VerifyInner() {
   const params = useSearchParams();
   const router = useRouter();
   const token = params.get('token') ?? '';
+  const invitation=params.get('invitation');
   const setToken = useAuthStore((s) => s.setToken);
   const loadProfile = useAuthStore((s) => s.loadProfile);
 
@@ -34,14 +35,14 @@ function VerifyInner() {
         setToken(data.accessToken);
         await loadProfile();
         setState('success');
-        setTimeout(() => router.push('/dashboard'), 600);
+        setTimeout(() => router.push(invitation?'/invite/accept?token='+encodeURIComponent(invitation):'/dashboard'), 600);
       } catch (e: any) {
         setState('error');
         setCode(e.response?.data?.code ?? '');
         setMessage(e.response?.data?.message ?? '验证失败，请稍后再试');
       }
     })();
-  }, [token, setToken, loadProfile, router]);
+  }, [token, invitation, setToken, loadProfile, router]);
 
   const resend = async () => {
     setResendNotice('');

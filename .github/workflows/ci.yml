@@ -101,6 +101,7 @@ jobs:
           pnpm exec ts-node --transpile-only scripts/seed-system-menus.ts
           pnpm exec ts-node --transpile-only scripts/grant-monitor-privs.ts
           pnpm --filter @collabspace/store migrate
+          ADMIN_DATABASE_URL="$DATABASE_ADMIN_URL" node ../../deploy/collabspace/apply-invitations.cjs
           pnpm run build
       - name: Run product acceptance
         working-directory: apps/api
@@ -118,6 +119,7 @@ jobs:
           node scripts/ci-collab-config.cjs
           node scripts/test-collab.cjs
           node scripts/test-password.cjs
+          INVITATION_TEST_CONFIG=.test-runs/collab-local/config.json node --test apps/api/tests/invitations.integration.test.cjs
       - name: Upload acceptance evidence
         if: always()
         uses: actions/upload-artifact@v4

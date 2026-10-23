@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import {invitationReturn} from '@/lib/invitation-return';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import Link from 'next/link';
@@ -41,7 +42,7 @@ export default function LoginPage() {
       const { data } = await api.post('/auth/login', d);
       setToken(data.accessToken);
       await loadProfile();
-      router.push('/dashboard');
+      router.push(invitationReturn(location.search));
     } catch (e: any) {
       setError(e.response?.data?.message || '登录失败');
       if (e.response?.data?.code === 'EMAIL_NOT_VERIFIED') {

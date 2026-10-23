@@ -106,3 +106,8 @@ OF 文件协作采用兼容 Office 文件路线，当前以隔离应用集成验
 ## Office 线上交付（2026-10-22）
 
 Office现已正式上线，沿用协作主线与现有身份/租户授权，不新增商业化范围。正式多账号验收见 evidence/collaboration/OFFICE-ONLINE-2026-10-22.md。
+
+
+### 2026-10-23 注册邀请与个人通知
+
+新增 INV01–INV06，业务、状态机、数据库权限与邮件交付边界见 [INVITATION-NOTIFICATIONS.md](INVITATION-NOTIFICATIONS.md)。核心协作与资源 ACL 保持既有权威模型；个人通知不依赖先加入目标组织。侧栏一级、次级菜单统一14px。

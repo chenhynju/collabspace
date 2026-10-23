@@ -80,6 +80,7 @@ function run(args, env = {}) {
       readFileSync("/repo/packages/collab-store/office.sql", "utf8"),
     );
     await pool.query("GRANT SELECT,INSERT,UPDATE,DELETE ON collab_image,collab_office,collab_office_version,collab_office_lease TO collabspace_app");
+    await require('./apply-invitations.cjs').apply(process.env.DATABASE_ADMIN_URL,process.env.DATABASE_URL);
     // Docker volume is shared with the explicitly assigned non-root runtime user.
     const ownership = spawnSync("chown", [
       "-R",

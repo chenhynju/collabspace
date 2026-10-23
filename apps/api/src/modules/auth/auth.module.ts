@@ -1,3 +1,4 @@
+import {InvitationsModule} from '../invitations/invitations.module';
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -16,6 +17,7 @@ import { MailModule } from '../mail/mail.module';
     ProvisioningModule,
     AuditModule,
     MailModule,
+    InvitationsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

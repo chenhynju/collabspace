@@ -220,7 +220,7 @@ async function main() {
     `${r02.status} ${JSON.stringify(r02.body).slice(0, 120)}`,
   );
 
-  // 恢复/幂等：同一邀请再次使用 → 409
+  // 幂等：同一受邀者重复接受成功，不重复成员或通知
   if (firstOk) {
     const r02again = await call('POST', '/invitations/accept', {
       token: tNewhire,
@@ -228,9 +228,9 @@ async function main() {
     });
     check(
       'AT02',
-      '同一邀请不可重复使用',
-      '409 INVITE_USED',
-      r02again.status === 409 && r02again.body?.code === 'INVITE_USED',
+      '重复接受幂等返回成功',
+      '201 accepted=true',
+      r02again.status === 201 && r02again.body?.accepted === true,
       `${r02again.status} ${r02again.body?.code ?? ''}`,
     );
   }

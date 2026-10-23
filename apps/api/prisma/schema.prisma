@@ -954,6 +954,7 @@ enum MemberStatus {
 }
 
 enum InviteStatus {
+  DECLINED
   PENDING
   ACCEPTED
   REVOKED

@@ -8,12 +8,14 @@ import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 
 const STATUS_TONE: Record<string, any> = {
+  DECLINED: 'slate',
   PENDING: 'blue',
   ACCEPTED: 'green',
   REVOKED: 'red',
   EXPIRED: 'amber',
 };
 const STATUS_LABEL: Record<string, string> = {
+  DECLINED: '已拒绝',
   PENDING: '待接受',
   ACCEPTED: '已接受',
   REVOKED: '已撤销',
@@ -27,6 +29,7 @@ export default function InvitationsPage() {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [roleId, setRoleId] = useState('');
+  const [deliveryNotice,setDeliveryNotice]=useState('');
   const [inviteUrl, setInviteUrl] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -37,11 +40,13 @@ export default function InvitationsPage() {
   }, []);
 
   useEffect(() => {
-    refresh();
+    refresh().catch(()=>setError('邀请列表加载失败'));
+    const timer=setInterval(()=>refresh().catch(()=>{}),15000);
     api
       .get('/roles')
       .then((r) => setRoles(r.data.filter((x: any) => x.key !== 'OWNER')))
       .catch(() => setRoles([]));
+    return()=>clearInterval(timer);
   }, [refresh]);
 
   const send = async () => {
@@ -49,7 +54,7 @@ export default function InvitationsPage() {
     setError(null);
     try {
       const { data } = await api.post('/invitations', { email, roleId });
-      setInviteUrl(data.inviteUrl);
+      setInviteUrl(data.inviteUrl||'');setDeliveryNotice(data.delivery==='IN_APP'?'邀请已送达对方的个人通知中心。':'邮件已进入投递队列，请查看投递状态；演示模式不会实际发信。');
       await refresh();
     } catch (e: any) {
       setError(e.response?.data?.message ?? '发送失败');
@@ -76,7 +81,7 @@ export default function InvitationsPage() {
               setOpen(true);
               setEmail('');
               setRoleId(roles[0]?.id ?? '');
-              setInviteUrl('');
+              setInviteUrl('');setDeliveryNotice('');
               setError(null);
             }}
           >
@@ -96,7 +101,7 @@ export default function InvitationsPage() {
                 <th className="px-4 py-3 font-medium">角色</th>
                 <th className="px-4 py-3 font-medium">有效期至</th>
                 <th className="px-4 py-3 font-medium">状态</th>
-                <th className="px-4 py-3 font-medium text-right">操作</th>
+                <th className="px-4 py-3 font-medium">送达方式 / 状态</th><th className="px-4 py-3 font-medium text-right">操作</th>
               </tr>
             </thead>
             <tbody>
@@ -105,12 +110,12 @@ export default function InvitationsPage() {
                   <td className="px-4 py-3 text-slate-700">{inv.email}</td>
                   <td className="px-4 py-3 text-slate-600">{inv.role.name}</td>
                   <td className="px-4 py-3 text-slate-500">
-                    {new Date(inv.expiresAt).toLocaleDateString()}
+                    {new Date(inv.expiresAt).toISOString().slice(0,10)}
                   </td>
                   <td className="px-4 py-3">
                     <Badge tone={STATUS_TONE[inv.status]}>{STATUS_LABEL[inv.status]}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-slate-500">{({IN_APP:'站内通知',PENDING:'邮件排队',SENDING:'投递中',RETRY:'等待重试',SENT:'已发信',SIMULATED:'演示 · 未实际发信',FAILED:'投递失败',CANCELLED:'投递取消'} as Record<string,string>)[inv.delivery?.status]||'待处理'}</td><td className="px-4 py-3 text-right">
                     {inv.status === 'PENDING' && hasPerm('invite:revoke') ? (
                       <Button size="sm" variant="danger" onClick={() => revoke(inv)}>
                         撤销
@@ -142,7 +147,7 @@ export default function InvitationsPage() {
             </Select>
           </Field>
 
-          {inviteUrl ? (
+          {deliveryNotice&&<p role="status" className="rounded-xl bg-indigo-50 p-3 text-sm text-indigo-700">{deliveryNotice}</p>}{inviteUrl ? (
             <Field label="邀请链接（模拟邮件投递，请复制发送）">
               <Input readOnly value={inviteUrl} onFocus={(e) => e.target.select()} />
             </Field>
@@ -154,7 +159,7 @@ export default function InvitationsPage() {
               关闭
             </Button>
             <Button onClick={send} disabled={busy || !email.trim() || !roleId}>
-              {busy ? '发送中…' : '生成邀请'}
+              {busy ? '发送中…' : '发送邀请'}
             </Button>
           </div>
         </div>

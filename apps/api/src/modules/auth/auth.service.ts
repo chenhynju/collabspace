@@ -22,6 +22,7 @@ import { LoginDto } from './dto/login.dto';
 import { OAuthService } from './oauth.service';
 import { ProvisioningService } from '../provisioning/provisioning.service';
 import { AuditService, BusinessType } from '../audit/audit.service';
+import {InvitationsService} from '../invitations/invitations.service';
 import { MailService } from '../mail/mail.service';
 
 type ProviderKey = 'google' | 'github';
@@ -38,17 +39,20 @@ export class AuthService {
     private readonly provisioning: ProvisioningService,
     private readonly audit: AuditService,
     private readonly mail: MailService,
+    private readonly invitations: InvitationsService,
   ) {}
 
   /** 邮箱注册：创建用户 + 开通组织（克隆角色/根部门/免费套餐），注册人为 OWNER */
   async register(dto: RegisterDto, meta: RequestMeta) {
-    const exists = await this.prisma.user.findUnique({ where: { email: dto.email } });
+    dto.email=dto.email.trim().toLowerCase();
+    if(dto.inviteToken) await this.invitations.validateRegistration(dto.inviteToken,dto.email);
+    const exists = await this.prisma.user.findFirst({ where: { email: {equals:dto.email,mode:'insensitive'} } });
     if (exists) {
       throw new ConflictException({ code: 'EMAIL_EXISTS', message: '该邮箱已注册' });
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
-    const orgName = dto.organizationName || `${dto.name} 的组织`;
+    const orgName = dto.inviteToken ? `${dto.name} 的个人空间` : dto.organizationName?.trim() || `${dto.name} 的组织`;
 
     const result = await this.prisma.provision(async (tx) => {
       const u = await tx.user.create({
@@ -100,18 +104,19 @@ export class AuthService {
 
     // 是否要求邮箱验证由系统参数 sys.account.emailVerify 控制；
     // 关闭时注册后直接签发 token 登录
-    if (!(await this.isEmailVerifyRequired())) {
-      await this.prisma.user.update({
-        where: { id: result.u.id },
-        data: { emailVerifiedAt: new Date() },
-      });
+    // Invitation links are also known to the sender; they do not prove ownership of the recipient mailbox.
+    if (!dto.inviteToken && !(await this.isEmailVerifyRequired())) {
+      // Optional verification permits personal-space login; it must not fabricate mailbox ownership.
+      const issued = await this.issueVerification(result.u);
       return {
         email: result.u.email,
+        emailSent: issued.sent,
+        emailProvider: issued.provider,
         requireEmailVerification: false,
         ...(await this.issueToken(result.u)),
       };
     }
-    const issued = await this.issueVerification(result.u);
+    const issued = await this.issueVerification(result.u,dto.inviteToken);
     return {
       email: result.u.email,
       requireEmailVerification: true,
@@ -202,7 +207,7 @@ export class AuthService {
   }
 
   /** 生成验证凭证（sha256 哈希入库，原始值只出现在邮件链接中）并发信 */
-  private async issueVerification(user: { id: string; email: string; name: string }) {
+  private async issueVerification(user: { id: string; email: string; name: string }, invitation?:string) {
     const rawToken = nanoid(32);
     const tokenHash = createHash('sha256').update(rawToken).digest('hex');
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -214,7 +219,7 @@ export class AuthService {
     );
 
     const webUrl = this.config.get<string>('WEB_URL') ?? 'http://localhost:3000';
-    const url = `${webUrl}/verify-email?token=${rawToken}`;
+    const url = `${webUrl}/verify-email?token=${rawToken}${invitation?'&invitation='+encodeURIComponent(invitation):''}`;
 
     try {
       const res = await this.mail.sendVerificationEmail(user.email, url, user.name);

@@ -7,6 +7,7 @@ import { api } from '@/lib/api';
 function CheckEmailInner() {
   const params = useSearchParams();
   const email = params.get('email') ?? '';
+  const delivery=params.get('delivery');
   const [notice, setNotice] = useState('');
   const [resending, setResending] = useState(false);
 
@@ -15,7 +16,7 @@ function CheckEmailInner() {
     setNotice('');
     try {
       await api.post('/auth/resend-verification', { email });
-      setNotice('验证邮件已重新发送，请查收');
+      setNotice('已请求重新发送；若为演示邮件模式，不会实际发出，请联系管理员。');
     } catch (e: any) {
       setNotice(e.response?.data?.message || '发送失败，请稍后再试');
     } finally {
@@ -31,8 +32,9 @@ function CheckEmailInner() {
         </div>
         <h1 className="text-xl font-bold mb-2">请验证你的邮箱</h1>
         <p className="text-slate-500 text-sm leading-6 mb-1">
-          验证邮件已发送至
+          {delivery==='simulated'?'演示邮件模式 · 邮件未实际发送':delivery==='failed'?'验证邮件投递失败':'请查收邮箱验证链接'}
         </p>
+        {delivery==='simulated'&&<p role="status" className="mb-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-700">请联系管理员配置邮件服务后重新发送。未完成验证前不会加入受邀组织。</p>}
         <p className="text-slate-900 font-medium text-sm mb-6">{email}</p>
         <p className="text-slate-500 text-xs leading-6 mb-6">
           请在 24 小时内点击邮件中的链接完成注册。若未收到，请检查垃圾邮件或点击下方按钮重新发送。

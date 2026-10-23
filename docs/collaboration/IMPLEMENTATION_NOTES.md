@@ -115,3 +115,8 @@ test:collab 发现 local:up 生成的 config.json 时执行真实非特权 PG/WS
 ## Office 线上交付（2026-10-22）
 
 Office正式上线：后端r20261022-02/641693b，最终前端c40b2ae。线上Office3/3、最后前端双账号原生编辑器、下载内容与微软12.0保存/重开3/3通过；既有六流程分轮复测全部覆盖通过，Markdown包含首次列表请求中断注入。CI全绿。磁盘余量及HTTP1测试网络边界见正式报告，不将其称为全面兼容/容量通过。
+
+
+### 2026-10-23 注册邀请与个人通知
+
+新增 INV01–INV06，业务、状态机、数据库权限与邮件交付边界见 [INVITATION-NOTIFICATIONS.md](INVITATION-NOTIFICATIONS.md)。核心协作与资源 ACL 保持既有权威模型；个人通知不依赖先加入目标组织。侧栏一级、次级菜单统一14px。

@@ -71,7 +71,12 @@ export class MailService {
     return this.send(to, '【TeamSpace】重置你的密码', html, `[reset] ${to} -> ${url}`);
   }
 
-  private async send(to: string, subject: string, html: string, consolePreview: string) {
+  async sendInvitationEmail(to:string,url:string,organization:string,id:string){
+    const escape=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+    return this.send(to,'【CollabSpace】组织协作邀请',`<h1>加入 ${escape(organization)}</h1><p>请核对受邀邮箱与组织，登录或注册后选择接受或拒绝。邀请7天有效。</p><a href="${escape(url)}">查看组织邀请</a>`,`[invite] ${to} -> ${url}`,'collabspace-invitation-'+id);
+  }
+
+  private async send(to: string, subject: string, html: string, consolePreview: string, idempotencyKey?:string) {
     if (!this.resend) {
       this.logger.warn(`未配置 RESEND_API_KEY，邮件未真实发出：\n${consolePreview}`);
       return { provider: 'console' as const };
@@ -81,7 +86,7 @@ export class MailService {
       to,
       subject,
       html,
-    });
+    },idempotencyKey?{idempotencyKey}:undefined);
     if (error) {
       this.logger.error(`Resend 发信失败: ${JSON.stringify(error)}`);
       throw new Error(`email provider error: ${error.message ?? 'unknown'}`);
