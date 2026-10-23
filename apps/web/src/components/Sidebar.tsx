@@ -87,8 +87,8 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="w-64 bg-[#101827] text-slate-100 h-dvh flex flex-col shrink-0 border-r border-white/5">
-      <div className="px-5 py-6 border-b border-white/5">
+    <aside className="w-[220px] bg-[#131b2d] text-slate-100 h-dvh flex flex-col shrink-0 border-r border-white/5">
+      <div className="px-4 py-5 border-b border-white/5">
         <div className="flex items-center gap-2">
           <Building2 className="w-6 h-6 text-indigo-400" />
           <span className="font-semibold text-xl tracking-tight">CollabSpace</span>
@@ -113,11 +113,12 @@ export default function Sidebar() {
           const items = group.items.filter((item) => hasPerm(item.perm));
           if (!items.length) return null;
           return (
-            <div key={gi} className="space-y-0.5">
+            <details key={gi} open={gi<2?true:undefined} className="group space-y-0.5">
+              {!group.label&&<summary className="hidden">概览</summary>}
               {group.label && (
-                <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-slate-400">
                   {group.label}
-                </p>
+                </summary>
               )}
               {items.map((item) => {
                 const active = pathname === item.href || pathname.startsWith(item.href + "/");
@@ -129,7 +130,7 @@ export default function Sidebar() {
                     aria-current={active ? "page" : undefined}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors focus-visible:ring-2 focus-visible:ring-indigo-400 ${
                       active
-                        ? 'bg-indigo-500/20 text-indigo-200 ring-1 ring-inset ring-indigo-400/20'
+                        ? 'bg-indigo-600 text-white shadow-sm'
                         : 'text-slate-400 hover:bg-white/5 hover:text-white'
                     }`}
                   >
@@ -138,7 +139,7 @@ export default function Sidebar() {
                   </Link>
                 );
               })}
-            </div>
+            </details>
           );
         })}
       </nav>

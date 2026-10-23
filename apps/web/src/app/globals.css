@@ -37,3 +37,19 @@ body { @apply bg-slate-50 text-slate-900; }
 @media (prefers-reduced-motion: reduce) {
  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
+
+/* Figma 7IwWhVlznS5r8Q8xkU16VW: compact editor tools, preserved native controls. */
+.mermaid-composer h2 + p { display: none; }
+.mermaid-composer input, .mermaid-composer select { max-width: 100%; }
+.mermaid-composer button { overflow-wrap: anywhere; }
+.mermaid-composer svg { max-width: 100%; }
+@media (min-width: 1024px) {
+ .mermaid-composer { max-height: 680px; overflow-y: auto; }
+ .mermaid-composer [aria-label="新节点名称"] { width: 100%; margin-top: 6px; }
+ .mermaid-composer [aria-label="Mermaid 图元放置区"] button { width: 100%; text-align: left; padding: 8px; }
+}
+
+.mermaid-template-panel { width: calc(100% - 160px); }
+.mermaid-composer .grid button { padding: 8px; font-size: 11px; }
+.mermaid-composer .grid svg { width: 36px; height: 26px; margin-inline: auto; }
+@media (max-width: 640px) { .mermaid-template-panel { width: calc(100% - 24px); } }

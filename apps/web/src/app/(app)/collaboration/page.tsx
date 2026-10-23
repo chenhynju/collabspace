@@ -1,83 +1,33 @@
 "use client";
-import { useEffect, useState } from "react";
-import { ArrowUpRight, FileText, Network, FolderOpen, Users, MessageSquare, History } from "lucide-react";
-import Link from "next/link";
-import { api } from "@/lib/api";
-import { useAuthStore } from "@/store/auth";
-export default function CollaborationHub() {
-  const org = useAuthStore((s) => s.currentOrgId);
-  const [projects, setProjects] = useState<any[]>([]),
-    [error, setError] = useState("");
-  useEffect(() => {
-    let active = true;
-    setProjects([]);
-    setError("");
-    api
-      .get("/projects")
-      .then((r) => {
-        if (active)
-          setProjects(Array.isArray(r.data) ? r.data : r.data.list || []);
-      })
-      .catch(() => {
-        if (active) setError("项目加载失败，请检查权限后重试。");
-      });
-    return () => {
-      active = false;
-    };
-  }, [org]);
-  return (
-    <div className="mx-auto max-w-6xl space-y-7 p-5 sm:p-8">
-      <section className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 p-7 text-white shadow-lg sm:p-10">
-        <div className="pointer-events-none absolute -right-16 -top-24 h-80 w-80 rounded-full bg-indigo-500/20 blur-3xl" />
-        <p className="relative text-xs font-semibold uppercase tracking-[.2em] text-indigo-300">CollabSpace · Workspace</p>
-        <h1 className="relative mt-4 max-w-2xl text-3xl font-semibold leading-tight sm:text-4xl">好想法，在同一份画布上成形。</h1>
-        <p className="relative mt-4 max-w-2xl leading-7 text-slate-300">从一段文字到一张流程图，让团队的讨论、修改与交付始终保持同步。</p>
-        <div className="relative mt-7 flex flex-wrap gap-5 text-xs text-slate-300"><span className="flex items-center gap-2"><Users size={15}/>在线成员与光标</span><span className="flex items-center gap-2"><MessageSquare size={15}/>原文评论</span><span className="flex items-center gap-2"><History size={15}/>版本与离线恢复</span></div>
-      </section>
-      <div className="grid gap-4 md:grid-cols-2">
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><span className="inline-flex rounded-xl bg-indigo-50 p-3 text-indigo-600"><FileText size={24}/></span><h2 className="mt-4 text-xl font-semibold text-slate-900">一起写，始终在同一页</h2><p className="mt-2 text-sm leading-6 text-slate-500">富文本与 Markdown，图文表达、共同编辑和原文评论。把想法写清楚，把讨论留在上下文里。</p></section>
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"><span className="inline-flex rounded-xl bg-teal-50 p-3 text-teal-700"><Network size={24}/></span><h2 className="mt-4 text-xl font-semibold text-slate-900">一起画，让思路看得见</h2><p className="mt-2 text-sm leading-6 text-slate-500">以 Mermaid 源码驱动图表，在画布与代码间切换。用流程图与思维导图组织团队的下一步。</p></section>
-      </div>
-      <div className="flex items-end justify-between"><div><h2 className="text-lg font-semibold text-slate-900">项目协作空间</h2><p className="mt-1 text-sm text-slate-500">选择一个项目，继续团队的创作。</p></div><Link href="/files" className="flex items-center gap-1 text-sm font-medium text-indigo-600">Office 与文件<ArrowUpRight size={16}/></Link></div>
-      {error && (
-        <p role="alert" className="text-red-700">
-          {error}
-        </p>
-      )}
-      {!error && !projects.length && (
-        <p className="text-slate-500">
-          暂无可访问项目。先在“项目”创建项目或请负责人授予访问权限。
-        </p>
-      )}
-      <div className="space-y-3">
-        {projects.map((p) => (
-          <div
-            key={p.id}
-            className="group flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-indigo-200 hover:shadow-md"
-          >
-            <div>
-              <h3 className="flex items-center gap-3 font-semibold text-slate-900"><FolderOpen className="text-indigo-500" size={20}/>{p.name}</h3>
-              <p className="text-xs text-slate-500">
-                文档、图表与团队讨论的共享空间
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <Link
-                className="rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-700"
-                href={`/projects/${p.id}/documents`}
-              >
-                打开协作文档
-              </Link>
-              <Link
-                className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                href={`/projects/${p.id}/boards`}
-              >
-                打开实时白板
-              </Link>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+import {useEffect,useState} from 'react';
+import Link from 'next/link';
+import {useRouter} from 'next/navigation';
+import {FileText,Network,Files,Search,ArrowUpRight,FolderOpen} from 'lucide-react';
+import {api} from '@/lib/api';
+import {useAuthStore} from '@/store/auth';
+import {Button,Card,Input,Modal,Select,Field,Empty} from '@/components/ui';
+import {displayDate} from '@/lib/display-date';
+type Recent={id:string;title:string;kind:string;project:string;projectId:string;date:string;role?:string;href:string};
+export default function CollaborationHub(){
+ const router=useRouter(),org=useAuthStore(s=>s.currentOrgId),orgs=useAuthStore(s=>s.organizations),hasPerm=useAuthStore(s=>s.hasPerm);
+ const[projects,setProjects]=useState<any[]>([]),[recent,setRecent]=useState<Recent[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState(''),[query,setQuery]=useState(''),[filter,setFilter]=useState('全部'),[reload,setReload]=useState(0);
+ const[create,setCreate]=useState(''),[project,setProject]=useState(''),[title,setTitle]=useState(''),[busy,setBusy]=useState(false),[createError,setCreateError]=useState('');
+ useEffect(()=>{let active=true;const headers={'x-organization-id':org};setRecent([]);setProjects([]);setCreate('');setQuery('');setLoading(true);setError('');
+ (async()=>{try{const r=await api.get('/projects',{headers});const list=Array.isArray(r.data)?r.data:r.data.list||[];if(!active)return;setProjects(list);const docs:Recent[]=[];let failed=false;
+ for(let i=0;i<list.length;i+=4){const results=await Promise.allSettled(list.slice(i,i+4).map(async(p:any)=>{const d=await api.get('/documents',{headers,params:{projectId:p.id}});return d.data.map((v:any)=>({id:v.id,title:v.title,kind:v.kind,project:p.name,projectId:p.id,date:v.updated_at,role:v.role,href:'/projects/'+p.id+'/documents/'+v.id}));}));if(!active)return;for(const d of results){if(d.status==='fulfilled')docs.push(...d.value);else failed=true;}}
+ if(hasPerm('file:manage')){try{const f=await api.get('/files',{headers});docs.push(...f.data.filter((v:any)=>v.officeId).map((v:any)=>({id:v.id,title:v.name,kind:'OFFICE',project:v.project?.name||'团队文件',projectId:v.projectId,date:v.lastEditedAt||v.createdAt,href:'/office/'+v.officeId})));}catch{failed=true;}}
+ if(active){setRecent(docs.sort((a,b)=>new Date(b.date).getTime()-new Date(a.date).getTime()));if(failed)setError('部分资源暂时无法加载，可重试；仅显示已成功加载且有权访问的内容。');}
+ }catch{if(active)setError('项目加载失败，请检查网络或权限后重试。');}finally{if(active)setLoading(false);}})();return()=>{active=false;};},[org,reload,hasPerm]);
+ const matches=(s:string)=>s.toLocaleLowerCase().includes(query.toLocaleLowerCase());
+ const visible=recent.filter(d=>matches(d.title+' '+d.project)&&(filter==='全部'||filter==='图表'&&d.kind==='BOARD'||filter==='Office'&&d.kind==='OFFICE'||filter==='文档'&&['DOCUMENT','MARKDOWN'].includes(d.kind)));
+ const start=(kind:string)=>{setCreate(kind);setProject(projects[0]?.id||'');setTitle('');setCreateError('');};
+ return <div className="mx-auto max-w-[1440px] space-y-7 p-5 sm:p-9">
+ <div className="flex flex-wrap items-center justify-between gap-4"><p className="text-xs text-slate-500">{orgs.find(o=>o.id===org)?.name} / 实时协作</p><label className="relative w-full sm:w-80"><Search size={16} className="absolute left-3 top-3 text-slate-400"/><Input aria-label="搜索协作资源" placeholder="搜索文档、图表或项目…" className="pl-9" value={query} onChange={e=>setQuery(e.target.value)}/></label></div>
+ <header className="flex flex-wrap items-center justify-between gap-5"><div><h1 className="text-3xl font-semibold tracking-tight text-slate-900">继续你的团队创作</h1><p className="mt-2 text-sm text-slate-500">最近编辑、文档与图表，都在同一个工作空间。</p></div><div className="flex gap-2"><Button onClick={()=>start('DOCUMENT')}>＋ 新建文档</Button><Button variant="secondary" onClick={()=>start('BOARD')}>新建图表</Button></div></header>
+ <div className="grid gap-4 md:grid-cols-3">{[{name:'在线文档',desc:'一起写作 · 富文本与 Markdown',icon:FileText,kind:'DOCUMENT'},{name:'Mermaid 图表',desc:'流程、架构与思维导图',icon:Network,kind:'BOARD'},{name:'Office 文件',desc:'Word、Excel、PowerPoint',icon:Files,kind:'OFFICE'}].map(({name,desc,icon:Icon,kind})=><button key={kind} onClick={()=>kind==='OFFICE'?router.push('/files'):start(kind)} className="group rounded-2xl border border-slate-200 bg-white p-5 text-left transition hover:border-indigo-300 hover:shadow-sm"><div className="flex items-center gap-3 text-indigo-600"><Icon size={20}/><h2 className="font-semibold">{name}</h2></div><p className="mt-3 text-sm text-slate-500">{desc}</p></button>)}</div>
+ <Card className="p-5 sm:p-6"><div className="flex items-center justify-between"><h2 className="text-lg font-semibold">最近编辑</h2><Button size="sm" variant="ghost" onClick={()=>setReload(x=>x+1)} disabled={loading}>重新加载</Button></div><div className="my-4 flex gap-2 border-b border-slate-100 pb-3" aria-label="资源类型筛选">{['全部','文档','图表','Office'].map(t=><button key={t} aria-pressed={t===filter} onClick={()=>setFilter(t)} className={`rounded-lg px-3 py-1.5 text-sm ${t===filter?'bg-indigo-50 font-medium text-indigo-700':'text-slate-500 hover:bg-slate-50'}`}>{t}</button>)}<span className="ml-auto hidden self-center text-xs text-slate-400 sm:block">最近修改 ↓</span></div>
+ {error&&<div role="alert" className="mb-4 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">{error}</div>}{loading?<p role="status" className="p-8 text-center text-sm text-slate-500">正在加载可访问资源…</p>:!visible.length?<Empty text={query?'没有匹配的资源。': '暂无可访问文档，选择项目创建你的第一份内容。'}/>:<div className="divide-y divide-slate-100">{visible.slice(0,12).map(d=><Link key={d.kind+d.id} href={d.href} className="flex flex-wrap items-center gap-4 rounded-lg px-2 py-4 hover:bg-indigo-50/40"><span className="rounded-lg bg-indigo-50 p-2 text-indigo-600">{d.kind==='BOARD'?<Network size={18}/>:<FileText size={18}/>}</span><div className="min-w-0 flex-1"><h3 className="truncate text-sm font-semibold">{d.title}</h3><p className="mt-1 text-xs text-slate-500">{d.project}</p></div><span className="hidden text-xs text-slate-500 md:block">{d.kind==='BOARD'?'Mermaid 图表':d.kind==='OFFICE'?'Office 文件':d.kind==='MARKDOWN'?'Markdown':'在线文档'}</span><time className="text-xs text-slate-500">{displayDate(d.date)}</time><ArrowUpRight size={16} className="text-indigo-500"/></Link>)}</div>}</Card>
+ <section><h2 className="mb-4 text-lg font-semibold">项目协作空间</h2><div className="grid gap-4 md:grid-cols-2">{projects.filter(p=>matches(p.name)).map(p=><Card key={p.id} className="p-5"><h3 className="flex items-center gap-2 font-semibold"><FolderOpen size={18} className="text-indigo-500"/>{p.name}</h3><p className="mt-2 text-xs text-slate-500">文档、图表与团队讨论的共享空间</p><div className="mt-4 flex flex-wrap gap-3"><Link className="rounded-lg bg-indigo-600 px-3 py-2 text-sm text-white" href={'/projects/'+p.id+'/documents'}>打开协作文档</Link><Link className="rounded-lg border border-slate-200 px-3 py-2 text-sm" href={'/projects/'+p.id+'/boards'}>打开实时白板</Link></div></Card>)}</div>{!loading&&!projects.length&&<Empty text="暂无可访问项目。先在“项目”创建项目或请负责人授予访问权限。"/>}</section>
+ <Modal open={!!create} onClose={()=>!busy&&setCreate('')} title={create==='BOARD'?'新建 Mermaid 图表':'新建协作文档'}><form className="space-y-4" onSubmit={async e=>{e.preventDefault();setBusy(true);setCreateError('');const scope=org;try{const r=await api.post('/documents',{projectId:project,title,kind:create},{headers:{'x-organization-id':scope}});if(useAuthStore.getState().currentOrgId===scope)router.push('/projects/'+project+'/documents/'+r.data.id);}catch(e:any){setCreateError(e.response?.data?.message||'创建失败，请检查权限或网络。');}finally{setBusy(false);}}}><Field label="所属项目"><Select aria-label="所属项目" required value={project} onChange={e=>setProject(e.target.value)}><option value="">选择项目</option>{projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</Select></Field>{create!=='BOARD'&&<Field label="文档格式"><Select aria-label="文档格式" value={create} onChange={e=>setCreate(e.target.value)}><option value="DOCUMENT">富文本</option><option value="MARKDOWN">Markdown 源码</option></Select></Field>}<Field label="标题"><Input aria-label="新内容标题" required maxLength={160} value={title} onChange={e=>setTitle(e.target.value)}/></Field>{createError&&<p role="alert" className="text-sm text-red-700">{createError}</p>}<Button disabled={busy||!project}>{busy?'正在创建…':'创建并打开'}</Button></form></Modal>
+ </div>;
 }

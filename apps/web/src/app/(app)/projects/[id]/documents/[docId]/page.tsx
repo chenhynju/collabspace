@@ -61,6 +61,7 @@ export default function DocumentPage({
 }) {
   const org = useAuthStore((s) => s.currentOrgId),
     user = useAuthStore((s) => s.user);
+  const [panelOpen,setPanelOpen]=useState(true);
   const [meta, setMeta] = useState<any>(null),
     [provider, setProvider] = useState<DocumentProvider | null>(null),
     [status, setStatus] = useState("正在连接"),
@@ -145,7 +146,7 @@ export default function DocumentPage({
     }
   };
   async function share() {
-    setTab("share");
+    (setPanelOpen(true),setTab("share"));
     await action(async () => {
       const [a, b] = await Promise.all([
         api.get(`${base}/grants`),
@@ -187,15 +188,15 @@ export default function DocumentPage({
   if(meta.kind==='OFFICE')return <Link href={'/office/'+params.docId}>打开 Office 文件编辑器 →</Link>;
   const Surface = meta.kind === 'BOARD' ? Whiteboard : meta.kind==='MARKDOWN'?MarkdownEditor:DocumentEditor;
   return (
-    <div className="flex min-h-[85vh] flex-col bg-slate-50">
-      <header className="border-b bg-white px-6 py-4">
+    <div className="flex min-h-[100dvh] min-w-0 flex-col bg-[#f5f6fa]">
+      <header className="border-b border-slate-200 bg-white px-5 py-3">
         <Link
           className="text-sm text-slate-500"
           href={`/projects/${params.id}/${meta.kind==='BOARD'?'boards':'documents'}`}
         >
           ← {meta.kind==='BOARD'?'项目白板':'项目文档'}
         </Link>
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-semibold">{meta.title}</h1>
             <p
@@ -206,9 +207,9 @@ export default function DocumentPage({
               {status} · {provider?.role || meta.role}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <span className="text-sm text-slate-500" aria-label="在线成员">
-              {uniquePeople.map((p) => p.name).join("、") || "连接中"}
+              {uniquePeople.map((p) => p.name).join("、") || "连接中"}{uniquePeople.length>0&&` · ${uniquePeople.length} 人在线`}
             </span>
             {meta.role === "OWNER" && (
               <button
@@ -220,7 +221,7 @@ export default function DocumentPage({
             )}
             <button
               className="rounded-lg border px-3 py-2 text-sm"
-              onClick={() => setTab("history")}
+              onClick={() => (setPanelOpen(true),setTab("history"))}
             >
               历史版本
             </button>
@@ -244,6 +245,7 @@ export default function DocumentPage({
             )}
           </div>
         </div>
+      {meta.kind==='BOARD'&&<button aria-expanded={panelOpen} className="mt-2 text-xs font-medium text-indigo-600" onClick={()=>setPanelOpen(v=>!v)}>{panelOpen?'收起讨论侧栏':'展开讨论侧栏'}</button>}
       </header>
       {error && (
         <p className="bg-red-50 px-6 py-3 text-sm text-red-800" role="alert">
@@ -251,7 +253,7 @@ export default function DocumentPage({
         </p>
       )}
       <div className="flex flex-1 flex-col lg:flex-row">
-        <main className="mx-auto my-6 w-full max-w-4xl flex-1 rounded-xl border bg-white shadow-sm">
+        <main className={meta.kind==='BOARD'?"my-3 w-full min-w-0 flex-1 bg-white p-3":"mx-auto my-6 w-full min-w-0 max-w-4xl flex-1 rounded-xl border bg-white shadow-sm"}>
           <OfflineStorage />
           {org && user && (
             <Surface
@@ -264,7 +266,7 @@ export default function DocumentPage({
             />
           )}
         </main>
-        <aside className="w-full border-l bg-white p-5 lg:w-80">
+        <aside hidden={meta.kind==='BOARD'&&!panelOpen} className="w-full shrink-0 border-l border-slate-200 bg-white p-5 lg:w-[280px]">
           <nav className="mb-5 flex gap-4 border-b pb-3" aria-label="文档侧栏">
             <button
               aria-pressed={tab === "comments"}
@@ -274,7 +276,7 @@ export default function DocumentPage({
             </button>
             <button
               aria-pressed={tab === "history"}
-              onClick={() => setTab("history")}
+              onClick={() => (setPanelOpen(true),setTab("history"))}
             >
               历史
             </button>
