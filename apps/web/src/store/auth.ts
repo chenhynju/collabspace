@@ -55,8 +55,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   roleKeys: [],
 
   setToken: (t) => {
+    window.dispatchEvent(new Event('collabspace:logout'));
+    if(get().user?.id)void clearDocumentCaches(get().user?.id);
+    useImStore.setState({conversations:[],currentConversationId:null,messages:[]});
+    localStorage.removeItem('current_org_id');
     localStorage.setItem('access_token', t);
-    set({ token: t });
+    set({ token:t,user:null,organizations:[],currentOrgId:null,perms:[],roleKeys:[] });
   },
 
   setCurrentOrg: async (id) => {
@@ -86,8 +90,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   loadProfile: async () => {
+    const token=get().token;
+    if(!token)return;
     const { data } = await api.get('/users/me');
-    const organizations: MembershipOrg[] = data.organizations ?? [];
+    if(get().token!==token)return;
+    const organizations: MembershipOrg[] = (data.organizations ?? []).filter((o:MembershipOrg)=>o.membershipStatus==='ACTIVE'&&o.status==='ACTIVE');
     set({
       user: {
         id: data.id,
@@ -98,18 +105,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       organizations,
     });
 
-    if (!get().currentOrgId && organizations.length > 0) {
-      await get().setCurrentOrg(organizations[0].id);
-    } else {
-      await get().loadOrgContext();
-    }
+    const selected=organizations.find(o=>o.id===get().currentOrgId)?.id||organizations[0]?.id;
+    if(selected){await get().setCurrentOrg(selected);}
+    else{localStorage.removeItem('current_org_id');set({currentOrgId:null,perms:[],roleKeys:[]});}
+
   },
 
   loadOrgContext: async () => {
+    const token=get().token;
     const orgId = get().currentOrgId;
     if (!orgId) return;
-    const { data } = await api.get('/organizations/current');
-    if (get().currentOrgId !== orgId) return;
+    const { data } = await api.get('/organizations/current',{headers:{'x-organization-id':orgId}});
+    if (get().currentOrgId !== orgId || get().token!==token) return;
     set({ perms: data.perms ?? [], roleKeys: data.roleKeys ?? [] });
   },
 

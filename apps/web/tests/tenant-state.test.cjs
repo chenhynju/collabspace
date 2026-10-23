@@ -56,3 +56,15 @@ test('late response from B cannot overwrite A permissions after A-B-A switch', a
   assert.equal(f.auth.getState().perms[0], 'A:read');
   assert.equal(f.auth.getState().roleKeys[0], 'MEMBER');
 });
+
+test('new login discards previous identity, organization and permissions before profile load',async()=>{
+ const f=fixture();f.auth.setState({token:'old',user:{id:'old'},organizations:[{id:'A'}],perms:['*'],roleKeys:['OWNER']});f.im.setState({messages:[{content:'private'}]});f.auth.getState().setToken('new');assert.equal(f.auth.getState().currentOrgId,null);assert.equal(f.auth.getState().user,null);assert.equal(f.auth.getState().perms.length,0);assert.equal(f.im.getState().messages.length,0);
+ const loaded=f.auth.getState().loadProfile();f.pending.shift()({data:{id:'new',email:'new@test.dev',name:'new',organizations:[{id:'B',status:'ACTIVE',membershipStatus:'ACTIVE'}]}});await new Promise(r=>setImmediate(r));assert.equal(f.auth.getState().currentOrgId,'B');f.pending.shift()({data:{perms:['B:read'],roleKeys:['OWNER']}});await loaded;assert.equal(f.auth.getState().roleKeys[0],'OWNER');
+});
+test('reload repairs a foreign cached organization and ignores a suspended membership',async()=>{
+ const f=fixture();f.auth.setState({token:'user'});const loaded=f.auth.getState().loadProfile();f.pending.shift()({data:{id:'user',organizations:[{id:'A',status:'ACTIVE',membershipStatus:'SUSPENDED'},{id:'B',status:'ACTIVE',membershipStatus:'ACTIVE'}]}});await new Promise(r=>setImmediate(r));assert.equal(f.auth.getState().currentOrgId,'B');f.pending.shift()({data:{perms:['B:read'],roleKeys:['MEMBER']}});await loaded;assert.equal(f.auth.getState().perms[0],'B:read');
+});
+test('old-account profile and organization replies cannot overwrite a new login',async()=>{
+ const f=fixture();f.auth.setState({token:'old'});const old=f.auth.getState().loadProfile();f.auth.getState().setToken('new');f.pending.shift()({data:{id:'old',organizations:[{id:'A',status:'ACTIVE',membershipStatus:'ACTIVE'}]}});await old;assert.equal(f.auth.getState().user,null);assert.equal(f.auth.getState().currentOrgId,null);
+ f.auth.setState({token:'old',currentOrgId:'A'});const context=f.auth.getState().loadOrgContext();f.auth.setState({token:'new',currentOrgId:'A',perms:['new:read']});f.pending.shift()({data:{perms:['*'],roleKeys:['OWNER']}});await context;assert.equal(f.auth.getState().perms[0],'new:read');
+});
