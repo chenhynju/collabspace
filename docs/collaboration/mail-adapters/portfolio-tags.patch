@@ -17,3 +17,10 @@
      ...(msg.replyTo ? { replyTo: msg.replyTo } : {}),
    });
  
+@@ -130,5 +133,5 @@
+   url: string
+ ): Promise<MailChannel> {
+   const { subject, html } = verificationEmail(url);
+-  return sendMail({ to, subject, html });
++  return sendMail({ to, subject, html, module: "verification" });
+ }
