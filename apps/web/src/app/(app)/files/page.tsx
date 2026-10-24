@@ -21,8 +21,6 @@ export default function FilesGlobalPage() {
   const router=useRouter();
   const hasPerm = useAuthStore((s) => s.hasPerm);
   const [list, setList] = useState<any[]>([]);
-  const [markdown,setMarkdown]=useState<any[]>([]);
-  const [markdownError,setMarkdownError]=useState(''),[reload,setReload]=useState(0);
   const org=useAuthStore(s=>s.currentOrgId);
   const [shareFor, setShareFor] = useState<any | null>(null);
   const [shareUrl, setShareUrl] = useState('');
@@ -34,15 +32,10 @@ export default function FilesGlobalPage() {
   }, [org]);
 
   useEffect(() => {
-    let active=true;let retry:ReturnType<typeof setTimeout>|undefined;setList([]);setMarkdown([]);setMarkdownError('');setShareFor(null);
+    let active=true;setList([]);setShareFor(null);
     void refresh().catch(()=>{if(active)setError('文件加载失败，请检查权限或网络。');});
-    const loadMarkdown=async(attempt=0)=>{
-      try{const r=await api.get('/documents/mine',{headers:{'x-organization-id':org}});if(active){setMarkdown(r.data);setMarkdownError('');}}
-      catch(e:any){if(!active)return;const status=e.response?.status;if(attempt<2&&(!status||status>=500)){retry=setTimeout(()=>void loadMarkdown(attempt+1),1000*(attempt+1));}else setMarkdownError('协作 Markdown 列表加载失败，请重新加载。');}
-    };
-    void loadMarkdown();
-    return ()=>{active=false;clearTimeout(retry);};
-  }, [refresh,org,reload]);
+    return ()=>{active=false;};
+  }, [refresh,org]);
 
   const download = async (f: any) => {
     const res = await api.get(`/files/${f.id}/download`, { responseType: 'blob' });
@@ -65,10 +58,8 @@ export default function FilesGlobalPage() {
 
   return (
     <div className="p-6">
-      <PageHeader title="团队文件" description="集中管理交付文件与在线 Office；上传入口在项目详情页。编辑时间为北京时间的已确认保存日期。" />
-      <div className="mb-5 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-900">在线编辑支持 .docx、.xlsx、.pptx。表格公式与工作表管理、幻灯片图片与图形，均在编辑器顶部原生工具栏中。旧 .xls 请先转换为 .xlsx。</div>
-      {markdownError&&<div role="alert"><InlineError message={markdownError}/><Button onClick={()=>setReload(v=>v+1)}>重新加载文档列表</Button></div>}
-      {markdown.length>0&&<Card><h2 className="p-4 font-semibold">协作 Markdown 文件</h2><div className="divide-y">{markdown.map(d=><Link key={d.id} href={`/projects/${d.project_id}/documents/${d.id}`} className="flex justify-between p-4 hover:bg-slate-50"><span>{d.title}</span><span className="text-sm text-slate-500">{d.role} · 实时编辑 →</span></Link>)}</div></Card>}
+      <PageHeader title="附件管理" description="附件下载与共享。文档、图表和 Office 已统一在协作空间中创建和编辑。" />
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-sm text-indigo-900"><span>新建 Word、Excel、PowerPoint，或继续编辑 Markdown、白板，请进入统一协作空间。已有文件链接和下载仍可使用。</span><Link className="rounded-lg bg-indigo-600 px-4 py-2 text-white" href="/collaboration">打开协作空间 →</Link></div>
 
       {list.length === 0 ? (
         <Empty text="暂无文件" />

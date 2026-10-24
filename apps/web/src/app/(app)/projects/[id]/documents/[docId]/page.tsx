@@ -194,9 +194,9 @@ export default function DocumentPage({
       <header className="border-b border-slate-200 bg-white px-5 py-3">
         <Link
           className="text-sm text-slate-500"
-          href={`/projects/${params.id}/${meta.kind==='BOARD'?'boards':'documents'}`}
+          href={`/projects/${params.id}/content`}
         >
-          ← {meta.kind==='BOARD'?'项目白板':'项目文档'}
+          ← 协作空间
         </Link>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div>

@@ -1,5 +1,2 @@
-"use client";
-import ResourceList from "@/components/documents/ResourceList";
-export default function Documents({ params }: { params: { id: string } }) {
-  return <ResourceList params={params} />;
-}
+import CollaborationHub from '@/components/documents/CollaborationHub';
+export default function ProjectContent({params}:{params:{id:string}}){return <CollaborationHub projectId={params.id} initialKind="DOCUMENTS"/>;}

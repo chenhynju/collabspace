@@ -56,11 +56,12 @@ test("whiteboard: discover, draw, concurrent accounts, cursors, undo, offline re
       a.getByRole("heading", { name: "让团队始终编辑同一份文档。" }),
     ).toBeVisible();
     await a
-      .locator(`a[href="/projects/${config.TEST_PROJECT}/boards"]`)
+      .locator(`a[href="/projects/${config.TEST_PROJECT}/content"]`)
       .click();
     const title = "Whiteboard " + randomUUID().slice(0, 8);
-    await a.getByLabel("新白板标题").fill(title);
-    await a.getByRole("button", { name: "创建白板", exact: true }).click();
+    await a.getByRole("button",{name:"新建 白板 / Mermaid",exact:true}).click();
+      await a.getByLabel("新内容标题").fill(title);
+    await a.getByRole("button", { name: "创建并打开", exact: true }).click();
     await a.getByRole("heading", { name: title, exact: true }).click();
     await a.getByRole("button", { name: "自由画布", exact: true }).click();
     await expect(a.getByTestId("whiteboard-canvas")).toBeVisible();

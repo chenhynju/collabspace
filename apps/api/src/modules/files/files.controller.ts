@@ -66,8 +66,7 @@ export class FilesController {
       tx.file.findMany({
         where: {
           organizationId: org.organizationId,
-          projectId: { in: accessReq.accessibleProjectIds ?? [] },
-          ...(projectId ? { projectId } : {}),
+          projectId: { in: (accessReq.accessibleProjectIds ?? []).filter(id => !projectId || id === projectId) },
         },
         include: {
           uploadedBy: { select: { id: true, name: true } },

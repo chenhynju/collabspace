@@ -62,8 +62,10 @@ export class DocumentsController implements OnModuleDestroy, OnModuleInit {
     @CurrentOrg() o: OrgContext,
     @CurrentUser() u: { id: string },
     @Query("projectId") p: string,
+    @Query("offset") offset?: string,
+    @Query("limit") limit?: string,
   ) {
-    return this.run(o, u, "list", p);
+    return this.run(o, u, "list", p, {offset,limit});
   }
   @Post() create(
     @CurrentOrg() o: OrgContext,

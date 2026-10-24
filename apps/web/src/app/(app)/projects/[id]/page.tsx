@@ -91,22 +91,6 @@ export default function ProjectDetail({ params }: { params: { id: string } }) {
     await refresh();
   };
 
-  const upload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    const fd = new FormData();
-    fd.append('file', f);
-    fd.append('projectId', project.id);
-    try {
-      await api.post('/files/upload', fd);
-      await refresh();
-    } catch (e: any) {
-      alert(e.response?.data?.message ?? '上传失败');
-    } finally {
-      e.target.value = '';
-    }
-  };
-
   const download = async (fileId: string) => {
     const res = await api.get(`/files/${fileId}/download`, { responseType: 'blob' });
     const url = URL.createObjectURL(res.data);
@@ -130,8 +114,7 @@ export default function ProjectDetail({ params }: { params: { id: string } }) {
   return (
     <div className="p-6">
       <PageHeader title={project.name}>
-        <Link href={`/projects/${params.id}/documents`} className="rounded-lg bg-slate-900 px-4 py-2 text-sm text-white">协作文档</Link>
-        <Link href={`/projects/${params.id}/boards`} className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white">实时白板</Link>
+        <Link href={`/projects/${params.id}/content`} className="rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white">协作空间 · 新建 / 上传</Link>
         <PresenceBar presence={presence} connected={connected} />
         <Link href="/projects">
           <Button variant="secondary">返回列表</Button>
@@ -152,12 +135,9 @@ export default function ProjectDetail({ params }: { params: { id: string } }) {
 
           <Card className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-slate-700">交付文件</h2>
+              <h2 className="text-sm font-semibold text-slate-700">附件与交付文件</h2>
               {hasPerm('file:manage') ? (
-                <label className="text-xs text-blue-600 cursor-pointer hover:underline">
-                  上传文件
-                  <input type="file" className="hidden" onChange={upload} />
-                </label>
+                <Link className="text-xs text-indigo-600 hover:underline" href={`/projects/${params.id}/content`}>新建 / 上传</Link>
               ) : null}
             </div>
             {project.files.length === 0 ? (

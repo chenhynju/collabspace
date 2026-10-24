@@ -314,13 +314,23 @@ class Store {
       ],
     );
   }
-  async list(ctx, project) {
+  async list(ctx, project, options = {}) {
+    const offset=z.coerce.number().int().min(0).default(0).parse(options.offset);
+    const limit=z.coerce.number().int().min(1).max(100).default(100).parse(options.limit);
     return this.tx(ctx, async (c) => {
       await this.parent(c, ctx, project);
       return (
         await c.query(
-          "SELECT d.id,d.title,d.kind,d.status,d.revision,d.updated_at,g.role FROM collab_document d JOIN collab_grant g ON g.document_id=d.id AND g.organization_id=d.organization_id WHERE d.organization_id=$1 AND d.project_id=$2 AND g.user_id=$3 ORDER BY d.updated_at DESC LIMIT 100",
-          [ctx.org, project, ctx.user],
+          `SELECT d.id,d.title,d.kind,d.status,d.revision,d.updated_at,g.role,
+           CASE WHEN d.kind='OFFICE' THEN CASE WHEN saved.after_value IS NULL THEN creator.name ELSE saved.after_value->'lastEditor'->>'name' END
+                WHEN d.seq=0 THEN creator.name ELSE editor.name END AS last_editor
+           FROM collab_document d JOIN collab_grant g ON g.document_id=d.id AND g.organization_id=d.organization_id
+           LEFT JOIN sys_user creator ON creator.id=d.created_by
+           LEFT JOIN LATERAL (SELECT actor_id FROM collab_update WHERE organization_id=d.organization_id AND document_id=d.id ORDER BY seq DESC LIMIT 1) last_edit ON true
+           LEFT JOIN sys_user editor ON editor.id=last_edit.actor_id
+           LEFT JOIN LATERAL (SELECT after_value FROM sys_oper_log WHERE organization_id=d.organization_id AND resource_id=d.id AND action='office:save' ORDER BY created_at DESC LIMIT 1) saved ON d.kind='OFFICE'
+           WHERE d.organization_id=$1 AND d.project_id=$2 AND g.user_id=$3 ORDER BY d.updated_at DESC,d.id LIMIT $4 OFFSET $5`,
+          [ctx.org, project, ctx.user,limit,offset],
         )
       ).rows;
     });
@@ -347,6 +357,9 @@ class Store {
       if(kind==='MARKDOWN'){
         const source=z.string().max(64000).default('').parse(input.source);
         const initial=new Y.Doc();try{initial.getText('markdown').insert(0,source);checkMarkdown(initial);state=Buffer.from(Y.encodeStateAsUpdate(initial));}finally{initial.destroy();}
+      }else if(kind==='BOARD'&&input.source!==undefined){
+        const source=z.string().max(32000).parse(input.source);if(source.includes('\0'))fail(400,'INVALID_BOARD');
+        const initial=new Y.Doc();try{initial.getText('mermaid').insert(0,source);checkBoard(initial);state=Buffer.from(Y.encodeStateAsUpdate(initial));}finally{initial.destroy();}
       }
       return this.insert(c, ctx, project, name, state, kind);
     });

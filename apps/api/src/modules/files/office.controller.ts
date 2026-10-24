@@ -5,12 +5,24 @@ import {CurrentOrg,OrgContext} from '../../common/decorators/current-org.decorat
 import {CurrentUser} from '../../common/decorators/current-user.decorator';
 import {Public} from '../../common/decorators/public.decorator';
 import {OfficeService} from './office.service';
+import {PermissionsGuard} from '../../common/guards/permissions.guard';
+import {RequirePermissions} from '../../common/decorators/permissions.decorator';
+import {IsIn,IsString,IsUUID,Length} from 'class-validator';
+
+class CreateOfficeDto {
+ @IsString() @Length(1,150) title:string;
+ @IsIn(['docx','xlsx','pptx']) extension:string;
+ @IsString() @Length(1,100) projectId:string;
+ @IsUUID() requestId:string;
+}
 
 @Controller('office')
 export class OfficeController {
  constructor(private readonly store:OfficeService){}
  private async call(method:string,...args:any[]){try{return await this.store[method](...args)}catch(e:any){if(e.status)throw new HttpException({code:e.code,message:e.code},e.status);throw e}}
  private ctx(o:OrgContext,u:{id:string}){return {org:o.organizationId,user:u.id}}
+ @Post('create') @UseGuards(OrgContextGuard,PermissionsGuard) @RequirePermissions('file:manage')
+ create(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Body() b:CreateOfficeDto){return this.call('createBlank',this.ctx(o,u),b.projectId,b)}
  @Post('files/:file/open') @UseGuards(OrgContextGuard)
  open(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Param('file') id:string){return this.call('importFile',this.ctx(o,u),id)}
  @Post(':id/config') @UseGuards(OrgContextGuard)

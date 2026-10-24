@@ -1,5 +1,7 @@
 # 可直接交给开发 Agent 的 Prompt
 
+2026-10-24：统一协作空间、空白 Office 创建和入口/权限验收，见 [UNIFIED-WORKSPACE.md](UNIFIED-WORKSPACE.md)。
+
 2026-10-24：新增富文本文档数学公式模板拖拽、LaTeX 输入与源码修改，P-MATH / BR-MATH / D-MATH / AT-MATH 及客户端升级要求见 [数学公式](MATH.md)。
 
 2026-10-22 高频业务绘图扩展：场景覆盖、24个模板/图元、源码属性操作、导入及SVG/PNG交付见 [BUSINESS-DIAGRAMS.md](BUSINESS-DIAGRAMS.md)。90%是待业务验收的目标，不是已通过比例。

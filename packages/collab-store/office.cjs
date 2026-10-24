@@ -40,6 +40,29 @@ class OfficeStore extends Store{
  capability(ctx,id,h,purpose,user,session){return sign({org:ctx.org,id,generation:h.generation,purpose,user,session,exp:Math.floor(Date.now()/1000)+(purpose==='callback'?86400:300)},this.setting('OFFICE_CAPABILITY_SECRET'))}
  claim(token,purpose){const p=verify(token,this.setting('OFFICE_CAPABILITY_SECRET'));if(p.purpose!==purpose||typeof p.org!=='string'||typeof p.id!=='string'||typeof p.user!=='string'||!/^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i.test(p.session||''))fail(401,'OFFICE_CAPABILITY');return p}
  async head(c,ctx,id){const h=(await c.query('SELECT * FROM collab_office WHERE organization_id=$1 AND document_id=$2 FOR UPDATE',[ctx.org,id])).rows[0];if(!h)fail(404,'NOT_FOUND');return h}
+ async createBlank(ctx,project,input){
+  if(!this.enabled())fail(503,'OFFICE_NOT_CONFIGURED');
+  const ext=input?.extension,name=typeof input?.title==='string'?input.title.trim().replace(/\.(docx|xlsx|pptx)$/i,''):'';
+  if(!['docx','xlsx','pptx'].includes(ext)||!name||name.length>150||/[\x00-\x1f\\/]/.test(name)||!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(input?.requestId||''))fail(400,'OFFICE_CREATE_INVALID');
+  const title=name+'.'+ext,fileId='blank_'+hash(Buffer.from(ctx.org+':'+input.requestId));
+  try{return await this.tx(ctx,async c=>{
+   await c.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',['office:create:'+ctx.org+':'+input.requestId]);
+   const {p}=await this.parent(c,ctx,project);
+   if(p.access==='READ')fail(403,'READ_ONLY');if(p.status==='ARCHIVED')fail(409,'PROJECT_ARCHIVED');
+   const prior=(await c.query('SELECT f.*,o.document_id FROM prj_file f LEFT JOIN collab_office o ON o.organization_id=f.organization_id AND o.file_id=f.id WHERE f.organization_id=$1 AND f.id=$2',[ctx.org,fileId])).rows[0];
+   if(prior){if(prior.project_id!==project||prior.name!==title||prior.uploaded_by!==ctx.user||!prior.document_id)fail(409,'OFFICE_CREATE_CONFLICT');await this.access(c,ctx,prior.document_id);return {id:prior.document_id,fileId,replayed:true};}
+   const bytes=validate(fs.readFileSync(path.join(__dirname,'templates','blank.'+ext)),ext);
+   const root=path.resolve(this.setting('UPLOAD_ROOT')||'.uploads'),object=ctx.org+'/'+project+'/'+randomUUID(),target=path.resolve(root,object);
+   if(!target.startsWith(root+path.sep))fail(400,'OFFICE_OBJECT_KEY');
+   fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,bytes,{flag:'wx'});
+   const mime='application/vnd.openxmlformats-officedocument.'+({docx:'wordprocessingml.document',xlsx:'spreadsheetml.sheet',pptx:'presentationml.presentation'}[ext]);
+   await c.query('INSERT INTO prj_file(id,organization_id,project_id,name,object_key,size,mime_type,version,uploaded_by,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,1,$8,now())',[fileId,ctx.org,project,title,object,bytes.length,mime,ctx.user]);
+   const doc=await this.insert(c,ctx,project,title,undefined,'OFFICE'),generation=randomUUID();
+   await c.query("INSERT INTO collab_office(organization_id,document_id,file_id,extension,generation,phase) VALUES($1,$2,$3,$4,$5,'CLOSED')",[ctx.org,doc.id,fileId,ext,generation]);
+   await c.query('INSERT INTO collab_office_version VALUES($1,$2,$3,1,$4,$5,$6,now())',[ctx.org,doc.id,randomUUID(),generation,'blank',bytes]);
+   await this.audit(c,ctx,doc.id,'office:create',null,{fileId,extension:ext,title});return {id:doc.id,fileId};
+  });}catch(e){if(e.code==='23505')fail(409,'OFFICE_CREATE_CONFLICT');throw e;}
+ }
  async importFile(ctx,fileId){
   if(!this.enabled())fail(503,'OFFICE_NOT_CONFIGURED');
   return this.tx(ctx,async c=>{
@@ -89,7 +112,7 @@ class OfficeStore extends Store{
   if(session&&/^[0-9a-f-]{36}$/i.test(session))await c.query("UPDATE collab_office_lease SET expires_at=now()+interval '90 seconds' WHERE organization_id=$1 AND document_id=$2 AND user_id=$3 AND role=$4 AND generation=$5 AND id=$6",[ctx.org,id,ctx.user,d.role,h.generation,session]);
   const users=[];for(const sid of h.phase==='OPEN'?h.users:[]){const found=(await c.query('SELECT u.id,u.name FROM collab_office_lease l JOIN sys_user u ON u.id=l.user_id WHERE l.organization_id=$1 AND l.document_id=$2 AND l.id=$3',[ctx.org,id,sid])).rows[0];if(found&&!users.some(u=>u.id===found.id))users.push(found)}
   const versions=(await c.query("SELECT id,revision,created_at FROM collab_office_version WHERE organization_id=$1 AND document_id=$2 AND (revision IS NOT NULL OR $3='OWNER') ORDER BY created_at DESC LIMIT 50",[ctx.org,id,d.role])).rows;
-  return {id,title:d.title,role:d.role,revision:h.revision,generation:h.generation,phase:h.phase,error:h.error,users,versions};
+  return {id,projectId:d.project_id,title:d.title,role:d.role,revision:h.revision,generation:h.generation,phase:h.phase,error:h.error,users,versions};
  })}
  async leaseCheck(c,ctx,id,h){
   const leases=(await c.query('SELECT * FROM collab_office_lease WHERE organization_id=$1 AND document_id=$2 AND generation=$3 ORDER BY user_id,id',[ctx.org,id,h.generation])).rows;

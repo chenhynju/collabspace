@@ -9,8 +9,8 @@ test('native Markdown import, GFM/Mermaid preview, two-editor convergence, offli
   const a=await client(owner),filename='Native-'+randomUUID().slice(0,8)+'.md';
   const initial='# 原生 Markdown\n\n|项目|状态|\n|---|---|\n|文档|完成|\n\n- [x] 实时协作\n\n```mermaid\nflowchart LR\n A[源文件] --> B[协作]\n```\n\n<script>window.markdownUnsafe=true</script>\n[unsafe](javascript:alert(1))\n';
   await a.goto(`${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents`);
-  await a.getByLabel('导入 Markdown 文件').setInputFiles({name:filename,mimeType:'text/markdown',buffer:Buffer.from('\ufeff'+initial.replaceAll('\n','\r\n'))});
-  await a.getByRole('link').filter({hasText:filename}).click();await expect(source(a)).toHaveValue(initial);await saved(a);
+  await a.getByRole('button',{name:'上传文件',exact:true}).click();await a.getByLabel('所属项目').selectOption(config.TEST_PROJECT);await a.getByLabel('上传已有文件').setInputFiles({name:filename,mimeType:'text/markdown',buffer:Buffer.from('\ufeff'+initial.replaceAll('\n','\r\n'))});
+  await a.getByRole('button',{name:'上传并打开',exact:true}).click();await expect(source(a)).toHaveValue(initial);await saved(a);
   const id=a.url().split('/').pop();
   let listRequests=0;const mineRoute=api+'/documents/mine';await a.route(mineRoute,r=>{listRequests++;return listRequests===1?r.abort():r.continue();});
   await a.goto(config.WEB_URL+'/files');await a.getByRole('link').filter({hasText:filename}).click();expect(listRequests).toBeGreaterThan(1);await a.unroute(mineRoute);await expect(source(a)).toHaveValue(initial);await saved(a);
