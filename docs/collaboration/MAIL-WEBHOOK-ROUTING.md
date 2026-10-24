@@ -1,6 +1,6 @@
 # 多项目邮件回调路由
 
-2026-10-24：CollabSpace 入口已部署 r20261024-01，Resend 订阅enabled；真实发信与下游跨项目切换待验收，见证据。
+2026-10-24：CollabSpace 入口已部署 r20261024-01，Resend 订阅enabled；真实发信已启用、两目标邮箱真实delivered回执已入库；计费路由已上线并重放验收通过，见证据。
 
 P-MAIL / BR-MAIL：多个 Resend 项目、多个业务板块共用事件入口；禁止把发送回执当成用户完成邮箱验证、重置密码或接受邀请。
 
@@ -40,7 +40,7 @@ MAIL_ROUTE_PORTFOLIO_SECRET=<另一个随机密钥>
 - `mail-adapters/billandcharge-tags-filter.patch`：计费邮件标记 billandcharge.billing_email；已验签、无本地计费关联且明确属于 portfolio/CollabSpace 的事件确认并忽略；已有计费关联优先处理；未知或无标签回执保留重试逻辑。
 - `mail-adapters/billandcharge-routed-receiver.patch`：新增内部HMAC验签入口，将最小事件映射到已有 EmailDeliveryService，沿用本地 provider receipt 反查租户、事件唯一约束和状态优先级。不复用 Resend 签名密钥。
 
-以上为当前文件生成的待应用补丁；未修改、部署其他工作区。可在对应仓库 `git apply --ignore-space-change --check <补丁绝对路径>`，保留脏改动后应用、构建并运行该项目自己的测试。其他 Resend 项目同样改统一发送层，不能仅新增一个Key就认为回调隔离完成。
+以上为适配补丁参考；用户后续已授权并应用两项目代码。计费已上线且线上回归，作品集曾因Vercel项目paused阻断，用户授权恢复后已完整构建并上线，实时结果见验收证据。可在对应仓库 `git apply --ignore-space-change --check <补丁绝对路径>`，保留脏改动后应用、构建并运行该项目自己的测试。其他 Resend 项目同样改统一发送层，不能仅新增一个Key就认为回调隔离完成。
 
 ## 运维与验收
 
