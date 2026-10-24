@@ -76,6 +76,11 @@ export class MailService {
     return this.send(to,'【CollabSpace】组织协作邀请',`<h1>加入 ${escape(organization)}</h1><p>请核对受邀邮箱与组织，登录或注册后选择接受或拒绝。邀请7天有效。</p><a href="${escape(url)}">查看组织邀请</a>`,`[invite] ${to} -> ${url}`,'collabspace-invitation-'+id, 'invitation');
   }
 
+  async sendProjectEmail(to:string,subject:string,text:string,key:string) {
+    const escape=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+    return this.send(to,subject,`<div style="white-space:pre-wrap">${escape(text)}</div>`,'[project mail content omitted]',key,'project_mail');
+  }
+
   private async send(to: string, subject: string, html: string, consolePreview: string, idempotencyKey?:string, module = 'notification') {
     if (!this.resend) {
       this.logger.warn(`未配置 RESEND_API_KEY，邮件未真实发出：\n${consolePreview}`);
@@ -87,7 +92,7 @@ export class MailService {
       subject,
       html,
       tags: [{name:'app',value:'collabspace'}, {name:'module',value:module}],
-    },idempotencyKey?{idempotencyKey}:undefined);
+    },{...(idempotencyKey?{idempotencyKey}:{}),signal:AbortSignal.timeout(20000)});
     if (error || !data?.id) {
       this.logger.error(`Resend 发信失败: ${JSON.stringify(error)}`);
       throw new Error(`email provider error: ${error?.message ?? 'missing receipt'}`);

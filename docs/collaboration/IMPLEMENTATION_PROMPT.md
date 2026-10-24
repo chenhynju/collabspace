@@ -1,5 +1,7 @@
 # 可直接交给开发 Agent 的 Prompt
 
+2026-10-24 最新授权增加协作助手。按 [ASSISTANT.md](ASSISTANT.md) 实现与验收摘要、行动项、中英互译、朗读和预览确认后的项目邮件。DeepSeek按需且有限额；开发不发真实测试邮件，不自动部署生产。保留共享工作树，实际进展见 ../../evidence/collaboration/ASSISTANT-2026-10-24.md。
+
 2026-10-24：统一协作空间、空白 Office 创建和入口/权限验收，见 [UNIFIED-WORKSPACE.md](UNIFIED-WORKSPACE.md)。
 
 2026-10-24：新增富文本文档数学公式模板拖拽、LaTeX 输入与源码修改，P-MATH / BR-MATH / D-MATH / AT-MATH 及客户端升级要求见 [数学公式](MATH.md)。

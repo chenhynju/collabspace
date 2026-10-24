@@ -6,21 +6,29 @@ const { spawn } = require("node:child_process");
 const root = resolve(__dirname, ".."),
   apiDir = join(root, "apps/api"),
   req = createRequire(join(apiDir, "package.json"));
-const dir = join(root, ".test-runs", "collab-local");
+const localName=process.env.COLLAB_LOCAL_NAME || 'collab-local';
+if(!/^[a-z0-9-]+$/.test(localName))throw new Error('Invalid local environment name');
+const dbPort=Number(process.env.COLLAB_LOCAL_DB_PORT || 5548);
+const webPort=Number(process.env.COLLAB_LOCAL_WEB_PORT || 43120);
+const apiPort=Number(process.env.COLLAB_LOCAL_API_PORT || 43121);
+const collabPort=Number(process.env.COLLAB_LOCAL_WS_PORT || 43122);
+for(const port of [dbPort,webPort,apiPort,collabPort])if(!Number.isInteger(port)||port<1024||port>65535)throw new Error('Invalid local port');
+const dir = join(root, ".test-runs", localName);
 mkdirSync(dir, { recursive: true });
 const env = {
   ...process.env,
   DATABASE_ADMIN_URL:
-    "postgresql://teamspace:teamspace_dev_pwd@127.0.0.1:5548/collabspace",
+    `postgresql://teamspace:teamspace_dev_pwd@127.0.0.1:${dbPort}/collabspace`,
   DATABASE_URL:
-    "postgresql://teamspace_app:teamspace_app_pwd@127.0.0.1:5548/collabspace",
+    `postgresql://teamspace_app:teamspace_app_pwd@127.0.0.1:${dbPort}/collabspace`,
   JWT_SECRET: "collabspace-local-synthetic-only-change-in-production",
-  WEB_URL: "http://localhost:43120",
-  APP_PORT: "43121",
-  COLLAB_PORT: "43122",
-  COLLAB_WS_URL: "ws://localhost:43122/collab",
-  NEXT_PUBLIC_API_URL: "http://localhost:43121/api/v1",
-  NEXT_PUBLIC_WS_URL: "http://localhost:43121",
+  WEB_URL: `http://localhost:${webPort}`,
+  APP_PORT: String(apiPort),
+  COLLAB_PORT: String(collabPort),
+  COLLAB_WS_URL: `ws://localhost:${collabPort}/collab`,
+  NEXT_PUBLIC_API_URL: `http://localhost:${apiPort}/api/v1`,
+  NEXT_PUBLIC_WS_URL: `http://localhost:${apiPort}`,
+  NEXT_DIST_DIR: '.next-'+localName,
   REDIS_URL: "redis://127.0.0.1:6399",
   BILLING_MODE: "sandbox",
   EMAIL_PROVIDER: "console",
@@ -51,7 +59,7 @@ async function main() {
     databaseDir: join(dir, "pgdata"),
     user: "teamspace",
     password: "teamspace_dev_pwd",
-    port: 5548,
+    port: dbPort,
     persistent: true,
     postgresFlags: ["-h", "127.0.0.1", "-c", "listen_addresses=127.0.0.1"],
   });
@@ -72,7 +80,7 @@ async function main() {
   )
     await admin.query("CREATE DATABASE collabspace");
   await admin.end();
-  await run([req.resolve("prisma/build/index.js"), "generate"]);
+  if(process.env.COLLAB_LOCAL_SKIP_GENERATE!=='1')await run([req.resolve("prisma/build/index.js"), "generate"]);
   await run(
     [req.resolve("prisma/build/index.js"), "db", "push", "--skip-generate"],
     apiDir,
@@ -180,7 +188,7 @@ async function main() {
         ),
         "dev",
         "-p",
-        "43120",
+        String(webPort),
       ],
     ],
   ])
@@ -193,7 +201,7 @@ async function main() {
       }),
     );
   console.log(
-    `CollabSpace local web: http://localhost:43120/projects/${project}/documents`,
+    `CollabSpace local web: http://localhost:${webPort}/projects/${project}/documents`,
   );
 }
 async function stop(code = 0) {

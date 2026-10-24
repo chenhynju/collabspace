@@ -26,6 +26,7 @@ import { TraceIdMiddleware } from './common/middleware/trace-id.middleware';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { DocumentsController } from './modules/documents/documents.controller';
 import { GroupsModule } from './modules/groups/groups.module';
+import { AssistantModule } from './modules/assistant/assistant.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { GroupsModule } from './modules/groups/groups.module';
     ScheduleModule.forRoot(),
     PrismaModule,
     GroupsModule,
+    AssistantModule,
     RealtimeModule,
     AuthModule,
     UsersModule,

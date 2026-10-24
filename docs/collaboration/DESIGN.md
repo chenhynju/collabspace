@@ -1,5 +1,7 @@
 # CollabSpace — 详细设计 v1
 
+2026-10-24 协作助手：组织/项目授权、有限模型调用、隔离文档解析、邮件持久意图与幂等、语音和互译设计见 [ASSISTANT.md](ASSISTANT.md)。
+
 2026-10-24：统一协作空间、空白 Office 创建和入口/权限验收，见 [UNIFIED-WORKSPACE.md](UNIFIED-WORKSPACE.md)。
 
 2026-10-24：多项目 Resend 回调验签、业务分流、持久化队列与其他项目适配补丁，见 [邮件回调路由](MAIL-WEBHOOK-ROUTING.md)。

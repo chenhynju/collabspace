@@ -37,6 +37,7 @@ const GROUPS: NavGroup[] = [
       { href: '/projects', label: '项目', icon: FileText, perm: 'project:list' },
       { href: '/collaboration', label: '协作空间', icon: BookOpen, perm: 'project:list' },
       { href: '/files', label: '附件管理', icon: Files, perm: 'file:manage' },
+      { href: '/assistant', label: '协作助手', icon: FileText, perm: 'project:list' },
       { href: '/im', label: '消息', icon: MessageSquare, perm: 'im:view' },
     ],
   },

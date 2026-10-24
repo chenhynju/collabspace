@@ -1,5 +1,7 @@
 # CollabSpace — 需求分析与产品决策
 
+2026-10-24 用户追加：DeepSeek协作助手、Word/PDF摘要、行动项、确认后项目邮件、文字朗读及中英文互译；P-A01–A07 / BR / D / AT 见 [协作助手](ASSISTANT.md)，覆盖旧的AI不在首版范围描述。
+
 2026-10-24：统一协作空间、空白 Office 创建和入口/权限验收，见 [UNIFIED-WORKSPACE.md](UNIFIED-WORKSPACE.md)。
 
 2026-10-24：多项目 Resend 回调验签、业务分流、持久化队列与其他项目适配补丁，见 [邮件回调路由](MAIL-WEBHOOK-ROUTING.md)。

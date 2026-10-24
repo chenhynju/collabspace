@@ -5,7 +5,7 @@ import { createHash, createHmac } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 
 const types = new Set(['email.sent','email.delivered','email.delivery_delayed','email.failed','email.bounced','email.complained']);
-const localModules = new Set(['verification','password_reset','invitation','notification']);
+const localModules = new Set(['verification','password_reset','invitation','notification','project_mail']);
 type Envelope = { eventId: string; app: string; module: string; type: string; emailId: string; occurredAt: string };
 type Route = { url: string; secretEnv: string };
 
