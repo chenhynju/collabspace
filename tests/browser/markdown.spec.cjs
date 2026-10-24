@@ -12,8 +12,8 @@ test('native Markdown import, GFM/Mermaid preview, two-editor convergence, offli
   await a.getByRole('button',{name:'上传文件',exact:true}).click();await expect(a.getByLabel('所属项目',{exact:true})).toHaveValue(config.TEST_PROJECT);await a.getByLabel('上传已有文件').setInputFiles({name:filename,mimeType:'text/markdown',buffer:Buffer.from('\ufeff'+initial.replaceAll('\n','\r\n'))});
   await a.getByRole('button',{name:'上传并打开',exact:true}).click();await expect(source(a)).toHaveValue(initial);await saved(a);
   const id=a.url().split('/').pop();
-  let listRequests=0;const mineRoute=api+'/documents/mine';await a.route(mineRoute,r=>{listRequests++;return listRequests===1?r.abort():r.continue();});
-  await a.goto(config.WEB_URL+'/files');await a.getByRole('link').filter({hasText:filename}).click();expect(listRequests).toBeGreaterThan(1);await a.unroute(mineRoute);await expect(source(a)).toHaveValue(initial);await saved(a);
+  let listRequests=0;const listRoute=url=>url.pathname.endsWith('/documents')&&url.searchParams.get('projectId')===config.TEST_PROJECT;await a.route(listRoute,r=>{listRequests++;return listRequests===1?r.abort():r.continue();});
+  await a.goto(config.WEB_URL+'/projects/'+config.TEST_PROJECT+'/content');await expect(a.getByText('部分资源加载失败，可重新加载；当前只显示已成功加载且有权访问的内容。')).toBeVisible();await a.getByRole('button',{name:'重新加载',exact:true}).click();await a.getByRole('link',{name:filename,exact:true}).click();expect(listRequests).toBeGreaterThan(1);await a.unroute(listRoute);await expect(source(a)).toHaveValue(initial);await saved(a);
   for(const [userId,role]of[[config.TEST_MEMBER,'EDITOR'],[config.TEST_ADMIN,'VIEWER']])expect((await request.put(`${api}/documents/${id}/grants`,{headers,data:{userId,role}})).ok()).toBeTruthy();
   const b=await client(peer),v=await client(viewer);await b.goto(a.url());await v.goto(a.url());await saved(b);await saved(v);
   await expect(source(v)).toHaveAttribute('readonly','');await expect(a.getByLabel('Markdown 安全预览').locator('table')).toContainText('完成');
