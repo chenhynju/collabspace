@@ -13,7 +13,7 @@ const clean=url=>{const u=new URL(url);return u.pathname.replace(/\/(doc|data|fi
   const login=await ctx.request.post(c.NEXT_PUBLIC_API_URL+'/auth/login',{data:{email:c.TEST_OWNER_EMAIL,password:c.TEST_PASSWORD}});
   if(!login.ok())throw Error('Synthetic login status '+login.status());
   const token=(await login.json()).accessToken,headers={Authorization:'Bearer '+token,'x-organization-id':c.TEST_ORG};
-  const stateFile=path.join(out,'document.json');let doc;
+  const stateFile=path.join(out,process.env.OFFICE_PROFILE_FRESH==='1'?'exact-document.json':'document.json');let doc;
   if(fs.existsSync(stateFile))doc=JSON.parse(fs.readFileSync(stateFile,'utf8'));
   else{
    const created=await ctx.request.post(c.NEXT_PUBLIC_API_URL+'/office/create',{headers,data:{projectId:c.TEST_PROJECT,title:'Synthetic-image-latency-'+randomUUID().slice(0,8),extension:'pptx',requestId:randomUUID()}});
@@ -27,6 +27,7 @@ const clean=url=>{const u=new URL(url);return u.pathname.replace(/\/(doc|data|fi
   p.on('requestfailed',req=>{const row=inflight.get(req);if(row)records.push({...row,error:req.failure()?.errorText,timing:req.timing()});});
   await p.goto(c.WEB_URL+'/office/'+doc.id,{waitUntil:'domcontentloaded',timeout:60000});
   await p.locator('[data-office-ready="true"]').waitFor({timeout:180000});
+  console.log('Synthetic editor ready');
   const f=p.frames().find(x=>/presentationeditor/.test(x.url()));if(!f)throw Error('Native presentation frame missing');
   await f.locator('#id_viewer_overlay').waitFor({timeout:120000});
   if(phase==='inspect'){
@@ -36,28 +37,74 @@ const clean=url=>{const u=new URL(url);return u.pathname.replace(/\/(doc|data|fi
    fs.writeFileSync(path.join(out,'initial-network.json'),JSON.stringify(records,null,2));
   }
   if(phase==='measure'){
+   await f.evaluate(()=>{
+    window.__profileUploads=[];
+    const open=XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open=function(method,url,...args){
+     if(method.toUpperCase()==='POST'&&/upload/i.test(String(url)))this.addEventListener('load',()=>{
+      try{window.__profileUploads.push(JSON.parse(this.responseText));}catch{}
+     });
+     return open.call(this,method,url,...args);
+    };
+   });
    const cdp=await ctx.newCDPSession(f).catch(()=>ctx.newCDPSession(p)),network=[],active=new Map(),samples=[];
-   await cdp.send('Network.enable');
+   await cdp.send('Network.enable',{maxTotalBufferSize:64*1024*1024,maxResourceBufferSize:16*1024*1024});
    cdp.on('Network.requestWillBeSent',e=>active.set(e.requestId,{method:e.request.method,path:clean(e.request.url),start:e.timestamp,type:e.type}));
    cdp.on('Network.responseReceived',e=>{const r=active.get(e.requestId);if(r){r.status=e.response.status;r.details=e.response.timing;r.type=e.type;r.protocol=e.response.protocol;r.cache=!!e.response.fromDiskCache||!!e.response.fromServiceWorker;}});
    cdp.on('Network.loadingFinished',e=>{const r=active.get(e.requestId);if(!r)return;const t=r.details||{};network.push({method:r.method,path:r.path,type:r.type,status:r.status,protocol:r.protocol,cache:r.cache,totalMs:(e.timestamp-r.start)*1000,uploadMs:t.sendEnd>=0?t.sendEnd-t.sendStart:null,waitMs:t.receiveHeadersStart>=0?t.receiveHeadersStart-t.sendEnd:null,downloadMs:t.receiveHeadersEnd>=0?(e.timestamp-t.requestTime)*1000-t.receiveHeadersEnd:null,encodedBytes:e.encodedDataLength});});
-   const sizes=(process.env.OFFICE_PROFILE_SIZES||'small,large,small,large').split(',');if(sizes.some(s=>!['small','large'].includes(s)))throw Error('Invalid fixture size');
+   const sizes=(process.env.OFFICE_PROFILE_SIZES||'small,large,small,large').split(',');if(sizes.some(s=>!['small','large','large-optimized'].includes(s)))throw Error('Invalid fixture size');
    for(const size of sizes){
     await f.locator('#tlbtn-insertimage-0 button').click();
     const choice=p.waitForEvent('filechooser',{timeout:10000});
     await f.locator('#tlbtn-insertimage-0').getByText('来自文件的图片',{exact:true}).click();
     const picker=await choice,begin=Date.now(),index=network.length;
     const posted=p.waitForResponse(r=>r.request().method()==='POST'&&/upload/i.test(new URL(r.url()).pathname),{timeout:90000});
-    const image=p.waitForResponse(r=>r.request().resourceType()==='image'&&/\/media\//.test(new URL(r.url()).pathname),{timeout:90000});
-    await picker.setFiles(path.join(out,size+'.png'));
+    const mediaResponses=[];
+    const collectMedia=r=>{if(/\/media\//.test(new URL(r.url()).pathname))mediaResponses.push(r);};
+    p.on('response',collectMedia);
+    const fixture=path.join(out,size+(size.endsWith('optimized')?'.webp':'.png'));
+    await picker.setFiles(fixture);
     const upload=await posted;await upload.finished();const postDoneMs=Date.now()-begin;
-    const img=await image;await img.finished();const imageDoneMs=Date.now()-begin;
+    console.log(JSON.stringify({stage:'upload-complete',size,status:upload.status(),postDoneMs}));
+    // Capture the native XHR response before Chromium discards its inspector copy.
+    const payload=await f.evaluate(()=>window.__profileUploads.shift())||await upload.json();
+    const urls=[];const visit=value=>{if(typeof value==='string'&&/\/media\//.test(value)){try{urls.push(new URL(value,upload.url()).pathname);}catch{}}else if(value&&typeof value==='object')Object.values(value).forEach(visit);};visit(payload);
+    if(!urls.length)throw Error('Upload response has no media URL; do not substitute unrelated image requests');
+    const exact=r=>urls.includes(new URL(r.url()).pathname);
+    let img=mediaResponses.find(exact);
+    if(!img)img=await p.waitForResponse(exact,{timeout:90000});
+    await img.finished();const imageDoneMs=Date.now()-begin;
+    p.off('response',collectMedia);
     await f.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
     await p.screenshot({path:path.join(out,'insert-'+samples.length+'-'+size+'.png'),fullPage:true});
-    const sample={size,bytes:fs.statSync(path.join(out,size+'.png')).size,postDoneMs,imageDoneMs,uploadStatus:upload.status(),imageStatus:img.status(),network:network.slice(index).filter(r=>r.path.includes('/office-engine/'))};
+    const sample={size,bytes:fs.statSync(fixture).size,postDoneMs,imageDoneMs,exactMediaMatch:true,uploadStatus:upload.status(),imageStatus:img.status(),network:network.slice(index).filter(r=>r.path.includes('/office-engine/'))};
     samples.push(sample);console.log(JSON.stringify(sample));
-    fs.writeFileSync(path.join(out,http1?'measurements-http1.json':'measurements-default.json'),JSON.stringify({at:new Date().toISOString(),browser:http1?'Edge headless HTTP/1.1 forced':'Edge headless default negotiation',document:doc.id,samples},null,2));
+    fs.writeFileSync(path.join(out,'measurements-exact-'+(http1?'http1':'default')+'.json'),JSON.stringify({at:new Date().toISOString(),browser:http1?'Edge headless HTTP/1.1 forced':'Edge headless default negotiation',document:doc.id,samples},null,2));
     await p.keyboard.press('Escape');
+   }
+   if(process.env.OFFICE_PROFILE_VERIFY_SAVE==='1'){
+    await p.close();
+    let state;
+    for(let attempt=0;attempt<45;attempt++){
+     const r=await ctx.request.get(c.NEXT_PUBLIC_API_URL+'/office/'+doc.id+'/state',{headers});
+     if(!r.ok())throw Error('Saved state status '+r.status());
+     state=await r.json();if(state.phase==='CLOSED')break;
+     await new Promise(resolve=>setTimeout(resolve,2000));
+    }
+    if(state.phase!=='CLOSED')throw Error('Final save not confirmed: '+state.phase);
+    const download=await ctx.request.get(c.NEXT_PUBLIC_API_URL+'/office/'+doc.id+'/download',{headers});
+    if(!download.ok())throw Error('Saved download status '+download.status());
+    const {createRequire}=require('node:module'),apiRequire=createRequire(path.resolve('apps/api/package.json'));
+    const JSZip=createRequire(apiRequire.resolve('mammoth'))('jszip'),zip=await JSZip.loadAsync(await download.body());
+    const media=Object.keys(zip.files).filter(name=>/^ppt\/media\//.test(name)&&!zip.files[name].dir),dimensions=[];
+    const probe=await ctx.newPage();await probe.goto('about:blank');
+    for(const name of media){const bytes=await zip.file(name).async('base64');dimensions.push(await probe.evaluate(async base64=>{const b=await createImageBitmap(new Blob([Uint8Array.from(atob(base64),c=>c.charCodeAt(0))]));const dimensions={width:b.width,height:b.height};b.close();return dimensions;},bytes));}
+    await probe.close();
+    if(!dimensions.some(d=>d.width===1280&&d.height===720))throw Error('Optimized image absent from saved PPT');
+    const reopened=await ctx.newPage();await reopened.goto(c.WEB_URL+'/office/'+doc.id,{waitUntil:'domcontentloaded',timeout:60000});
+    await reopened.locator('[data-office-ready="true"]').waitFor({timeout:180000});
+    const proof={revision:state.revision,phase:state.phase,mediaCount:media.length,dimensions,reopened:true};
+    fs.writeFileSync(path.join(out,'saved-image-proof.json'),JSON.stringify(proof,null,2));console.log(JSON.stringify(proof));
    }
   }
  }finally{await browser.close();}

@@ -76,3 +76,49 @@ node scripts/profile-office-images.cjs measure
 ## Logo 问题
 
 本次保留原生ONLYOFFICE品牌。官方 [许可FAQ](https://www.onlyoffice.com/license-faq) 对社区版原标识保留有要求；[官方品牌定制对比](https://www.onlyoffice.com/white-label) 区分Developer标准Logo替换与扩展White Label的加载页面、名称及About等定制。未做未经授权的隐藏、替换或源码修改。
+
+## 03:30 续做：可选副本优化与精确对照
+
+实际执行于北京时间03:30后。工作树原有 `apps/web/tsconfig.json` 修改保留；现场API仍运行旧镜像 `63cdb32b…`，Office转发服务active，未发现 `r20261025*` 活跃release目录。此次不切发布、不重启服务，避免与待完成的协作助手发布冲突。
+
+### 实现
+
+新增 `OfficeImagePreparation`：已连接且OWNER/EDITOR的Office页面提供本地选图、原图/均衡/更小档位、预览、前后体积、下载。副本仍由用户在原生插图入口选择；不改写引擎内部文件输入、不新增上传/保存API。切图片/档位/组织/文档使旧处理结果失效并释放预览URL。WebP保留本地副本透明度，动画PNG/WebP明确拒绝优化；原图原样保留。设计追溯见 [OFFICE-IMAGE-PREPARATION.md](../../docs/collaboration/OFFICE-IMAGE-PREPARATION.md)。
+
+### 同一张图的真实线上对照
+
+用同一浏览器实现将既有1920×1080高熵合成PNG，选择“更小”档生成1280×720 WebP：**6,223,843 → 458,088字节，减少92.64%**。本地编码约303ms。此为有损缩放和编码，不是同画质无损压缩；不能推广为任意照片的压缩率。
+
+新建空白合成PPT `37bbd60e-fd04-4d5d-9428-4bd1381a47dd`，按副本→原图→副本→原图交替插入，默认协商均为h2。此前旧测试文档有后台媒体加载，且Chromium丢弃调试响应副本，两轮未完成严格关联；不计作有效成绩。新脚本从原生XHR的load事件取回本次响应，仅匹配该响应媒体URL的pathname，未保存正文/凭据/签名参数。以下为成功完成的一轮：
+
+| 样本 | 文件字节 | 请求发送 | 发送后等待 | POST完成 | 对应媒体响应完成 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 优化1 | 458088 | 1.43秒 | 3.61秒 | 5.09秒 | 5.77秒 |
+| 原图1 | 6223843 | 61.05秒 | 3.52秒 | 64.60秒 | 67.43秒 |
+| 优化2 | 458088 | 1.23秒 | 3.70秒 | 4.95秒 | 5.61秒 |
+| 原图2 | 6223843 | 58.69秒 | 2.99秒 | 61.71秒 | 64.62秒 |
+
+POST平均63.15→5.02秒，当前小样本中耗时下降约92%。**这是减少上传字节带来的可重复大图改善；小图仍约5秒，额外3–4秒等待没有消除，不能宣称已经根治所有插图延迟。** 原图链路本轮有效吞吐约0.82–0.85Mbps，较前轮还慢，说明不能以旧吞吐作为稳定带宽保证。媒体响应精确对应本次图片，但CDP缓存标志为true，不是严格冷缓存下载或像素绘制时刻；不能把表中最后一列称为纯渲染时间。
+
+每次截图确认原生幻灯片显示图片。关闭编辑器后真实服务器状态CLOSED、revision=2；下载保存PPT解析ZIP，包含1920×1080和1280×720媒体（引擎可能转码/去重，共3个媒体文件），再次打开编辑器ready通过。证明优化副本能经既有保存链路持久化，不以200代替保存。未修改其他用户文档。
+
+测试后的Office引擎三次只读资源快照：CPU0.02%/3.64%/0.02%，内存311.6MiB/2.539GiB；采样晚于上传，不能用这些数值排除上传期间CPU尖峰。仍缺少代理/引擎逐请求上游时间和反压追踪，不将Waiting等同于CPU，也不据此购买资源或改代理参数。
+
+### 验证、复现与边界
+
+- 真实Edge组件验收：`pnpm exec playwright test tests/browser/office-image-preparation.spec.cjs --reporter=list --output=.test-runs/ppt-image-preparation-final`，1/1 PASS（13.7秒）。覆盖真实编码缩放、透明角落alpha、原图字节身份、小文件不增大、动画拒绝、组件预览、下载及切回原图。初次受限环境Edge启动失败，提升权限后实际运行通过。
+- `pnpm --filter @teamspace/web exec tsc --noEmit`：PASS。
+- Web生产构建 `.next-ppt-image-20261025-verify`：PASS，38路由，仅既有register Hook和MessageBubble图片警告；受限环境第一次构建EPERM，换独立目录和权限后通过。动画保护后的最终构建另见下方记录。
+- 最终版本 `NEXT_DIST_DIR=.next-ppt-image-20261025-final pnpm --filter @teamspace/web run build`：PASS，38路由，仍只有上述既有警告；清理本轮新增临时types目录项，保留原有tsconfig内容。
+- 没有模型调用、真实发信、付费或基础设施修改。**页面入口尚未部署**；线上对照是生成后的副本经过现有原生入口验证，不把它当作新入口已经上线。
+
+```powershell
+node scripts/prepare-office-image-fixture.cjs
+$env:OFFICE_PROFILE_FRESH='1' # 独立exact-document.json，避免旧图初始化干扰
+$env:OFFICE_PROFILE_HTTP1='0'
+$env:OFFICE_PROFILE_SIZES='large-optimized,large,large-optimized,large'
+$env:OFFICE_PROFILE_VERIFY_SAVE='1'
+node scripts/profile-office-images.cjs measure
+```
+
+私密证据：`.test-runs/ppt-image-profile/preparation.json`、`measurements-exact-default.json`、`saved-image-proof.json`、`exact-document.json`及截图。重跑将继续使用合成文档；保留历史结果时先改输出目录，不指向用户工作文件。

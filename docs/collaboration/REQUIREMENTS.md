@@ -1,5 +1,7 @@
 # CollabSpace — 需求分析与产品决策
 
+2026-10-25：Office插图前可选本地优化副本、保留原图与精确性能验收，P-IMG01–05 / BR / D / AT 见 [图片优化](OFFICE-IMAGE-PREPARATION.md)。
+
 2026-10-24 用户追加：DeepSeek协作助手、Word/PDF摘要、行动项、确认后项目邮件、文字朗读及中英文互译；P-A01–A07 / BR / D / AT 见 [协作助手](ASSISTANT.md)，覆盖旧的AI不在首版范围描述。
 
 2026-10-24：统一协作空间、空白 Office 创建和入口/权限验收，见 [UNIFIED-WORKSPACE.md](UNIFIED-WORKSPACE.md)。

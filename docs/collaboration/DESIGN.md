@@ -1,5 +1,7 @@
 # CollabSpace — 详细设计 v1
 
+2026-10-25：Office图片本地准备、原图选择及精确上传/保存验收见 [OFFICE-IMAGE-PREPARATION.md](OFFICE-IMAGE-PREPARATION.md)，复用原生上传和保存权威，不新增图片写入接口。
+
 2026-10-24 协作助手：组织/项目授权、有限模型调用、隔离文档解析、邮件持久意图与幂等、语音和互译设计见 [ASSISTANT.md](ASSISTANT.md)。
 
 2026-10-24：统一协作空间、空白 Office 创建和入口/权限验收，见 [UNIFIED-WORKSPACE.md](UNIFIED-WORKSPACE.md)。
