@@ -17,11 +17,20 @@ Browser: set COLLAB_BROWSER_CONFIG to private isolated/online config, INVITATION
 
 ## Release gates
 
-- Candidate backend: r20261023-02, API sha256:1369ff7361f535e3de11127707c4a481de6b7df16ed02cde69f7cb3e227973da. Existing Linux Prisma engine is preserved; patch consists of 10 compiled JS files, 3 generated Prisma metadata files, SQL/compose and Dockerfiles, ~335KB. No Windows engine, dependencies, env or credentials uploaded.
+- Released backend: r20261023-02, API sha256:1369ff7361f535e3de11127707c4a481de6b7df16ed02cde69f7cb3e227973da. Existing Linux Prisma engine is preserved; patch consists of 10 compiled JS files, 3 generated Prisma metadata files, SQL/compose and Dockerfiles, ~335KB. No Windows engine, dependencies, env or credentials uploaded.
 - Compatibility rollback API: sha256:585f6dfa270047312d6b6cf31490ebb681f8db5cb51c9555da6a918bb50d7627, existing business code plus DECLINED-aware Prisma metadata. Do not roll back to an enum-unaware client after declined rows exist.
-- Production backup/migration/activation: NOT_RUN at source commit; final update below will record actual result.
-- Production browser acceptance and CI: NOT_RUN at source commit.
+- Production backup/migration/activation: PASSED. Database dump 1,040,303 bytes; uploads archive 157,645 bytes; catalog checked. Migration, nonprivileged role grants, Linux Prisma and FORCE RLS runtime gates passed; API and WS healthy. Full restore rehearsal remains NOT_RUN.
+- Production browser acceptance: PASSED **3/3** on the formal domain. Source CI: PASSED, run 39955328163.
 - External invitation/verification email: BLOCKED until an authorized Resend sender/key is configured. Console SIMULATED is explicitly shown and never treated as actual delivery. Mail retries were exercised with a substitute provider; real SMTP/delivery/bounce is not claimed.
 - Full backup restore, load/HA and provider OAuth are NOT_RUN in this iteration. Previous load failures are retained and not relabeled.
 
 An automatic approval review rejected a proposed packaging adjustment as potentially broadening uploaded directories. The adjustment was not executed; the original explicit per-file whitelist was retained and the bounded patch was accepted. No approval bypass was used.
+
+
+## Final online acceptance — 2026-10-24
+
+Source aa2fd706c8ddb6c67ecbaccdf08b7527dd7de45e is pushed to the authorized private repository. [Source CI](https://github.com/chenhynju/collabspace/actions/runs/39955328163) completed successfully. Vercel final committed-source build READY and promoted: dpl_4h42W72sYtaTMcA2LEXzbpuQTVYn, https://collabspace-3nv7ah6o5-purelamp.vercel.app; formal domain https://collabspace.purelamp.uk.
+
+Online Playwright **3/3 passed (3.9 minutes)**: (1) real Figma-layout creation, recent list, two-user Mermaid source convergence, comment and export; (2) independent accounts receive notifications, accept/decline with inviter result, locked invited signup, mailbox verification and explicit join, foreign tenant refusal, parent/child navigation computed 14px; (3) blank organization registration creates usable private OWNER space, project and persistent document, with stale-cache repair and bidirectional cross-tenant HTTP/ticket refusal. Console verification links for synthetic mailboxes were retrieved privately for this test; this does not validate real email delivery.
+
+Screenshot: [notification center and sidebar](invitations-online-2026-10-24.png). Runtime reports EMAIL_PROVIDER=console and no configured Resend key: external email remains BLOCKED. Enabling mail instructions are in docs/collaboration/INVITATION-NOTIFICATIONS.md. No real users were emailed and no credentials, raw tokens or browser traces are archived.

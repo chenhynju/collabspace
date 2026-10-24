@@ -1,0 +1,51 @@
+{
+  "recordedOn": "2026-10-24",
+  "sourceCommit": "aa2fd706c8ddb6c67ecbaccdf08b7527dd7de45e",
+  "frontend": {
+    "deploymentId": "dpl_4h42W72sYtaTMcA2LEXzbpuQTVYn",
+    "url": "https://collabspace-3nv7ah6o5-purelamp.vercel.app",
+    "state": "READY",
+    "formal": "https://collabspace.purelamp.uk"
+  },
+  "backend": {
+    "release": "r20261023-02",
+    "apiImage": "sha256:1369ff7361f535e3de11127707c4a481de6b7df16ed02cde69f7cb3e227973da",
+    "healthy": true
+  },
+  "ci": {
+    "id": 39955328163,
+    "sha": "aa2fd706c8ddb6c67ecbaccdf08b7527dd7de45e",
+    "status": "completed",
+    "conclusion": "success",
+    "url": "https://github.com/chenhynju/collabspace/actions/runs/39955328163"
+  },
+  "browser": {
+    "passed": 3,
+    "failed": 0,
+    "scenarios": [
+      "Figma collaboration workbench/editor",
+      "personal invitation accept/decline and invited signup",
+      "blank organization personal space and isolation"
+    ]
+  },
+  "local": {
+    "webUnitPassed": 15,
+    "apiUnitPassed": 20,
+    "apiUnitSkipped": 3,
+    "collaborationRegressionPassed": 32,
+    "passwordRegressionPassed": 3,
+    "httpPostgresIntegration": "PASSED",
+    "syntheticDeliveryRetry": "PASSED"
+  },
+  "mail": {
+    "provider": "console",
+    "resendConfigured": false,
+    "externalDelivery": "BLOCKED"
+  },
+  "backup": {
+    "databaseDumpBytes": 1040303,
+    "uploadsArchiveBytes": 157645,
+    "catalogValidated": true,
+    "fullRestore": "NOT_RUN"
+  }
+}
