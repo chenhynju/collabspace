@@ -31,3 +31,5 @@ CollabSpace真实发信已启用。启用前确认仅有1条SIMULATED历史任�
 ## 作品集最终发布
 
 用户授权恢复服务后，通过官方unpause接口确认paused=false。原BLOCKED部署保留为失败证据，重新提交相同已测试归档：dpl_3UWXQHW2cfuczwPrCpVFBWVkUH9j / https://purelampsite-cn01cdpia-purelamp.vercel.app，完整构建READY；无数据库迁移。已promote到www.purelamp.uk，线上真实Edge浏览器/en、/zh及/api/auth/providers均200，主内容和标题正常。没有通过作品集额外发送真实邮件；标签由43项定向回归及此次实际部署证明，不声称作品集新增了回执状态界面。原生产部署保留供回滚；套餐和预算未修改。
+
+最终CI核查：CollabSpace运行40084742985通过；作品集运行40084764548失败于本次未修改的职位页Date.now与翻译组件effect内setState两处ESLint规则，后续CI测试/构建跳过；本次定向测试/类型检查/实际Vercel构建/线上浏览器通过分别保留，不将其替代CI。计费原codex/plan-entitlements分支未触发仅main/PR的CI，标记NOT_RUN，不擅自合并原分支。完整记录MAIL-MATH-CI-2026-10-24.json。
