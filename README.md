@@ -1,5 +1,9 @@
 # CollabSpace — 多人实时协作文档
 
+2026-10-24：多项目 Resend 回调验签、业务分流、持久化队列与其他项目适配补丁，见 [邮件回调路由](docs/collaboration/MAIL-WEBHOOK-ROUTING.md)。
+
+2026-10-24：新增富文本文档数学公式模板拖拽、LaTeX 输入与源码修改，P-MATH / BR-MATH / D-MATH / AT-MATH 及客户端升级要求见 [数学公式](docs/collaboration/MATH.md)。
+
 本工程从 F-U01 / TeamSpace 当前文件快照独立复制，私有仓库为 chenhynju/collabspace。已实现项目协作文档、多人编辑、离线草稿、评论、命名版本和文档权限；已上线独立演示环境，实际验收与边界见下方证据。
 
 在线文档支持富文本、正文配图、图片说明及宽度、上传/粘贴/拖入图片，并沿用多人同步和私有版本恢复。见 [图文写作契约](docs/collaboration/RICH_TEXT.md)、[验收与上线记录](evidence/collaboration/RICH-TEXT-2026-10-21.md)；登录后可打开 [图文协作示例](https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/30ae9064-e8e2-4ee6-8d24-9de1eb50f2e3)。

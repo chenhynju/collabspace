@@ -17,6 +17,8 @@ import {
 } from "y-prosemirror";
 import { DocumentProvider, from64, to64 } from "@/lib/document-provider";
 import { api } from "@/lib/api";
+import { DocumentFormula, formulaHTML } from "./DocumentFormula";
+import { FormulaPalette, LATEX_DND_TYPE } from "./FormulaPalette";
 import { DocumentImage } from "./DocumentImage";
 
 function positions(provider: DocumentProvider) {
@@ -93,6 +95,7 @@ export function RichEditor({
     v: { quote: string; anchor: { start: string; end: string } } | null,
   ) => void;
 }) {
+  const [formulaOpen,setFormulaOpen]=useState(false),[latex,setLatex]=useState(""),[formulaError,setFormulaError]=useState("");
   const [, render] = useState(0);
   const [uploading,setUploading]=useState(false),[imageError,setImageError]=useState("");
   const fileInput=useRef<HTMLInputElement>(null),mounted=useRef(true),busy=useRef(false);
@@ -112,6 +115,7 @@ export function RichEditor({
           protocols: ["https", "http"],
           HTMLAttributes: { rel: "noopener noreferrer" },
         }),
+        DocumentFormula,
         TaskList,
         TaskItem.configure({ nested: true }),
         DocumentImage.configure({documentId:provider.docId,organizationId}),
@@ -126,6 +130,16 @@ export function RichEditor({
           event.preventDefault();uploadRef.current(files);return true;
         },
         handleDrop: (view,event,_slice,moved) => {
+          const latex=event.dataTransfer?.getData(LATEX_DND_TYPE);
+          if(latex && !moved){
+            event.preventDefault();
+            if(!provider.writable)return true;
+            try {formulaHTML(latex);const pos=view.posAtCoords({left:event.clientX,top:event.clientY})?.pos;
+              const node=view.state.schema.nodes.documentFormula.create({latex});
+              view.dispatch(pos===undefined?view.state.tr.replaceSelectionWith(node):view.state.tr.insert(pos,node));setFormulaError("");
+            } catch {setFormulaError("公式无效或过长，请修改 LaTeX 源码。");}
+            return true;
+          }
           if(moved || !event.dataTransfer?.files.length)return false;
           event.preventDefault();
           uploadRef.current(Array.from(event.dataTransfer.files),view.posAtCoords({left:event.clientX,top:event.clientY})?.pos);
@@ -271,8 +285,16 @@ export function RichEditor({
           </button>
         ))}
         <button type="button" disabled={!provider.writable || uploading} onMouseDown={e=>e.preventDefault()} onClick={()=>fileInput.current?.click()} className="rounded border px-3 py-1 text-sm disabled:opacity-40">{uploading?"正在上传图片…":"插入图片"}</button>
+        <button type="button" disabled={!provider.writable} aria-expanded={formulaOpen} onMouseDown={e=>e.preventDefault()} onClick={()=>{setFormulaOpen(v=>!v);setLatex(editor.isActive("documentFormula")?editor.getAttributes("documentFormula").latex:"");setFormulaError("");}} className="rounded border px-3 py-1 text-sm">数学公式</button>
         <input ref={fileInput} aria-label="上传文档图片" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden onChange={e=>{uploadRef.current(Array.from(e.target.files || []));e.target.value="";}} />
       </div>
+      {formulaOpen && <div className="space-y-3 border-b bg-slate-50 p-3">
+        <FormulaPalette disabled={!provider.writable} onInsert={value=>{if(!provider.writable)return;try{formulaHTML(value);editor.chain().focus().insertContent({type:"documentFormula",attrs:{latex:value}}).run();setFormulaError("");}catch{setFormulaError("公式无效或过长。");}}} />
+        <textarea aria-label="LaTeX 公式源码" maxLength={8000} disabled={!provider.writable} value={latex} onChange={e=>setLatex(e.target.value)} placeholder="输入 LaTeX，例如 \frac{a}{b}" className="w-full rounded border p-2 font-mono text-sm" />
+        <button type="button" disabled={!provider.writable} className="rounded border bg-white px-3 py-1 text-sm" onClick={()=>{if(!provider.writable)return;try{formulaHTML(latex);if(editor.isActive("documentFormula"))editor.chain().focus().updateAttributes("documentFormula",{latex}).run();else editor.chain().focus().insertContent({type:"documentFormula",attrs:{latex}}).run();setFormulaError("");}catch{setFormulaError("公式无效或过长，请检查 LaTeX 源码。");}}}>插入 / 更新选中公式</button>
+        <p className="text-xs text-slate-500">拖拽模板到正文指定位置，或点击模板插入；选中已有公式后打开此面板修改源码。支持 KaTeX 数学语法，无需 $ 分隔符。</p>
+      </div>}
+      {formulaError && <p role="alert" className="p-3 text-sm text-red-700">{formulaError}</p>}
       {linkOpen && <form className="flex flex-wrap gap-2 border-b bg-slate-50 p-3" onSubmit={e=>{e.preventDefault();try{const parsed=new URL(link);if(!["https:","http:"].includes(parsed.protocol))throw Error();editor.chain().focus().extendMarkRange("link").setLink({href:parsed.href}).run();setLinkOpen(false);setImageError("");}catch{setImageError("请输入有效的 HTTP / HTTPS 链接。");}}}>
         <input aria-label="链接地址" className="min-w-60 flex-1 rounded border p-2 text-sm" value={link} onChange={e=>setLink(e.target.value)} />
         <button disabled={!provider.writable} className="rounded border px-3 text-sm">应用链接</button>

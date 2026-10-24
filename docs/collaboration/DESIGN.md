@@ -1,5 +1,9 @@
 # CollabSpace — 详细设计 v1
 
+2026-10-24：多项目 Resend 回调验签、业务分流、持久化队列与其他项目适配补丁，见 [邮件回调路由](MAIL-WEBHOOK-ROUTING.md)。
+
+2026-10-24：新增富文本文档数学公式模板拖拽、LaTeX 输入与源码修改，P-MATH / BR-MATH / D-MATH / AT-MATH 及客户端升级要求见 [数学公式](MATH.md)。
+
 2026-10-22 高频业务绘图扩展：场景覆盖、24个模板/图元、源码属性操作、导入及SVG/PNG交付见 [BUSINESS-DIAGRAMS.md](BUSINESS-DIAGRAMS.md)。90%是待业务验收的目标，不是已通过比例。
 
 2026-10-22 编辑体验改进：完整 Office 工具入口、协作/设计工作区 UI、文件最近编辑人与确认保存日期，契约见 [EDITOR-EXPERIENCE.md](EDITOR-EXPERIENCE.md)。

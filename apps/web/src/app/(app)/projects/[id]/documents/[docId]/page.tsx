@@ -15,6 +15,7 @@ import { DocumentProvider, from64 } from "@/lib/document-provider";
 import { useAuthStore } from "@/store/auth";
 import { api } from "@/lib/api";
 import { BoardPreview } from '@/components/boards/Whiteboard';
+import { DocumentFormula } from "@/components/documents/DocumentFormula";
 import { DocumentImage } from '@/components/documents/DocumentImage';
 import OfflineStorage from '@/components/documents/OfflineStorage';
 import {MarkdownHistory} from '@/components/documents/MarkdownEditor';
@@ -31,6 +32,7 @@ function Preview({ state, documentId, organizationId }: { state: string; documen
       editable: false,
       extensions: [
         StarterKit,
+        DocumentFormula,
         TaskList,
         TaskItem,
         LinkExtension.configure({ openOnClick: false }),

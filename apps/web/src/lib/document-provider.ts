@@ -197,7 +197,7 @@ export class DocumentProvider {
       ws.onopen = () =>
         this.send({
           type: "auth",
-            docSchema: 3,
+            docSchema: 4,
           org: this.org,
           user: this.user,
           docId: this.docId,

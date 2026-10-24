@@ -167,9 +167,9 @@ function start({
             const ctx = { org: a.org, user: a.user };
             const info = await store.consume(ctx, a.docId, a.ticket);
             ctx.credentialState=info.credentialState;
-            // Old ProseMirror schemas normalize unknown image nodes away. Do
+            // Old ProseMirror schemas normalize unknown image/formula nodes away. Do
             // not let an old document client sync or submit destructive cleanup.
-            if((info.kind==="DOCUMENT" && ![2,3].includes(a.docSchema)) || (info.kind==='MARKDOWN' && a.docSchema!==3))
+            if((info.kind==="DOCUMENT" && a.docSchema!==4) || (info.kind==='MARKDOWN' && ![3,4].includes(a.docSchema)))
               throw new StoreError(409,"CLIENT_UPGRADE_REQUIRED");
             const key = `${ctx.org}:${a.docId}`;
             let r = rooms.get(key);
