@@ -13,7 +13,7 @@ const clean=url=>{const u=new URL(url);return u.pathname.replace(/\/(doc|data|fi
   const login=await ctx.request.post(c.NEXT_PUBLIC_API_URL+'/auth/login',{data:{email:c.TEST_OWNER_EMAIL,password:c.TEST_PASSWORD}});
   if(!login.ok())throw Error('Synthetic login status '+login.status());
   const token=(await login.json()).accessToken,headers={Authorization:'Bearer '+token,'x-organization-id':c.TEST_ORG};
-  const stateFile=path.join(out,process.env.OFFICE_PROFILE_FRESH==='1'?'exact-document.json':'document.json');let doc;
+  const stateFile=path.join(out,process.env.OFFICE_PROFILE_REPLAY==='1'?'wait-document.json':process.env.OFFICE_PROFILE_FRESH==='1'?'exact-document.json':'document.json');let doc;
   if(fs.existsSync(stateFile))doc=JSON.parse(fs.readFileSync(stateFile,'utf8'));
   else{
    const created=await ctx.request.post(c.NEXT_PUBLIC_API_URL+'/office/create',{headers,data:{projectId:c.TEST_PROJECT,title:'Synthetic-image-latency-'+randomUUID().slice(0,8),extension:'pptx',requestId:randomUUID()}});
@@ -37,15 +37,31 @@ const clean=url=>{const u=new URL(url);return u.pathname.replace(/\/(doc|data|fi
    fs.writeFileSync(path.join(out,'initial-network.json'),JSON.stringify(records,null,2));
   }
   if(phase==='measure'){
+   await f.evaluate(enabled=>{window.__profileReplay=enabled;},process.env.OFFICE_PROFILE_REPLAY==='1');
    await f.evaluate(()=>{
-    window.__profileUploads=[];
+    window.__profileUploads=[];window.__profileBodies=[];
     const open=XMLHttpRequest.prototype.open;
     XMLHttpRequest.prototype.open=function(method,url,...args){
-     if(method.toUpperCase()==='POST'&&/upload/i.test(String(url)))this.addEventListener('load',()=>{
+     this.__profileUpload=method.toUpperCase()==='POST'&&/upload/i.test(String(url));
+     if(this.__profileUpload)this.addEventListener('load',()=>{
       try{window.__profileUploads.push(JSON.parse(this.responseText));}catch{}
      });
      return open.call(this,method,url,...args);
     };
+    if(window.__profileReplay){
+     const send=XMLHttpRequest.prototype.send;
+     XMLHttpRequest.prototype.send=function(body){
+      if(this.__profileUpload){
+       const response=new Response(body),contentType=body instanceof FormData?response.headers.get('content-type'):null;
+       window.__profileBodies.push(response.arrayBuffer().then(buffer=>{
+        const bytes=new Uint8Array(buffer);let binary='';
+        for(let offset=0;offset<bytes.length;offset+=32768)binary+=String.fromCharCode(...bytes.subarray(offset,offset+32768));
+        return {body:btoa(binary),contentType};
+       }));
+      }
+      return send.call(this,body);
+     };
+    }
    });
    const cdp=await ctx.newCDPSession(f).catch(()=>ctx.newCDPSession(p)),network=[],active=new Map(),samples=[];
    await cdp.send('Network.enable',{maxTotalBufferSize:64*1024*1024,maxResourceBufferSize:16*1024*1024});
@@ -79,7 +95,18 @@ const clean=url=>{const u=new URL(url);return u.pathname.replace(/\/(doc|data|fi
     await p.screenshot({path:path.join(out,'insert-'+samples.length+'-'+size+'.png'),fullPage:true});
     const sample={size,bytes:fs.statSync(fixture).size,postDoneMs,imageDoneMs,exactMediaMatch:true,uploadStatus:upload.status(),imageStatus:img.status(),network:network.slice(index).filter(r=>r.path.includes('/office-engine/'))};
     samples.push(sample);console.log(JSON.stringify(sample));
-    fs.writeFileSync(path.join(out,'measurements-exact-'+(http1?'http1':'default')+'.json'),JSON.stringify({at:new Date().toISOString(),browser:http1?'Edge headless HTTP/1.1 forced':'Edge headless default negotiation',document:doc.id,samples},null,2));
+    if(process.env.OFFICE_PROFILE_REPLAY==='1'){
+     const request=upload.request(),url=new URL(upload.url()),headers=await request.allHeaders();
+     const body=await f.evaluate(()=>window.__profileBodies.shift());
+     if(!body)throw Error('Synthetic XHR body not captured');
+     if(body.contentType)headers['content-type']=body.contentType;
+     const packet={path:url.pathname.replace(/^\/office-engine/,'')+url.search,body:body.body,headers};
+     const {spawnSync}=require('node:child_process');
+     const probe=spawnSync('python',['scripts/probe-office-upload-layers.py'],{input:JSON.stringify(packet),encoding:'utf8',timeout:180000,maxBuffer:2*1024*1024});
+     if(probe.status!==0){let kind=probe.error?.code||'unknown';try{kind=JSON.parse(probe.stderr.trim()).error||kind;}catch{}throw Error('Layer replay failed: '+kind);}
+     sample.layerReplay=JSON.parse(probe.stdout);console.log(JSON.stringify({layerReplay:sample.layerReplay}));
+    }
+    fs.writeFileSync(path.join(out,(process.env.OFFICE_PROFILE_REPLAY==='1'?'measurements-layers-':'measurements-exact-')+(http1?'http1':'default')+'.json'),JSON.stringify({at:new Date().toISOString(),browser:http1?'Edge headless HTTP/1.1 forced':'Edge headless default negotiation',document:doc.id,samples},null,2));
     await p.keyboard.press('Escape');
    }
    if(process.env.OFFICE_PROFILE_VERIFY_SAVE==='1'){
