@@ -1,0 +1,30 @@
+--- a/apps/api/src/modules/billing/email-delivery.controller.ts
++++ b/apps/api/src/modules/billing/email-delivery.controller.ts
+@@ -2,12 +2,27 @@
+ import { ConfigService } from '@nestjs/config';
+ import { Request } from 'express';
+ import { Resend } from 'resend';
++import { createHmac, timingSafeEqual } from 'crypto';
+ import { Public } from '../../common/decorators/public.decorator';
+ import { EmailDeliveryService } from './email-delivery.service';
+ 
+ @Controller('billing/email')
+ export class EmailDeliveryController {
+   constructor(private readonly config:ConfigService,private readonly delivery:EmailDeliveryService){}
++  @Public()
++  @Post('routed-webhook')
++  async routed(@Req() req:RawBodyRequest<Request>){
++    const secret=this.config.get<string>('MAIL_ROUTER_SECRET');
++    if(!secret||secret.length<32)throw new ServiceUnavailableException('邮件路由未配置');
++    const id=req.header('x-mail-event-id'),time=req.header('x-mail-timestamp'),signature=req.header('x-mail-signature');
++    if(!req.rawBody||!id||!time||!/^\d+$/.test(time)||Math.abs(Date.now()/1000-Number(time))>300||!signature||!/^[a-f0-9]{64}$/.test(signature))throw new UnauthorizedException('邮件路由签名无效');
++    const expected=createHmac('sha256',secret).update(`${time}.${id}.${req.rawBody.toString('utf8')}`).digest();
++    if(!timingSafeEqual(expected,Buffer.from(signature,'hex')))throw new UnauthorizedException('邮件路由签名无效');
++    const e=JSON.parse(req.rawBody.toString('utf8'));
++    if(e.eventId!==id||e.app!=='billandcharge'||e.module!=='billing_email')throw new UnauthorizedException('邮件路由归属错误');
++    // Existing receive() resolves the provider receipt and tenant from our database.
++    return this.delivery.receive(id,{type:e.type,created_at:e.occurredAt,data:{email_id:e.emailId}});
++  }
+   @Public()
+   @Post('webhook')
+   async webhook(@Req() req:RawBodyRequest<Request>){

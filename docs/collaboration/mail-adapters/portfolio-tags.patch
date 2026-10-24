@@ -1,0 +1,19 @@
+--- a/src/lib/mailer.ts
++++ b/src/lib/mailer.ts
+@@ -28,6 +28,8 @@
+    * 站长在邮箱里点「回复」时，收件人自动是访客，而不是发件账号自身。
+    */
+   replyTo?: string;
++  /** Stable business route, e.g. verification/contact/notification. */
++  module?: string;
+ }
+ 
+ async function sendViaResend(msg: MailMessage) {
+@@ -38,6 +40,7 @@
+     to: msg.to,
+     subject: msg.subject,
+     html: msg.html,
++    tags: [{ name: "app", value: "portfolio" }, { name: "module", value: msg.module ?? "notification" }],
+     ...(msg.replyTo ? { replyTo: msg.replyTo } : {}),
+   });
+ 

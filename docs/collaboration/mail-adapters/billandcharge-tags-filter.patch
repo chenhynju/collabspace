@@ -1,0 +1,32 @@
+--- a/apps/api/src/modules/mail/mail.service.ts
++++ b/apps/api/src/modules/mail/mail.service.ts
+@@ -32,7 +32,7 @@
+     const sandbox=this.config.get('ALLOW_LIVE_BILLING')!=='true';
+     const subject=(sandbox?'【沙箱演练】':'')+(recovered?'【Billing Platform】订阅付款已恢复':'【Billing Platform】订阅付款失败');
+     const text=`${recovered?'支付渠道已确认账单付款，订阅状态已同步。':'支付渠道报告账单未付，请联系平台计费管理员更新支付方式或补缴。'}\n账单编号：${invoiceId}\n请勿回复邮件提供银行卡或密码。`;
+-    const {data,error}=await this.resend.emails.send({from:this.from,to,subject,text},{idempotencyKey});
++    const {data,error}=await this.resend.emails.send({from:this.from,to,subject,text,tags:[{name:'app',value:'billandcharge'},{name:'module',value:'billing_email'}]},{idempotencyKey});
+     if(error||!data?.id)throw new Error('计费邮件渠道未确认受理');
+     return {provider:'resend',id:data.id};
+   }
+@@ -92,6 +92,7 @@
+       to,
+       subject,
+       html,
++      tags: [{name:'app',value:'billandcharge'},{name:'module',value:'notification'}],
+     });
+     if (error) {
+       this.logger.error(`Resend 发信失败: ${JSON.stringify(error)}`);
+--- a/apps/api/src/modules/billing/email-delivery.service.ts
++++ b/apps/api/src/modules/billing/email-delivery.service.ts
+@@ -15,6 +15,10 @@
+     if(typeof emailId!=='string'||!emailId||!Number.isFinite(time.getTime()))throw new BadRequestException('邮件事件缺少有效标识或时间');
+     // Resolve only a known provider receipt; never use organization IDs from callback data.
+     const matches=await this.prisma.withEmailReceiptLookup(emailId,tx=>tx.billingOperation.findMany({where:{kind:'BILLING_EMAIL',externalId:emailId},select:{id:true,organizationId:true},take:2}));
++    const tags=event?.data?.tags;
++    const app=Array.isArray(tags)?tags.find((t:any)=>t?.name==='app')?.value:tags?.app;
++    // Existing billing receipts always win. Unknown untagged events retain retry semantics.
++    if(matches.length===0&&['collabspace','portfolio'].includes(app))return {received:true,ignored:true};
+     if(matches.length!==1)throw new ServiceUnavailableException('邮件任务尚未关联或需人工复核');
+     const mapped=matches[0];
+     return this.prisma.withOrg(mapped.organizationId,async tx=>{
