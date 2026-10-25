@@ -27,8 +27,9 @@ test('local image preparation: original, transparency, reduced bytes, preview an
   expect(result.same).toBe(true);expect(result.tinyOriginal).toBe(true);expect(result.rejected).toBe(true);
   expect(result.animationRejected).toBe(true);expect(result.kept).toBe(true);
   expect(result.bytes).toBeLessThan(result.original);expect(result.width).toBe(1280);expect(result.height).toBe(853);expect(result.alpha).toBe(0);
+  await page.evaluate(source=>{const exports={};new Function('exports','require','React',source)(exports,name=>name==='react'?window.React:{UploadCloud:()=>null,FileCheck2:()=>null},window.React);window.filePicker=exports;},compile('apps/web/src/components/file-picker.tsx'));
   await page.evaluate(source=>{
-    const exports={},require=name=>name==='react'?window.React:window.imagePreparation;
+    const exports={},require=name=>name==='react'?window.React:name==='@/components/file-picker'?window.filePicker:window.imagePreparation;
     new Function('exports','require','React',source)(exports,require,window.React);
     const root=document.createElement('div');document.body.append(root);window.ReactDOM.createRoot(root).render(window.React.createElement(exports.OfficeImagePreparation));
   },compile('apps/web/src/components/office-image-preparation.tsx'));

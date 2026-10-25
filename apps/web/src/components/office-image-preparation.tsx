@@ -1,5 +1,6 @@
 'use client';
 import {useEffect, useRef, useState} from 'react';
+import {FilePicker} from '@/components/file-picker';
 import {prepareOfficeImage, type ImagePreset} from '@/lib/prepare-office-image';
 
 export function OfficeImagePreparation() {
@@ -14,7 +15,7 @@ export function OfficeImagePreparation() {
     <summary className="cursor-pointer font-medium">图片上传慢？先缩小图片</summary>
     <p className="my-3 text-slate-600">在浏览器本地生成较小副本，下载后通过编辑器“插入 → 图片 → 来自文件的图片”选择该副本。不会自动上传或更改幻灯片。照片可选均衡或更小；截图、文字、透明图请检查预览，清晰度优先时选原图。</p>
     <div className="flex flex-wrap items-center gap-3">
-      <input aria-label="准备插入的图片" type="file" accept="image/png,image/jpeg,image/webp" onChange={e => {clear(); setFile(e.target.files?.[0] || null);}} />
+      <FilePicker label="准备插入的图片" accept="image/png,image/jpeg,image/webp" onFile={f=>{clear();setFile(f);}} hint="PNG / JPEG / WebP · 本地处理，不会自动上传"/>
       <select aria-label="图片质量" className="rounded border p-2" value={preset} onChange={e => {clear(); setPreset(e.target.value as ImagePreset);}}>
         <option value="original">原图（保持文件）</option><option value="balanced">均衡（最长1920像素）</option><option value="small">更小（最长1280像素）</option>
       </select>

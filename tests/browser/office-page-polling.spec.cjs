@@ -10,11 +10,11 @@ test('Office page polling keeps exactly one actions panel and one image preparat
   const api={get:async()=>{window.polls++;return {data:state}},post:async()=>({data:{sessionId:'synthetic-session',role:'EDITOR',publicUrl:'http://localhost',config:{}}})};
   window.DocsAPI={DocEditor:function(id,config){this.destroyEditor=()=>{};queueMicrotask(()=>config.events.onDocumentReady());}};
   const interval=window.setInterval;window.setInterval=(callback,ms)=>interval(callback,ms===2000?30:ms);
-  const modules={'react':window.React,'@/lib/api':{api},'@/lib/prepare-office-image':{prepareOfficeImage:async f=>f},'next/link':{default:props=>window.React.createElement('a',props)},'next/navigation':{useRouter:()=>({push:()=>{}})},'@/lib/display-date':{displayDate:()=>''},'@/store/auth':{useAuthStore:selector=>selector({currentOrgId:'synthetic-org'})}};
+  const modules={'lucide-react':{UploadCloud:()=>null,FileCheck2:()=>null},'react':window.React,'@/lib/api':{api},'@/lib/prepare-office-image':{prepareOfficeImage:async f=>f},'next/link':{default:props=>window.React.createElement('a',props)},'next/navigation':{useRouter:()=>({push:()=>{}})},'@/lib/display-date':{displayDate:()=>''},'@/store/auth':{useAuthStore:selector=>selector({currentOrgId:'synthetic-org'})}};
   const load=(name,code)=>{const exports={};new Function('exports','require','React',code)(exports,n=>modules[n],window.React);modules[name]=exports;return exports};
-  load('@/components/office-file-actions',sources.actions);load('@/components/office-image-preparation',sources.images);
+  load('@/components/file-picker',sources.picker);load('@/components/office-file-actions',sources.actions);load('@/components/office-image-preparation',sources.images);
   const Page=load('page',sources.page).default,root=document.createElement('div');document.body.append(root);window.ReactDOM.createRoot(root).render(window.React.createElement(Page,{params:{id:'synthetic-document'}}));
- },{actions:compile('apps/web/src/components/office-file-actions.tsx'),images:compile('apps/web/src/components/office-image-preparation.tsx'),page:compile('apps/web/src/app/(app)/office/[id]/page.tsx')});
+ },{picker:compile('apps/web/src/components/file-picker.tsx'),actions:compile('apps/web/src/components/office-file-actions.tsx'),images:compile('apps/web/src/components/office-image-preparation.tsx'),page:compile('apps/web/src/app/(app)/office/[id]/page.tsx')});
  await expect.poll(()=>page.evaluate(()=>window.polls)).toBeGreaterThanOrEqual(10);
  await expect(page.locator('[data-office-ready="true"]')).toHaveCount(1);
  await expect(page.locator('[data-office-file-actions]')).toHaveCount(1);

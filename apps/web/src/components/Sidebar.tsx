@@ -37,7 +37,6 @@ const GROUPS: NavGroup[] = [
       { href: '/projects', label: '项目', icon: FileText, perm: 'project:list' },
       { href: '/collaboration', label: '协作空间', icon: BookOpen, perm: 'project:list' },
       { href: '/files', label: '附件管理', icon: Files, perm: 'file:manage' },
-      { href: '/assistant', label: '协作助手', icon: FileText, perm: 'project:list' },
       { href: '/im', label: '消息', icon: MessageSquare, perm: 'im:view' },
     ],
   },
@@ -126,7 +125,7 @@ export default function Sidebar() {
               )}
               {items.map((item) => {
                 const inContent = /^\/projects\/[^/]+\/(content|documents|boards)(\/|$)/.test(pathname) || pathname.startsWith('/office/');
-                const active = item.href === '/collaboration' ? pathname === item.href || inContent : item.href === '/projects' ? (pathname === item.href || pathname.startsWith(item.href + "/")) && !inContent : pathname === item.href || pathname.startsWith(item.href + "/");
+                const active = item.href === '/collaboration' ? pathname === item.href || pathname === '/assistant' || inContent : item.href === '/projects' ? (pathname === item.href || pathname.startsWith(item.href + "/")) && !inContent : pathname === item.href || pathname.startsWith(item.href + "/");
                 const Icon = item.icon;
                 return (
                   <Link

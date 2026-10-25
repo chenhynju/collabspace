@@ -1,0 +1,35 @@
+const {test,expect}=require('@playwright/test'),c=require('./config.cjs');
+test('unified workspace: icon tools, contextual project, draft continuity, native picker and mobile',async({browser,request})=>{
+ const login=await request.post(c.NEXT_PUBLIC_API_URL+'/auth/login',{data:{email:c.TEST_OWNER_EMAIL,password:c.TEST_PASSWORD}});expect(login.ok()).toBeTruthy();
+ const token=(await login.json()).accessToken,ctx=await browser.newContext();
+ await ctx.addInitScript(({token,org})=>{localStorage.setItem('access_token',token);localStorage.setItem('current_org_id',org);},{token,org:c.TEST_ORG});
+ try{const p=await ctx.newPage();const filename='dropped-synthetic-'+Date.now()+'.md';let calls=0;
+ await p.route('**/assistant/status',r=>r.fulfill({json:{ai:true,mail:true}}));
+ await p.route('**/assistant/generate',r=>{calls++;return r.fulfill({json:{text:'Synthetic translated result',cached:false}});});
+ await p.goto(c.WEB_URL+'/collaboration');await expect(p.getByRole('heading',{name:'协作空间',exact:true})).toBeVisible();
+ await expect(p.locator('nav').getByRole('link',{name:'协作助手',exact:true})).toHaveCount(0);
+ await p.getByLabel('筛选所属项目').selectOption(c.TEST_PROJECT);
+ await p.getByRole('button',{name:'写邮件',exact:true}).click();
+ await expect(p.getByLabel('项目',{exact:true})).toHaveValue(c.TEST_PROJECT);
+ await expect(p.getByRole('button',{name:'预览并发送邮件'})).toBeVisible();expect(calls).toBe(0);
+ await p.getByLabel('可修改结果').fill('Synthetic manual draft');
+ await p.getByRole('button',{name:'文件协作',exact:true}).click();await p.getByRole('button',{name:'AI 助手',exact:true}).click();
+ await expect(p.getByLabel('可修改结果')).toHaveValue('Synthetic manual draft');
+ await p.getByRole('button',{name:'中译英 中文转为英文',exact:true}).click();
+ await p.getByLabel('资料正文',{exact:true}).fill('请确认项目交付时间。');await p.getByRole('button',{name:'生成',exact:true}).click();
+ await expect(p.getByLabel('可修改结果')).toHaveValue('Synthetic translated result');expect(calls).toBe(1);
+ await p.getByRole('button',{name:'文件协作',exact:true}).click();await p.getByRole('button',{name:'上传文件',exact:true}).click();
+ const input=p.locator('input[type="file"][aria-label="上传已有文件"]');await expect(input).toHaveClass(/sr-only/);
+ await input.setInputFiles({name:'synthetic.md',mimeType:'text/markdown',buffer:Buffer.from('# Synthetic')});await expect(p.getByText('synthetic.md',{exact:true})).toBeVisible();
+ await input.evaluate((el,filename)=>{const dt=new DataTransfer();dt.items.add(new File(['# Dropped synthetic source'],filename,{type:'text/markdown'}));el.parentElement.dispatchEvent(new DragEvent('drop',{bubbles:true,dataTransfer:dt}));},filename);
+ await expect(p.getByText(filename,{exact:true})).toBeVisible();
+ const created=p.waitForResponse(r=>r.url()===c.NEXT_PUBLIC_API_URL+'/documents'&&r.request().method()==='POST');await p.getByRole('button',{name:'上传并打开',exact:true}).click();expect((await created).status()).toBe(201);await expect(p).toHaveURL(/\/documents\//,{timeout:120000});
+ await p.goto(c.WEB_URL+'/collaboration');await expect(p.getByRole('link',{name:filename,exact:false})).toBeVisible();
+ await p.getByRole('button',{name:'新建',exact:true}).click();await expect(p.getByRole('button',{name:'Excel',exact:true})).toBeVisible();await expect(p.getByLabel('新建内容类型')).toHaveCount(0);await p.keyboard.press('Escape');
+ await p.setViewportSize({width:390,height:844});await p.getByRole('button',{name:'AI 助手',exact:true}).click();
+ await expect(p.getByRole('button',{name:'写邮件 编写、预览与发送',exact:true})).toBeVisible();
+ expect(await p.evaluate(()=>document.body.scrollWidth<=innerWidth+1)).toBeTruthy();
+ require('fs').mkdirSync('.test-runs/unified-ui',{recursive:true});await p.screenshot({path:'.test-runs/unified-ui/mobile.png',fullPage:true});
+ await p.setViewportSize({width:1440,height:1000});await p.screenshot({path:'.test-runs/unified-ui/assistant.png',fullPage:true});
+ }finally{await ctx.close();}
+});

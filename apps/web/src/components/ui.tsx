@@ -132,18 +132,38 @@ export function Modal({
   children: React.ReactNode;
   wide?: boolean;
 }) {
+  const titleId=React.useId(),dialog=React.useRef<HTMLDivElement>(null),close=React.useRef(onClose);
+  close.current=onClose;
+  React.useEffect(()=>{
+    if(!open)return;
+    const previous=document.activeElement as HTMLElement|null;
+    dialog.current?.focus();
+    const keydown=(event:KeyboardEvent)=>{
+      if(event.key==='Escape'){event.preventDefault();close.current();}
+      if(event.key==='Tab'){
+        const nodes=Array.from(dialog.current?.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href],[tabindex="0"]')||[]).filter(n=>n.getClientRects().length);
+        const first=nodes[0],last=nodes[nodes.length-1];
+        if(!first){event.preventDefault();return;}
+        if(event.shiftKey&&(document.activeElement===first||document.activeElement===dialog.current)){event.preventDefault();last.focus();}
+        else if(!event.shiftKey&&(document.activeElement===last||document.activeElement===dialog.current)){event.preventDefault();first.focus();}
+      }
+    };
+    document.addEventListener('keydown',keydown);
+    return()=>{document.removeEventListener('keydown',keydown);if(previous?.isConnected)previous.focus();};
+  },[open]);
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-slate-950/45 backdrop-blur-sm" onClick={onClose} />
       <div
+        ref={dialog} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}
         className={cn(
           'relative bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-h-[90vh] overflow-y-auto',
           wide ? 'max-w-2xl' : 'max-w-md',
         )}
       >
         <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 sticky top-0 bg-white">
-          <h3 className="font-semibold text-slate-800">{title}</h3>
+          <h3 id={titleId} className="font-semibold text-slate-800">{title}</h3>
           <button aria-label="关闭弹窗" onClick={onClose} className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus-visible:ring-2 focus-visible:ring-indigo-500">
             <X className="w-4 h-4" />
           </button>

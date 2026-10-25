@@ -1,5 +1,7 @@
 # CollabSpace — 详细设计 v1
 
+2026-10-25：合并协作空间与助手、图标直达功能、上传控件及响应式布局，P-UX / BR / D / AT 见 [统一工作区 UI/UX](WORKSPACE-UX.md)。
+
 2026-10-25：Office重命名单一权威、幂等私有副本、确认版本PDF与分层验收见 [OFFICE-PARITY.md](OFFICE-PARITY.md)。
 
 2026-10-25：Office图片本地准备、原图选择及精确上传/保存验收见 [OFFICE-IMAGE-PREPARATION.md](OFFICE-IMAGE-PREPARATION.md)，复用原生上传和保存权威，不新增图片写入接口。
