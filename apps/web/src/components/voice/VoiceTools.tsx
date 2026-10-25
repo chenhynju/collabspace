@@ -6,14 +6,15 @@ import {toWav} from './audio';
 
 type Scope={projectId?:string;conversationId?:string};
 const errorText=(e:any)=>typeof e.response?.data?.message==='string'?e.response.data.message:e.message||'语音操作失败';
-export function VoiceTools({scope,text,onTranscript,onSendAudio,active=true}:{scope:Scope;text:string;onTranscript?:(text:string)=>void;onSendAudio?:(file:File)=>Promise<void>;active?:boolean}){
+export function VoiceTools({scope,text,onTranscript,onSendAudio,active=true,onBusyChange}:{scope:Scope;text:string;onTranscript?:(text:string)=>void;onSendAudio?:(file:File)=>Promise<void>;active?:boolean;onBusyChange?:(busy:boolean)=>void}){
  const org=useAuthStore(s=>s.currentOrgId),user=useAuthStore(s=>s.user?.id);
- return <VoiceSession key={`${org}:${user}:${scope.projectId||scope.conversationId}`} scope={scope} text={text} onTranscript={onTranscript} onSendAudio={onSendAudio} active={active}/>;
+ return <VoiceSession key={`${org}:${user}:${scope.projectId||scope.conversationId}`} scope={scope} text={text} onTranscript={onTranscript} onSendAudio={onSendAudio} active={active} onBusyChange={onBusyChange}/>;
 }
-function VoiceSession({scope,text,onTranscript,onSendAudio,active}:{scope:Scope;text:string;onTranscript?:(text:string)=>void;onSendAudio?:(file:File)=>Promise<void>;active:boolean}){
+function VoiceSession({scope,text,onTranscript,onSendAudio,active,onBusyChange}:{scope:Scope;text:string;onTranscript?:(text:string)=>void;onSendAudio?:(file:File)=>Promise<void>;active:boolean;onBusyChange?:(busy:boolean)=>void}){
  const [recording,setRecording]=useState(false),[blob,setBlob]=useState<Blob|null>(null),[url,setUrl]=useState(''),[language,setLanguage]=useState('zh-CN');
  const [ready,setReady]=useState(false),[error,setError]=useState(''),[busy,setBusy]=useState(false),[speaking,setSpeaking]=useState(false),[supported,setSupported]=useState(false);
  const [history,setHistory]=useState<any[]>([]);
+ useEffect(()=>{onBusyChange?.(recording||busy);},[recording,busy,onBusyChange]);
  const localeTouched=useRef(false);
  const recorder=useRef<MediaRecorder|null>(null),stream=useRef<MediaStream|null>(null),timer=useRef<ReturnType<typeof setTimeout>>(),epoch=useRef(0),alive=useRef(true),audio=useRef<HTMLAudioElement|null>(null),request=useRef<AbortController|null>(null),job=useRef<string|null>(null),pending=useRef<{id:string;payload:string}|null>(null);
  const playback=useRef<{url:string;context?:AudioContext;frame?:number}|null>(null),previewAudio=useRef<HTMLAudioElement|null>(null);

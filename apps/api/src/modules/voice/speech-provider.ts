@@ -5,15 +5,17 @@ import { UnconfiguredAvatarProvider } from './avatar-provider';
 @Injectable()
 export class SpeechProvider {
   private avatar=new UnconfiguredAvatarProvider();
-  get ready(){return !!process.env.AZURE_SPEECH_KEY && /^[a-z0-9-]+$/.test(process.env.AZURE_SPEECH_REGION||'');}
-  status(){return {provider:'azure',configured:this.ready,locales:Object.keys(VOICES),voices:VOICES,preciseVisemes:false,realistic:{configured:this.avatar.configured,reason:'尚未选定并配置真人服务'},maxSeconds:60,maxText:4000};}
+  get cloud(){return process.env.AZURE_SPEECH_CLOUD||'global';}
+  get ready(){const region=process.env.AZURE_SPEECH_REGION||'';return !!process.env.AZURE_SPEECH_KEY && /^[a-z0-9-]+$/.test(region)&&['global','china'].includes(this.cloud)&&(this.cloud==='china'?['chinaeast2','chinanorth2','chinanorth3'].includes(region):!region.startsWith('china'));}
+  status(){return {provider:'azure',cloud:this.cloud,configured:this.ready,locales:Object.keys(VOICES),voices:VOICES,preciseVisemes:false,realistic:{configured:this.avatar.configured,reason:'尚未选定并配置真人服务'},maxSeconds:60,maxText:4000};}
   async run(kind:'STT'|'TTS',input:Buffer|string,language:Locale,signal:AbortSignal):Promise<{text?:string;audio?:Buffer}> {
     if(!this.ready)throw new ServiceUnavailableException('Azure语音未配置，未调用供应商');
     const region=process.env.AZURE_SPEECH_REGION!;
     const key=process.env.AZURE_SPEECH_KEY!;
+    const domain=this.cloud==='china'?'azure.cn':'microsoft.com';
     const url=kind==='STT'
-      ?`https://${region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=${language}&format=simple`
-      :`https://${region}.tts.speech.microsoft.com/cognitiveservices/v1`;
+      ?`https://${region}.stt.speech.${domain}/speech/recognition/conversation/cognitiveservices/v1?language=${language}&format=simple`
+      :`https://${region}.tts.speech.${domain}/cognitiveservices/v1`;
     const body=kind==='STT'?new Uint8Array(input as Buffer).buffer:`<speak version="1.0" xml:lang="${language}"><voice name="${VOICES[language]}">${xml(input as string)}</voice></speak>`;
     const response=await fetch(url,{method:'POST',signal,headers:{'Ocp-Apim-Subscription-Key':key,'Content-Type':kind==='STT'?'audio/wav; codecs=audio/pcm; samplerate=16000':'application/ssml+xml',...(kind==='TTS'?{'X-Microsoft-OutputFormat':'riff-16khz-16bit-mono-pcm'}:{Accept:'application/json'})},body});
     if(!response.ok)throw new Error('供应商未确认结果，请核查后再操作');

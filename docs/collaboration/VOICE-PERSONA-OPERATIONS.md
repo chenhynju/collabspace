@@ -7,6 +7,8 @@
 ```dotenv
 AZURE_SPEECH_KEY=
 AZURE_SPEECH_REGION=
+AZURE_SPEECH_CLOUD=global
+# 中国云需独立资源与相应密钥，设置china及chinaeast2/chinanorth2/chinanorth3。
 # 未开启时为单API进程即时执行+数据库持久任务；刷新查询恢复QUEUED。
 # 启用后由BullMQ消费，Redis只传组织、actor和任务ID，不传音频/正文。
 VOICE_QUEUE_ENABLED=false

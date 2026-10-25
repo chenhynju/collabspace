@@ -1,5 +1,7 @@
 # CollabSpace — 多人实时协作文档
 
+2026-10-25后续：Azure海内外统一选型、IM话筒听写改版与受限助手工作流，见[听写体验](docs/collaboration/VOICE-DICTATION-UX.md)、[验收与发布](evidence/collaboration/DICTATION-RUNTIME-2026-10-25.md)。Azure/真人服务尚未开通，真实语音与视频不计为通过。
+
 2026-10-25：本轮语音与数字形象的[功能清单和待完成项](docs/collaboration/VOICE-PERSONA-STATUS.md)、[详细自测表](evidence/collaboration/VOICE-SELFTEST-2026-10-25.md)已整理；区分正式/本地成绩、替身、供应商阻塞和未验收项。
 
 2026-10-25：语音消息、3D卡通预览与邮件语音工具已更新到现有正式站点；云识别/合成和真人服务仍未配置。版本、CPU/内存/磁盘、备份与双账号正式验收见[语音与形象上线报告](evidence/collaboration/VOICE-RELEASE-2026-10-25.md)。

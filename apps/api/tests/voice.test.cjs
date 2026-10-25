@@ -31,3 +31,14 @@ test('Azure adapter is fail-closed; escaped SSML, final transcript, failed respo
  }finally{global.fetch=old.fetch;for(const [k,v] of [['AZURE_SPEECH_KEY',old.key],['AZURE_SPEECH_REGION',old.region]]){if(v===undefined)delete process.env[k];else process.env[k]=v;}}
 });
 module.exports={wav};
+
+test('Azure global and China routing are explicit and invalid cloud/region fail closed',async()=>{
+ const names=['AZURE_SPEECH_KEY','AZURE_SPEECH_REGION','AZURE_SPEECH_CLOUD'],old=Object.fromEntries(names.map(k=>[k,process.env[k]])),fetch=global.fetch,urls=[];
+ try{
+  process.env.AZURE_SPEECH_KEY='synthetic';const p=new SpeechProvider();global.fetch=async url=>{urls.push(url);return new Response(wav());};
+  process.env.AZURE_SPEECH_CLOUD='global';process.env.AZURE_SPEECH_REGION='eastus';await p.run('TTS','synthetic','en-US',new AbortController().signal);assert.equal(new URL(urls.at(-1)).hostname,'eastus.tts.speech.microsoft.com');
+  process.env.AZURE_SPEECH_CLOUD='china';process.env.AZURE_SPEECH_REGION='chinaeast2';await p.run('TTS','合成数据','zh-CN',new AbortController().signal);assert.equal(new URL(urls.at(-1)).hostname,'chinaeast2.tts.speech.azure.cn');
+  process.env.AZURE_SPEECH_REGION='eastus';assert.equal(p.ready,false);await assert.rejects(p.run('TTS','x','en-US',new AbortController().signal),e=>e.getStatus()===503);assert.equal(urls.length,2);
+  process.env.AZURE_SPEECH_CLOUD='unknown';assert.equal(p.ready,false);
+ }finally{global.fetch=fetch;for(const k of names){if(old[k]===undefined)delete process.env[k];else process.env[k]=old[k];}}
+});

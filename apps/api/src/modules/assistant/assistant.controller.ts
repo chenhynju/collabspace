@@ -24,7 +24,7 @@ export class AssistantController {
     if (!projectId || typeof projectId !== 'string') throw new HttpException('请选择项目', 400);
     return this.prisma.withOrg(o.organizationId, tx => this.policy.assert(tx, o.organizationId, u.id, projectId, 'READ'));
   }
-  @Get('status') status() { return { ai: !!process.env.DEEPSEEK_API_KEY, mail:this.projectMail.ready, speech: 'browser' }; }
+  @Get('status') status() { return { ai: !!process.env.DEEPSEEK_API_KEY, mail:this.projectMail.ready, speech: 'browser',agentRuntime:true,runtimeDurable:false }; }
   @Post('mail') sendMail(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Body() b:any,@Req() req:Request){return this.projectMail.send(o,u,b,req.traceId);}
   @Get('mail') mailHistory(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Query('projectId') p:string){return this.projectMail.list(o,u,p);}
   @Post('generate') async generate(@CurrentOrg() o: OrgContext, @CurrentUser() u: {id: string}, @Body() b: any, @Req() req: Request) {

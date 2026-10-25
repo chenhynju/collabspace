@@ -8,6 +8,8 @@ import {assistantTools} from './assistant-tools';
 import {Sparkles} from 'lucide-react';
 import {VoiceTools} from '@/components/voice/VoiceTools';
 import {PersonaPanel} from '@/components/personas/PersonaPanel';
+import {AgentPersona} from '@/components/personas/AgentPersona';
+import type {PersonaEvent} from '@/components/personas/persona-events';
 
 export default function AssistantPanel({initialMode='summary',projectId='',active=true,onProjectChange}:{initialMode?:string;projectId?:string;active?:boolean;onProjectChange?:(id:string)=>void}) {
   const org = useAuthStore(s=>s.currentOrgId);
@@ -31,6 +33,10 @@ function AssistantWorkspace({org,user,initialMode,projectId,active,onProjectChan
   const [to,setTo]=useState('');
   const [subject,setSubject]=useState('项目沟通');
   const [configured,setConfigured]=useState<boolean|null>(null);
+  const [runtimeAvailable,setRuntimeAvailable]=useState(false);
+  const [runEvent,setRunEvent]=useState<PersonaEvent|null>(null);
+  const [runSkill,setRunSkill]=useState('');
+  const runId=useRef<string|null>(null);
   const [mailReady,setMailReady]=useState(false);
   const [preview,setPreview]=useState<{to:string;subject:string;text:string;projectId:string;requestId:string}|null>(null);
   const [mailBusy,setMailBusy]=useState(false);
@@ -47,23 +53,38 @@ function AssistantWorkspace({org,user,initialMode,projectId,active,onProjectChan
     }}catch{}
     setSpeechAvailable('speechSynthesis' in window);
     void api.get('/projects',{signal:c.signal,headers:{'x-organization-id':org}}).then(r=>{if(alive.current&&!c.signal.aborted)setProjects(r.data);}).catch(()=>{if(alive.current&&!c.signal.aborted)setError('项目加载失败，请检查权限或网络');});
-    void api.get('/assistant/status',{signal:c.signal,headers:{'x-organization-id':org}}).then(r=>{if(alive.current){setConfigured(r.data.ai);setMailReady(r.data.mail);}}).catch(()=>{});
+    void api.get('/assistant/status',{signal:c.signal,headers:{'x-organization-id':org}}).then(r=>{if(alive.current){setConfigured(r.data.ai);setMailReady(r.data.mail);setRuntimeAvailable(r.data.agentRuntime===true);}}).catch(()=>{});
     const logout=()=>{window.speechSynthesis?.cancel();setSpeaking(false);for(let i=sessionStorage.length-1;i>=0;i--){const k=sessionStorage.key(i);if(k?.startsWith(`collabspace:assistant-mail:${user}:`))sessionStorage.removeItem(k);}};
     window.addEventListener('collabspace:logout',logout);
-    return ()=>{alive.current=false;c.abort();controller.current?.abort();window.speechSynthesis?.cancel();window.removeEventListener('collabspace:logout',logout);};
+    return ()=>{alive.current=false;c.abort();controller.current?.abort();if(runId.current)void api.delete(`/assistant/runs/${runId.current}`,{headers:{'x-organization-id':org}}).catch(()=>{});window.speechSynthesis?.cancel();window.removeEventListener('collabspace:logout',logout);};
   },[org,user,draftKey]);
   const stop=()=>{window.speechSynthesis?.cancel();setSpeaking(false);};
-  const reset=()=>{generation.current++;controller.current?.abort();setBusy(false);stop();setResult('');setInfo('');setError('');};
+  const reset=()=>{generation.current++;controller.current?.abort();if(runId.current){void api.delete(`/assistant/runs/${runId.current}`,{headers:{'x-organization-id':org}}).catch(()=>{});runId.current=null;}setRunEvent(null);setBusy(false);stop();setResult('');setInfo('');setError('');};
   useEffect(()=>{if(projectId!==project){reset();setText('');setTo('');setHistory([]);setProject(projectId);}},[projectId]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(()=>{if(!active){generation.current++;controller.current?.abort();setBusy(false);window.speechSynthesis?.cancel();setSpeaking(false);}},[active]);
+  useEffect(()=>{if(!active){generation.current++;controller.current?.abort();if(runId.current){void api.delete(`/assistant/runs/${runId.current}`,{headers:{'x-organization-id':org}}).catch(()=>{});runId.current=null;}setBusy(false);window.speechSynthesis?.cancel();setSpeaking(false);}},[active]);
   const failure=(e:any)=>setError(typeof e.response?.data?.message==='string'?e.response.data.message:'操作失败，请检查网络后重试');
   const generate=async()=>{
     reset();const n=generation.current;const c=new AbortController();controller.current=c;setBusy(true);
-    try {const {data}=await api.post('/assistant/generate',{projectId:project,text:text.slice(0,20000),mode},{signal:c.signal,headers:{'x-organization-id':org}});
+    try {let data:any;
+      if(runtimeAvailable){
+        const id=crypto.randomUUID();runId.current=id;setRunSkill(mode);
+        const started=await api.post('/assistant/runs',{requestId:id,projectId:project,text:text.slice(0,20000),mode},{signal:c.signal,headers:{'x-organization-id':org}});
+        let run=started.data;
+        for(let i=0;i<70;i++){
+          if(!alive.current||generation.current!==n)return;
+          setRunEvent(run.event);
+          if(run.state==='completed'){data=run.result;runId.current=null;break;}
+          if(['failed','cancelled'].includes(run.state)){runId.current=null;throw Error(run.error||'运行已取消');}
+          await new Promise<void>((resolve,reject)=>{const abort=()=>{clearTimeout(timer);reject(Error('已停止等待'));};const timer=setTimeout(()=>{c.signal.removeEventListener('abort',abort);resolve();},1000);c.signal.addEventListener('abort',abort,{once:true});});
+          run=(await api.get(`/assistant/runs/${id}`,{signal:c.signal,headers:{'x-organization-id':org}})).data;
+        }
+        if(!data)throw Error('运行仍未确认，请核查运行编号，不会自动重试');
+      }else data=(await api.post('/assistant/generate',{projectId:project,text:text.slice(0,20000),mode},{signal:c.signal,headers:{'x-organization-id':org}})).data;
       if(!alive.current||generation.current!==n)return;
       setResult(data.text);setInfo(`${data.cached?'复用15分钟内结果，本次未调用模型':'已生成'}${data.truncated?'；仅依据前6000字，不代表全文':''}${data.incomplete?'；输出达到上限，内容不完整，请缩短输入后重试':''}${data.usage?.total_tokens!=null?`；原始生成 token：${data.usage.total_tokens}`:''}`);
     }catch(e){if(alive.current&&generation.current===n)failure(e);}finally{if(alive.current&&generation.current===n)setBusy(false);}
   };
+  const cancelRun=async()=>{const id=runId.current;if(!id)return;generation.current++;controller.current?.abort();setBusy(false);try{const {data}=await api.delete(`/assistant/runs/${id}`,{headers:{'x-organization-id':org}});if(alive.current&&runId.current===id){setRunEvent(data.event);setInfo('已取消任务；已发出的供应商请求可能已计费，不自动重试。');}}catch{if(alive.current)setError('取消结果待核查，请勿自动重试。');}finally{if(runId.current===id)runId.current=null;}};
   const upload=async(file:File)=>{
     reset();setText('');if(file.size>5*1024*1024){setError('文件最大5MB');return;}
     const n=generation.current;const c=new AbortController();controller.current=c;setBusy(true);
@@ -103,6 +124,7 @@ function AssistantWorkspace({org,user,initialMode,projectId,active,onProjectChan
     </Card>
     <div className="min-w-0 space-y-4">
     <PersonaPanel active={active}/>
+    {runtimeAvailable&&<div className="space-y-2"><p className="text-xs text-slate-500">受限协作助手运行时：只读项目事实与资料生成；状态保留15分钟，服务重启后不可恢复。不会自动发邮件。</p>{runEvent&&<AgentPersona key={runEvent.runId} name="协作助手" event={runEvent} skill={runSkill} onStopSpeech={stop}/>}<button type="button" className={button} disabled={!busy||!runId.current} onClick={()=>void cancelRun()}>取消当前任务</button></div>}
     {error&&<p role="alert" className="text-red-700">{error}</p>}{info&&<p role="status" className="text-sm text-slate-600">{info}</p>}
     {!result&&mode!=='email'&&<Card className="flex min-h-80 flex-col items-center justify-center gap-3 p-8 text-center"><Sparkles size={32} className="text-indigo-300"/><h3 className="font-semibold">生成结果将显示在这里</h3><p className="text-sm text-slate-500">上传或粘贴资料，点击生成。你可以编辑、复制和朗读结果。</p></Card>}
     {(result||mode==='email')&&<section className="space-y-3 rounded-xl border bg-white p-5"><h2 className="font-semibold">{mode==='email'?'邮件草稿（也可直接编写）':'生成结果'}</h2><label className="block">可修改结果<textarea aria-label="可修改结果" className={cls} disabled={mailBusy} rows={9} maxLength={10000} value={result} onChange={e=>{stop();setResult(e.target.value);}}/></label>

@@ -2,6 +2,8 @@
 
 更新：2026-10-25，北京时间。对应P-VP01–08。当前站点：https://collabspace.purelamp.uk ，IM入口`/im`，邮件/助手入口`/assistant`。本清单覆盖本轮语音与形象功能；既有协作文档、白板、权限等底座没有因此获得全量重新验收。
 
+后续进展：用户已确定国内外统一Azure STT+TTS、OpenAI作为未来海外版可选项；[IM听写方案](VOICE-DICTATION-UX.md)、[供应商决策](SPEECH-PROVIDER-SELECTION.md)和[本轮实际验收](../../evidence/collaboration/DICTATION-RUNTIME-2026-10-25.md)覆盖后续变化。受限只读项目工具+真实DeepSeek工作流已本地验收，仍不具备持久/自治Agent运行时；下方原始清单的“无真实运行时”是首次交付状态。
+
 ## 已交付且有实际验收证据
 
 | 功能 | 当前行为与入口 | 验证范围 |

@@ -4,6 +4,8 @@ import { api } from '@/lib/api';
 import { useImStore } from '@/store/im';
 import { VoiceTools } from '@/components/voice/VoiceTools';
 import { useAuthStore } from '@/store/auth';
+import {DictationInput} from '@/components/voice/DictationInput';
+import {ArrowUp,ImagePlus,Paperclip,Volume2} from 'lucide-react';
 
 export default function MessageComposer({ conversationId }: { conversationId: string }) {
   const org=useAuthStore(s=>s.currentOrgId),user=useAuthStore(s=>s.user?.id),alive=useRef(true);
@@ -11,6 +13,12 @@ export default function MessageComposer({ conversationId }: { conversationId: st
   const current=()=>alive.current&&useAuthStore.getState().currentOrgId===org&&useAuthStore.getState().user?.id===user&&useImStore.getState().currentConversationId===conversationId;
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [dictationBusy,setDictationBusy]=useState(false),[legacyBusy,setLegacyBusy]=useState(false);
+  const inputRef=useRef<HTMLTextAreaElement>(null);
+  const focusAfterDictation=useRef(false);
+  useEffect(()=>{const input=inputRef.current;if(input){input.style.height='auto';input.style.height=Math.min(160,input.scrollHeight)+'px';}},[text]);
+  useEffect(()=>{if(focusAfterDictation.current&&!dictationBusy){focusAfterDictation.current=false;inputRef.current?.focus();}},[dictationBusy,text]);
+  const acceptTranscript=(value:string)=>{focusAfterDictation.current=true;setText(current=>current?`${current.trimEnd()}\n${value}`:value);};
   const sendingRef = useRef(false);
   const appendMessage = useImStore((s) => s.appendMessage);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -18,7 +26,7 @@ export default function MessageComposer({ conversationId }: { conversationId: st
   const voiceIntent=useRef<{file:File;hash:string;content:string;requestId:string;attachmentId?:string}|null>(null);
 
   const sendText = async () => {
-    if (!text.trim() || sendingRef.current) return;
+    if (!text.trim() || sendingRef.current||dictationBusy||legacyBusy) return;
     sendingRef.current = true;
     setSending(true);
     try {
@@ -38,7 +46,7 @@ export default function MessageComposer({ conversationId }: { conversationId: st
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey&&!e.nativeEvent.isComposing) {
       e.preventDefault();
       sendText();
     }
@@ -71,39 +79,34 @@ export default function MessageComposer({ conversationId }: { conversationId: st
   };
 
   return (
-    <div className="p-3 border-t border-slate-200 bg-white">
-      <div className="flex items-center gap-2 mb-2">
+    <div className="border-t border-slate-100 bg-white p-3 sm:p-4">
+      <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm transition focus-within:border-slate-300 focus-within:ring-2 focus-within:ring-slate-100">
+      <textarea ref={inputRef} value={text} disabled={sending||dictationBusy} onChange={e=>setText(e.target.value)} onKeyDown={handleKeyDown} placeholder="输入消息..." aria-label="消息正文" rows={1} className="max-h-40 min-h-12 w-full resize-none bg-transparent px-3 py-3 text-base leading-6 outline-none disabled:opacity-60 sm:text-sm"/>
+      <div className="flex items-start gap-1">
         <button
           onClick={() => imageInputRef.current?.click()}
-          className="text-sm text-slate-500 hover:text-blue-600"
+          disabled={sending||dictationBusy||legacyBusy} aria-label="发送图片" title="添加图片" className="rounded-full p-2.5 text-slate-500 hover:bg-slate-100 disabled:opacity-40"
         >
-          🖼️ 图片
+          <ImagePlus size={18}/>
         </button>
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="text-sm text-slate-500 hover:text-blue-600"
+          disabled={sending||dictationBusy||legacyBusy} aria-label="发送文件" title="添加文件" className="rounded-full p-2.5 text-slate-500 hover:bg-slate-100 disabled:opacity-40"
         >
-          📎 文件
+          <Paperclip size={18}/>
         </button>
-      </div>
-      <div className="flex gap-2">
-        <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="输入消息..."
-          className="flex-1 min-h-[40px] max-h-[120px] px-3 py-2 border border-slate-200 rounded-lg text-sm resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
-          rows={1}
-        />
+        <DictationInput conversationId={conversationId} active={!sending&&!legacyBusy} onTranscript={acceptTranscript} onBusyChange={setDictationBusy}/>
         <button
           onClick={sendText}
-          disabled={sending || !text.trim()}
-          className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          aria-label="发送" title="发送消息" disabled={sending ||dictationBusy||legacyBusy|| !text.trim()}
+          className="rounded-full bg-slate-900 p-2.5 text-white hover:bg-slate-700 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
         >
-          发送
+          <ArrowUp size={18}/>
         </button>
       </div>
-      <VoiceTools scope={{conversationId}} text={text} onTranscript={value=>setText(value)} onSendAudio={async file=>{
+      </div>
+      <div className="mt-2 flex items-center justify-between gap-3 px-1 text-xs text-slate-400"><span>语音输入转成文字，检查后再发送</span><span className="hidden sm:inline">Enter 发送 · Shift + Enter 换行</span></div>
+      <details className="mt-2"><summary className="flex w-fit cursor-pointer list-none items-center gap-1 text-xs text-slate-500"><Volume2 size={14}/>语音选项</summary><div className="mt-2"><VoiceTools scope={{conversationId}} text={text} active={!dictationBusy&&!sending} onBusyChange={setLegacyBusy} onTranscript={acceptTranscript} onSendAudio={async file=>{
         if(sendingRef.current)throw Error('消息正在发送');
         sendingRef.current=true;setSending(true);
         try{
@@ -119,7 +122,7 @@ export default function MessageComposer({ conversationId }: { conversationId: st
           voiceIntent.current=null;
           appendMessage(response.data);setText('');
         }finally{sendingRef.current=false;setSending(false);}
-      }}/>
+      }}/></div></details>
       <input
         ref={imageInputRef}
         type="file"

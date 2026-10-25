@@ -35,7 +35,7 @@ test('recording cancel/discard releases tracks and sends nothing; oversized loca
  await page.addInitScript(()=>{window.__voiceStreams=[];const capture=navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);navigator.mediaDevices.getUserMedia=async options=>{const stream=await capture(options);window.__voiceStreams.push(stream);return stream;};});
  let writes=0;page.on('request',r=>{if(r.method()==='POST'&&(/\/voice\/jobs$|\/messages$|\/attachments(?:\?|$)/.test(r.url())))writes++;});
  const headers=await auth(request),created=await request.post(`${config.NEXT_PUBLIC_API_URL}/conversations/direct`,{headers,data:{userId:config.TEST_MEMBER}});expect(created.ok()).toBeTruthy();const {id}=await created.json();
- await login(page);await page.goto(`${config.WEB_URL}/im?c=${id}`);
+ await login(page);await page.goto(`${config.WEB_URL}/im?c=${id}`);await page.getByText('语音选项',{exact:true}).click();
  await page.getByRole('button',{name:/^录音/}).click();await expect(page.getByRole('button',{name:/^结束录音/})).toBeVisible();
  await page.getByRole('button',{name:'停止语音',exact:true}).click();await expect(page.getByRole('button',{name:/^录音/})).toBeVisible();await expect(page.getByLabel('录音试听')).toHaveCount(0);
  await expect.poll(()=>page.evaluate(()=>window.__voiceStreams.every(s=>s.getTracks().every(t=>t.readyState==='ended')))).toBe(true);

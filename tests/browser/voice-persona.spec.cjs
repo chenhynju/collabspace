@@ -18,7 +18,7 @@ test('actual local IM recording sends private PCM audio with editable text; pers
  await page.getByRole('button',{name:'保存形象偏好'}).click();await expect(page.getByText('已保存当前组织的个人偏好',{exact:false})).toBeVisible();
  await page.reload();await page.getByText('我的数字形象',{exact:true}).click();await expect(page.getByLabel('形象风格')).toHaveValue('realistic');
  const text=`voice-${randomUUID()}`;await page.getByPlaceholder('输入消息...').fill(text);
- await expect(page.getByRole('button',{name:'生成语音朗读',exact:true})).toBeDisabled();
+ await page.getByText('语音选项',{exact:true}).click();await expect(page.getByRole('button',{name:'生成语音朗读',exact:true})).toBeDisabled();
  await page.getByRole('button',{name:/^录音/}).click();await expect(page.getByRole('button',{name:/^结束录音/})).toBeVisible();
  await page.waitForTimeout(1200);await page.getByRole('button',{name:/^结束录音/}).click();await expect(page.getByLabel('录音试听')).toBeVisible();
  await expect(page.getByRole('button',{name:'转写到正文'})).toBeDisabled();
@@ -49,7 +49,7 @@ test('explicit STT/TTS UI fixtures: review transcript, stop speech and invalidat
  const wav=Buffer.alloc(32044);wav.write('RIFF');wav.writeUInt32LE(wav.length-8,4);wav.write('WAVEfmt ',8);wav.writeUInt32LE(16,16);wav.writeUInt16LE(1,20);wav.writeUInt16LE(1,22);wav.writeUInt32LE(16000,24);wav.writeUInt32LE(32000,28);wav.writeUInt16LE(2,32);wav.writeUInt16LE(16,34);wav.write('data',36);wav.writeUInt32LE(32000,40);
  await page.route('**/voice/jobs/*/audio',async route=>{if(hold){reached?.();await new Promise(resolve=>release=resolve);}try{await route.fulfill({body:wav,contentType:'audio/wav'});}catch{}});
  await login(page,config.TEST_OWNER_EMAIL);await page.goto(`${config.WEB_URL}/im?c=${id}`);
- const composer=page.getByPlaceholder('输入消息...');await expect(composer).toBeVisible();
+ const composer=page.getByPlaceholder('输入消息...');await expect(composer).toBeVisible();await page.getByText('语音选项',{exact:true}).click();
  await page.getByRole('button',{name:/^录音/}).click();await expect(page.getByRole('button',{name:/^结束录音/})).toBeVisible();await page.waitForTimeout(500);await page.getByRole('button',{name:/^结束录音/}).click();await page.getByRole('button',{name:'转写到正文'}).click();await expect(composer).toHaveValue('Synthetic STT fixture，请人工核对。');
  await composer.fill('Reviewed fixture transcript.');await page.getByRole('button',{name:'生成语音朗读',exact:true}).click();await expect.poll(()=>page.evaluate(()=>window.__voicePlays)).toBe(1);await page.getByRole('button',{name:'停止语音',exact:true}).click();
  hold=true;const requested=new Promise(resolve=>reached=resolve);await page.getByRole('button',{name:'生成语音朗读',exact:true}).click();await requested;await composer.fill('Changed after synthesis request.');release();await expect(page.getByRole('button',{name:'生成语音朗读',exact:true})).toBeEnabled();expect(await page.evaluate(()=>window.__voicePlays)).toBe(1);

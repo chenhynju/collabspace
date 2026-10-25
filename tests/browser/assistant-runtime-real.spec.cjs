@@ -1,0 +1,19 @@
+const {test,expect}=require('@playwright/test'),{randomUUID}=require('node:crypto'),fs=require('node:fs');
+const config=require('./config.cjs');
+test.skip(process.env.AGENT_REAL_ACCEPTANCE!=='1'||![config.WEB_URL,config.NEXT_PUBLIC_API_URL].every(v=>['localhost','127.0.0.1'].includes(new URL(v).hostname)),'Explicit local, one real model call acceptance only');
+test('actual project read and DeepSeek run produce server receipt; replay does not execute twice',async({page,request})=>{
+ const login=await request.post(`${config.NEXT_PUBLIC_API_URL}/auth/login`,{data:{email:config.TEST_OWNER_EMAIL,password:config.TEST_PASSWORD}});expect(login.ok()).toBeTruthy();const token=(await login.json()).accessToken,h={Authorization:`Bearer ${token}`,'x-organization-id':config.TEST_ORG};
+ expect((await (await request.get(`${config.NEXT_PUBLIC_API_URL}/assistant/status`,{headers:h})).json()).agentRuntime).toBe(true);
+ const source=`Synthetic acceptance ${randomUUID()}. Alice owns delivery on Friday. Bob reviews tests Thursday. No email has been sent. Deployment requires explicit confirmation. The only remaining risk is incomplete test coverage.`;
+ // Real API login above; avoid compiling the unrelated dashboard on this runtime-specific journey.
+ await page.addInitScript(({token,org})=>{localStorage.setItem('access_token',token);localStorage.setItem('current_org_id',org);},{token,org:config.TEST_ORG});await page.goto(`${config.WEB_URL}/assistant`);
+ await page.getByLabel('项目',{exact:true}).selectOption(config.TEST_PROJECT);await page.getByLabel('资料正文').fill(source);
+ const started=page.waitForResponse(r=>r.url().endsWith('/assistant/runs')&&r.request().method()==='POST');await page.getByRole('button',{name:'生成',exact:true}).click();const receipt=await started;expect(receipt.ok()).toBeTruthy();const initial=await receipt.json();
+ await expect(page.getByLabel('Agent身份卡')).toContainText('已完成',{timeout:90000});await expect(page.getByLabel('可修改结果')).not.toHaveValue('');
+ const response=await request.get(`${config.NEXT_PUBLIC_API_URL}/assistant/runs/${initial.id}`,{headers:h});expect(response.ok()).toBeTruthy();const run=await response.json();expect(run.state).toBe('completed');expect(run.durable).toBe(false);expect(run.result.cached).toBe(false);expect(run.result.incomplete).not.toBe(true);expect(run.result.usage.total_tokens).toBeGreaterThan(0);expect(run.projectFacts.name).toBeTruthy();expect(run.projectFacts.taskCount).toBeGreaterThanOrEqual(0);expect(run.event.resultRef).toBe(`assistant-run:${run.id}`);
+ const replay=await request.post(`${config.NEXT_PUBLIC_API_URL}/assistant/runs`,{headers:h,data:{requestId:run.id,projectId:config.TEST_PROJECT,mode:'summary',text:source}});expect(replay.ok()).toBeTruthy();expect((await replay.json()).result.text).toBe(run.result.text);
+ expect((await request.post(`${config.NEXT_PUBLIC_API_URL}/assistant/runs`,{headers:h,data:{requestId:run.id,projectId:config.TEST_PROJECT,mode:'summary',text:source+'changed'}})).status()).toBe(409);
+ const peer=await request.post(`${config.NEXT_PUBLIC_API_URL}/auth/login`,{data:{email:config.TEST_MEMBER_EMAIL,password:config.TEST_PASSWORD}});expect(peer.ok()).toBeTruthy();expect((await request.get(`${config.NEXT_PUBLIC_API_URL}/assistant/runs/${run.id}`,{headers:{...h,Authorization:`Bearer ${(await peer.json()).accessToken}`}})).status()).toBe(404);
+ await page.screenshot({path:'evidence/collaboration/agent-runtime-real.png',fullPage:true});
+ fs.writeFileSync('evidence/collaboration/agent-runtime-real.json',JSON.stringify({at:new Date().toISOString(),environment:'local isolated PG + real existing DeepSeek',status:'PASSED',runId:run.id,event:run.event,source,result:run.result,projectFacts:run.projectFacts,oneNewModelRequest:true,replaySameReceipt:true,foreignActorDenied:true,durable:false},null,2));
+});
