@@ -30,4 +30,9 @@
 
 ## 发布
 
-本地已通过；前端生产部署与在线复验结果将在完成后追加。API与Office保持现有运行版本。
+- 应用源提交 `f3b8e12`，已推送origin/main。归档标签 `collabspace-20261025-ui` 指向同一源提交，已推送。
+- 源码归档 `.test-runs/archives/collabspace-f3b8e12-20261025.tar.gz`，SHA256 `b28bee9627befd9b8cf78790e0baf9d5cfc5e0d746113c4cb58d4d82471eafbc`。从该提交git archive生成独立部署目录，未包含本地私密配置或共享未提交规划。
+- Vercel部署 `dpl_DaWQp85krqjFWTT8aonXjtY1R9fL`，URL `https://collabspace-kau0ekfkf-purelamp.vercel.app`。生产构建38页成功、Ready，2026-10-25北京时间已promote；再次inspect正式域名确认指向该部署。
+- 正式域名 `https://collabspace.purelamp.uk` 在线Playwright三项全部通过，2.5分钟：assistant完整流程1.2分钟、ui-refresh导航26.4秒、unified-workspace图标/项目/草稿/真实拖入文档保存/移动端36.9秒。均使用现有合成验收账号；AI生成及邮件发送为替身。
+- 仅发布前端。回退：`vercel promote https://collabspace-fb7c987kc-purelamp.vercel.app --yes --scope purelamp`。无本轮数据库或Office回滚步骤。
+- 首次Git HTTPS连接被重置，使用现有gh凭据的一次性credential helper及HTTP/1.1后推送成功，未改全局凭据配置。Vercel CLI取状态中断，但核对同一部署已Ready后继续，没有重复部署。
