@@ -66,4 +66,13 @@
 
 本轮测试启动器在正常关闭独立PG后结束，仅保留.test-runs合成数据和本地证据。源码及上线证据使用collabspace-20261025-dictation标签归档，压缩包与SHA256清单保存在.test-runs/archives；不纳入.env、凭据、node_modules或测试库。
 
-上线验收后再次核查：2026-10-25 21:25北京时间，MemAvailable1685MiB、磁盘8.9GiB/85%、load0.84/0.80/0.96，API66.63MiB/384MiB、CPU0.12%、OOM=false/restart0；DB/Redis up、Office=true。无迁移条件触发。5小时额度剩余50%，未达到低于10%的接力任务条件。
+上线验收后再次核查：2026-10-25 21:25北京时间，MemAvailable1685MiB、磁盘8.9GiB/85%、load0.84/0.80/0.96，API66.63MiB/384MiB、CPU0.12%、OOM=false/restart0；DB/Redis up、Office=true。无迁移条件触发。当时5小时额度剩余50%，未达到低于10%的接力任务条件。
+
+### 时长确认修正版 r20261025-07
+
+- 仅发布前端：源码ca27b28，123文件快照SHA256 0b104b38becd2e48ff7da5a5e58803ee3c9ca8b11ddf86a67609f5bae9ab9744。API保持r06与上述fd64a9f镜像，未重启后端、未执行迁移。
+- Vercel dpl_27jPmU8M39BxhgVyMqrs8Yfx8885，https://collabspace-9f6rrdvsc-purelamp.vercel.app，构建1分12秒，inspect Ready、promote成功。前端回退可用上一版dpl_2VYGL3gHuLgKPv9uRqBDeiHpcr2G。
+- 首次上传连接中断，核查部署列表没有新候选；通过已有本机HTTPS代理重试成功，未修改全局网络设置。
+- 21:48北京时间复核：MemAvailable1669MiB、磁盘8.9GiB/85%、load0.39/0.52/0.62；API73.23MiB/384MiB、CPU15.60%瞬时样本、OOM=false/restart0，DB/Redis up、Office=true。没有触发迁移条件，不将瞬时采样当压测。
+- 最终正式域名听写专项5/5通过，1.9分钟，`.test-runs/im-dictation-cap-online/.last-run.json`为passed、failedTests为空。第五项以加速浏览器时钟确认59秒停止后请求0次、明确确认后1次；另外四项继续保留原有断言。STT仍为显式接口替身，不计真实Azure识别成绩。新截图已人工检查录音条、取消/确认及隐私说明。
+- 最新5小时额度剩余35%，条件未触发，未创建10月26日00:42、05:44接力任务。发布和验收已完成；剩余真实供应商验收等待开通配置，不以定时重跑替代凭据。
