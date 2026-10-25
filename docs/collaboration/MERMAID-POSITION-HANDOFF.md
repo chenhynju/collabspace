@@ -1,5 +1,12 @@
 # Mermaid 画布定位修复交接
 
+## 已完成：2026-10-26正式发布
+
+本次接力已完成，勿重复启动。应用源码eb7966f，Vercel dpl_49sw1YognkLsUSiUkcpNt1ofFUCj，r20261026-01；正式4/4通过（3.6分钟），本地Web22项、38页生产构建通过。详见../../evidence/collaboration/MERMAID-POSITION-2026-10-25.md，中文演示链接在报告中。API/数据库未改；原r08部署保留回退。最终归档标签collabspace-20261026-mermaid。下面是历史交接资料，不是仍待执行清单。
+
+本地生产服务启动被自动审批拒绝，未绕过；通过既有授权的正式发布/验收流程完成。测试PG、API、Redis、inspector均已关闭。未跟踪reports/和.trae-html-share-packages/不是本轮工作，保留不纳入归档。若定时任务仍触发，只核对完成标记并删除自身；05:44任务已无需继续。
+
+
 2026-10-25，用户反馈不能把图元拖入实际画布、位置不能自由调整、不能部分删除。基线14c2779，本轮未发布代码归档在codex/mermaid-canvas-position分支；不要把开发分支当成上线。先git status/diff，勿覆盖其他工作。定时接力已创建：北京时间10月26日00:42、05:44，仅各一次；automation id分别collabspace-mermaid-00-42、collabspace-mermaid-05-44。创建时5小时剩余9%。如果本轮已完成并归档，不重复执行。
 
 ## 根因与实现

@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-25T19:09:37.524Z",
+  "status": "PASSED",
+  "url": "https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/f4752774-d481-49a8-a5f9-f84c6870de05",
+  "documentId": "f4752774-d481-49a8-a5f9-f84c6870de05",
+  "title": "Mermaid 拖放与局部删除演示",
+  "source": "flowchart LR\n A@{ shape: rect, label: \"需求\" }\n B@{ shape: diam, label: \"评审\" }\n C@{ shape: rect, label: \"交付\" }\n D@{ shape: rect, label: \"返工\" }\n A --> B\n B -->|通过| C\n B -->|调整| D\n%% collab-position A 180 160\n%% collab-position B 450 160\n%% collab-position C 740 160\n%% collab-position D 450 410",
+  "realModelCalls": 0,
+  "emailsSent": 0
+}

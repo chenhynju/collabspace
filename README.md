@@ -1,5 +1,7 @@
 # CollabSpace — 多人实时协作文档
 
+2026-10-26：Mermaid实际画布拖入/移动、位置保存与局部删除已上线，正式4/4验收通过；[中文演示白板](https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/f4752774-d481-49a8-a5f9-f84c6870de05)、[范围](docs/collaboration/MERMAID-POSITION.md)、[验收发布](evidence/collaboration/MERMAID-POSITION-2026-10-25.md)。复杂结构自由定位仍明确限制，原图不被擅自覆盖。
+
 2026-10-25：IM/助手功能入口按钮化，隐藏未提供功能的占位项；[范围与规范](docs/collaboration/ACTION-UI.md)、[测试与发布](evidence/collaboration/ACTION-UI-2026-10-25.md)。
 
 2026-10-25后续：Azure海内外统一选型、IM话筒听写改版与受限助手工作流，见[听写体验](docs/collaboration/VOICE-DICTATION-UX.md)、[验收与发布](evidence/collaboration/DICTATION-RUNTIME-2026-10-25.md)。Azure/真人服务尚未开通，真实语音与视频不计为通过。
