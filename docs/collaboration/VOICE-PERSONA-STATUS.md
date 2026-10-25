@@ -1,5 +1,7 @@
 # 语音与数字形象：功能清单和待完成项
 
+界面入口后续整理：按钮化、隐藏未配置云功能与真人占位，保留原音、系统朗读及必要状态；见[入口规范](ACTION-UI.md)和[本轮验收](../../evidence/collaboration/ACTION-UI-2026-10-25.md)。隐藏入口不代表真实Azure/真人服务已验收。
+
 更新：2026-10-25，北京时间。对应P-VP01–08。当前站点：https://collabspace.purelamp.uk ，IM入口`/im`，邮件/助手入口`/assistant`。本清单覆盖本轮语音与形象功能；既有协作文档、白板、权限等底座没有因此获得全量重新验收。
 
 后续进展：用户已确定国内外统一Azure STT+TTS、OpenAI作为未来海外版可选项；[IM听写方案](VOICE-DICTATION-UX.md)、[供应商决策](SPEECH-PROVIDER-SELECTION.md)和[本轮实际验收](../../evidence/collaboration/DICTATION-RUNTIME-2026-10-25.md)覆盖后续变化。受限只读项目工具+真实DeepSeek工作流已本地和正式站点验收，IM新版及正式业务整组6/6通过；时长上限确认保护追加本地5/5、最终正式域名5/5通过。仍不具备持久/自治Agent运行时，发布身份和分层成绩详见实际验收报告。

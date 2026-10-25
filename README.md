@@ -1,5 +1,7 @@
 # CollabSpace — 多人实时协作文档
 
+2026-10-25：IM/助手功能入口按钮化，隐藏未提供功能的占位项；[范围与规范](docs/collaboration/ACTION-UI.md)、[测试与发布](evidence/collaboration/ACTION-UI-2026-10-25.md)。
+
 2026-10-25后续：Azure海内外统一选型、IM话筒听写改版与受限助手工作流，见[听写体验](docs/collaboration/VOICE-DICTATION-UX.md)、[验收与发布](evidence/collaboration/DICTATION-RUNTIME-2026-10-25.md)。Azure/真人服务尚未开通，真实语音与视频不计为通过。
 
 2026-10-25：本轮语音与数字形象的[功能清单和待完成项](docs/collaboration/VOICE-PERSONA-STATUS.md)、[详细自测表](evidence/collaboration/VOICE-SELFTEST-2026-10-25.md)已整理；区分正式/本地成绩、替身、供应商阻塞和未验收项。
