@@ -12,7 +12,8 @@ for(const extension of ['docx','xlsx','pptx'])test(extension+': real native edit
  try{
   const page=await ctx.newPage();await page.goto(c.WEB_URL+'/office/'+id);await expect(page.locator('[data-office-ready="true"]')).toBeVisible({timeout:180000});
   expect(page.frames().some(f=>/documenteditor|spreadsheeteditor|presentationeditor/.test(f.url()))).toBeTruthy();
-  await page.getByText('文件操作 · 重命名、另存副本、PDF',{exact:true}).click();await page.getByRole('button',{name:'重命名文件',exact:true}).click();
+  const actions=page.locator('[data-office-file-actions]').filter({visible:true});await expect(actions).toHaveCount(1);
+  await actions.locator('summary').click();await actions.getByRole('button',{name:'重命名文件',exact:true}).click();
   await page.getByLabel('Office 新文件名').fill(name+'-renamed');await page.getByRole('button',{name:'确认重命名'}).click();await expect(page.getByRole('heading',{level:1})).toHaveText(name+'-renamed.'+extension);
   const downloadPromise=page.waitForEvent('download',{timeout:45000});await page.getByRole('button',{name:'导出该版本PDF'}).click();const download=await downloadPromise;await download.saveAs(info.outputPath(extension+'.pdf'));
   expect(fs.readFileSync(info.outputPath(extension+'.pdf')).subarray(0,5).toString()).toBe('%PDF-');

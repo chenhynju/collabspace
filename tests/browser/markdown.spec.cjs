@@ -25,7 +25,7 @@ test('native Markdown import, GFM/Mermaid preview, two-editor convergence, offli
   await contexts[1].setOffline(false);await expect(source(a)).toHaveValue(/Offline Markdown/);await saved(b);
   await source(a).press('Control+Home');await source(a).press('Control+Shift+End');await a.getByLabel('评论内容').fill('Markdown review');await a.getByRole('button',{name:'评论选中内容',exact:true}).click();await expect(b.getByText('Markdown review',{exact:true})).toBeVisible({timeout:10000});
   await a.getByRole('button',{name:'历史版本',exact:true}).click();await a.getByLabel('版本名称').fill('Native source version');await a.getByRole('button',{name:'创建版本',exact:true}).click();await a.getByRole('button',{name:'只读预览',exact:true}).click();await expect(a.getByRole('dialog').getByLabel('Markdown 安全预览')).toContainText('Offline Markdown');await a.getByRole('button',{name:'关闭预览',exact:true}).click();
-  const text=await source(a).inputValue();await a.screenshot({path:'evidence/collaboration/markdown-workspace.png',fullPage:true});
+  const text=await source(a).inputValue();await a.screenshot({path:process.env.MARKDOWN_EVIDENCE_FILE||'evidence/collaboration/markdown-workspace.png',fullPage:true});
   await a.getByRole('button',{name:'恢复为副本',exact:true}).click();await expect(a).not.toHaveURL(new RegExp(id+'$'));await expect(source(a)).toHaveValue(text);await a.reload();await expect(source(a)).toHaveValue(text);await saved(a);
   const copy=a.url().split('/').pop();expect((await request.get(`${api}/documents/${copy}`,{headers:{Authorization:'Bearer '+peer,'x-organization-id':config.TEST_ORG}})).status()).toBe(404);
   const mine=await request.get(api+'/documents/mine',{headers});expect(mine.ok()).toBeTruthy();expect((await mine.json()).some(d=>d.id===copy)).toBe(true);

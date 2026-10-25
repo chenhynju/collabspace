@@ -32,6 +32,6 @@ test('assistant: real project/auth and upload, bounded generation UI, speech lif
   await expect(p.getByRole('status')).toContainText('尚不代表送达');expect(mailCalls).toBe(2);expect(ids[0]).toBe(ids[1]);expect(mailPayload.confirmed).toBe(true);expect(mailPayload.text).toBe('Manual synthetic delivery note.');
   await p.setViewportSize({width:390,height:844});expect(await p.evaluate(()=>document.body.scrollWidth<=innerWidth+1)).toBeTruthy();
   require('fs').mkdirSync('.test-runs/assistant-browser',{recursive:true});await p.screenshot({path:'.test-runs/assistant-browser/mobile.png',fullPage:true});
-  const denied=await request.post(c.NEXT_PUBLIC_API_URL+'/assistant/generate',{headers:{Authorization:'Bearer '+token,'x-organization-id':c.TEST_OTHER_ORG},data:{projectId:c.TEST_PROJECT,text:source,mode:'summary'}});expect([403,404]).toContain(denied.status());
+  const denied=await request.post(c.NEXT_PUBLIC_API_URL+'/assistant/generate',{headers:{Authorization:'Bearer '+token,'x-organization-id':c.TEST_OTHER_ORG||'forged-release-organization'},data:{projectId:c.TEST_PROJECT,text:source,mode:'summary'}});expect([403,404]).toContain(denied.status());
  }finally{await ctx.close();}
 });
