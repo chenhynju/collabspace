@@ -1,5 +1,7 @@
 # 可直接交给开发 Agent 的 Prompt
 
+2026-10-25图形编辑修复（开发中、未上线）：实际画布拖入/移动、位置协作注释与模板节点部分删除，见[交接与剩余门槛](MERMAID-POSITION-HANDOFF.md)、[实际验收](../../evidence/collaboration/MERMAID-POSITION-2026-10-25.md)。此前仅自动布局的行为是本轮修复原因，不能把本地通过当作正式发布。
+
 2026-10-25入口整理：操作区域按钮化、未提供功能的占位项移除，P/BR/D/AT-AUI见[功能入口规范](ACTION-UI.md)，范围和实际成绩见[验收记录](../../evidence/collaboration/ACTION-UI-2026-10-25.md)。
 
 2026-10-25后续入口：按[听写体验](VOICE-DICTATION-UX.md)、[供应商决策](SPEECH-PROVIDER-SELECTION.md)、[最新验收发布](../../evidence/collaboration/DICTATION-RUNTIME-2026-10-25.md)继续。当前Azure海内外统一选型、OpenAI仅未来海外适配；没有Azure/真人凭据，不编造真实语音/视频验收。受限助手真实DeepSeek已验证，后续需补持久运行、真实语音、真人视频、货币预算和定时物理清理。

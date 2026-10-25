@@ -39,9 +39,20 @@ test('leading collaboration comments preserve graphical editing and direction ch
  assert.match(addFlowNode(s,'More','cloud','B'),/shape: cloud/);
 });
 
-test('deletion removes only standalone generated nodes/simple edges and refuses complex references',()=>{
+test('deletion removes generated and template nodes without losing other definitions',()=>{
  let s=addFlowNode('flowchart LR\n A[Keep]','Delete','cloud','B');s=connectFlowNodes(s,'A','B','both','Link');s=exports_.colorFlowNode(s,'B','teal');
  const copy=exports_.duplicateFlowNode(s,'B','C');assert.match(copy,/C@\{ shape: cloud, label: "Delete 副本"/);
  const removed=exports_.deleteFlowNode(copy,'B');assert.ok(removed.includes('A[Keep]'));assert.ok(removed.includes('C@'));assert.ok(!removed.includes('B@'));assert.ok(!removed.includes('A <-->'));
- assert.throws(()=>exports_.deleteFlowNode(s+'\n class B external','B'));assert.throws(()=>exports_.deleteFlowNode(s,'A'));
+ assert.ok(!exports_.deleteFlowNode(s+'\n class B external','B').includes('class B'));assert.ok(exports_.deleteFlowNode(s,'A').includes('B@'));assert.throws(()=>exports_.deleteFlowNode(s+'\n A & B --> C','B'));
+});
+
+test('partial chain deletion preserves surviving edges, quoted labels and unrelated comments',()=>{
+ const source='flowchart LR\n%% keep B in this comment\n A[First] --> B{Middle} --> C[Last] --> D[End]\n X["B remains in label"] --> Y[Other]';
+ const next=exports_.deleteFlowNodes(source,['B']);assert.ok(next.includes('A[First]'));assert.ok(next.includes('C[Last] --> D[End]'));assert.ok(next.includes('X["B remains in label"] --> Y[Other]'));assert.ok(next.includes('%% keep B'));assert.ok(!next.includes('B{'));
+ const multi=exports_.deleteFlowNodes(source,['B','D']);assert.ok(multi.includes('C[Last]'));assert.ok(!multi.includes('D[End]'));assert.throws(()=>exports_.deleteFlowNode(source+'\n linkStyle 0 stroke:red','B'));
+});
+
+test('shared positions replace only their own annotation, validate limits and remain portable comments',()=>{
+ const out={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(require('node:path').join(__dirname,'../src/lib/mermaid-position.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{exports:out});
+ const source='flowchart LR\n A[Keep] --> B[Keep too]\n%% unrelated annotation';const once=out.positionNode(source,'A',400.4,300.6),twice=out.positionNode(once,'A',800,600);assert.ok(twice.startsWith(source));assert.equal(twice.split('collab-position A').length,2);assert.equal(out.nodePositions(twice).A.x,800);assert.equal(out.nodePositions(twice).A.y,600);assert.equal(out.removeNodePositions(twice,new Set(['A'])),source);for(const x of [-1,Infinity,9000])assert.throws(()=>out.positionNode(source,'A',x,100));assert.throws(()=>out.positionNode(source,'A;B',100,100));
 });

@@ -1,5 +1,7 @@
 # CollabSpace — 详细设计 v1
 
+2026-10-25图形编辑修复（开发中、未上线）：实际画布拖入/移动、位置协作注释与模板节点部分删除，见[交接与剩余门槛](MERMAID-POSITION-HANDOFF.md)、[实际验收](../../evidence/collaboration/MERMAID-POSITION-2026-10-25.md)。此前仅自动布局的行为是本轮修复原因，不能把本地通过当作正式发布。
+
 2026-10-25入口整理：操作区域按钮化、未提供功能的占位项移除，P/BR/D/AT-AUI见[功能入口规范](ACTION-UI.md)，范围和实际成绩见[验收记录](../../evidence/collaboration/ACTION-UI-2026-10-25.md)。
 
 2026-10-25后续：Azure global/china显式端点及失败关闭、IM听写草稿生命周期、只读项目事实+DeepSeek工作流与15分钟进程内收据见[听写设计](VOICE-DICTATION-UX.md)、[供应商决策](SPEECH-PROVIDER-SELECTION.md)和[实际验收](../../evidence/collaboration/DICTATION-RUNTIME-2026-10-25.md)。不把该运行时记成持久化/自治Agent引擎。

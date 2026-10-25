@@ -1,5 +1,7 @@
 # Mermaid 为白板图表的主要执行标准
 
+2026-10-25图形编辑修复（开发中、未上线）：实际画布拖入/移动、位置协作注释与模板节点部分删除，见[交接与剩余门槛](MERMAID-POSITION-HANDOFF.md)、[实际验收](../../evidence/collaboration/MERMAID-POSITION-2026-10-25.md)。此前仅自动布局的行为是本轮修复原因，不能把本地通过当作正式发布。
+
 2026-10-21 第二轮追加：受支持 Mermaid 流程图/基础思维导图拖拽直接修改共享源码；评论/版本提交后实时通知；账号/租户/文档隔离的离线配图；Google/GitHub 社交登录安全完善。最新契约和验收以 [ITERATION-2.md](ITERATION-2.md) 为准，配置见 [OAUTH-SETUP-MEMO.md](OAUTH-SETUP-MEMO.md)。历史未实现描述不覆盖本轮新增能力；任意语法/坐标回写、完整离线应用壳及企业SSO仍不宣称完成。
 
 2026-10-21 用户决策，优先于 DIAGRAMS.md 中“仅基础语法交换”的旧约定。图表以 Mermaid 文本为权威，图形是源码的派生显示。新空白板默认进入 Mermaid 工作区，提供图形、源码、分屏三种视图，使用锁定版本的官方 Mermaid 12.2.0。不是用少量正则模拟完整 Mermaid。

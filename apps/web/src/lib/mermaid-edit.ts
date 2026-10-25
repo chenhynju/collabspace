@@ -90,12 +90,32 @@ export function duplicateFlowNode(source:string,id:string,newId:string){
  return addFlowNode(source,node.label.slice(0,94)+' 副本',shape?.key||legacy,newId);
 }
 export function deleteFlowNode(source:string,id:string){
- if(!/^[A-Za-z][\w]*$/.test(id))throw Error('节点标识无效。');
- const lines=source.split('\n'),definition=new RegExp(`^\\s*${id}@\\{\\s*shape:\\s*[a-z-]+,\\s*label:\\s*"[^"\\n]+"\\s*\\}\\s*$`);
- if(lines.filter(line=>definition.test(line)).length!==1)throw Error('仅独立定义的标准图元支持安全删除；复杂节点请通过源码修改。');
- const edge=/^\s*([A-Za-z][\w]*)\s+(?:<-->|-->|---|-\.->|==>)(?:\|[^|\n]*\|)?\s+([A-Za-z][\w]*)\s*$/;
- const style=new RegExp(`^\\s*style\\s+${id}\\s+fill:#[0-9a-f]{6},stroke:#475569,color:#0f172a\\s*$`);
- const remaining=lines.filter(line=>{const m=edge.exec(line);return !definition.test(line)&&!style.test(line)&&!(m&&(m[1]===id||m[2]===id));}).join('\n');
- if(new RegExp(`\\b${id}\\b`).test(remaining))throw Error('此节点仍被分组、样式或复杂连线引用，请通过源码删除，避免误删其他内容。');
- return remaining;
+ return deleteFlowNodes(source,[id]);
+}
+/** Parse common flow statements without rebuilding unrelated source or diagram types. */
+export function deleteFlowNodes(source:string,ids:string[]){
+ if(!isFlowSource(source)||!ids.length||ids.some(id=>!/^[A-Za-z][\w]*$/.test(id)))throw Error('请选择流程图中的节点。');
+ const chosen=new Set(ids);let changed=false,removedEdge=false;
+ const atom=/^([A-Za-z][\w]*)(@\{[^\n}]*\}|\[\[[^\n]*?\]\]|\[\([^\n]*?\)\]|\[\/(?:[^\n]*?)\/\]|\[(?:"[^"\n]*"|[^\]\n]*)\]|\(\((?:"[^"\n]*"|[^)\n]*)\)\)|\((?:"[^"\n]*"|[^)\n]*)\)|\{\{[^\n]*?\}\}|\{(?:"[^"\n]*"|[^}\n]*)\})?/;
+ const link=/^\s*(<-->|-->|---|-\.->|==>)(\|[^|\n]*\|)?\s*/;
+ const hasId=(line:string)=>{const plain=line.replace(/"[^"\n]*"/g,'');return [...chosen].some(id=>new RegExp(`\\b${id}\\b`).test(plain));};
+ const result=source.split('\n').flatMap(line=>{
+  if(/^\s*%% collab-position /.test(line)){if([...chosen].some(id=>line.trim().startsWith('%% collab-position '+id+' ')))return [];return [line];}
+  if(/^\s*%%/.test(line)||!hasId(line))return [line];
+  const style=/^\s*(style|class)\s+([\w,]+)\s+(.+)$/.exec(line);
+  if(style){const names=style[2].split(',').filter(id=>!chosen.has(id));return names.length?[line.replace(style[2],names.join(','))]:[];}
+  const segments=line.trim().replace(/;\s*$/,'').split(/;(?=(?:[^"]*"[^"]*")*[^"]*$)/);const output:string[]=[];
+  for(const segment of segments){
+   if(!hasId(segment)){output.push(segment);continue;}
+   let rest=segment.trim(),a=atom.exec(rest);if(!a)throw Error('该节点含复杂语法，请在源码中删除，原图未改动。');
+   const nodes=[{id:a[1],raw:a[0]}],edges:string[]=[];rest=rest.slice(a[0].length);
+   while(rest.trim()){const e=link.exec(rest);if(!e)throw Error('该节点含分组、批量连线或复杂引用，请在源码中删除，原图未改动。');rest=rest.slice(e[0].length);a=atom.exec(rest);if(!a)throw Error('无法安全定位连线端点，原图未改动。');edges.push(e[0]);nodes.push({id:a[1],raw:a[0]});rest=rest.slice(a[0].length);}
+   if(!nodes.some(n=>chosen.has(n.id))){output.push(segment);continue;}changed=true;
+   let chain='';for(let i=0;i<nodes.length;i++){const n=nodes[i];if(chosen.has(n.id)){if(chain)output.push(chain);chain='';if(i||i<edges.length)removedEdge=true;continue;}if(chain&&i&&!chosen.has(nodes[i-1].id))chain+=edges[i-1]+n.raw;else{if(chain)output.push(chain);chain=n.raw;}}if(chain)output.push(chain);
+  }
+  return output.map(s=>'  '+s.trim());
+ });
+ if(!changed)throw Error('未找到可安全删除的节点定义。');
+ if(removedEdge&&/^\s*linkStyle\b/m.test(source))throw Error('图表使用按序号绑定的连线样式，请通过源码删除以免错配。');
+ return result.join('\n');
 }

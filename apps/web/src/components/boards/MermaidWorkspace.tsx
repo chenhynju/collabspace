@@ -17,6 +17,7 @@ export default function MermaidWorkspace({ provider, format = "mermaid",onSelect
   const markdown=format==='markdown';
   const limit=markdown?64000:32000;
   const text = provider.doc.getText(format);
+  const [canvasSelection,setCanvasSelection]=useState<string[]>([]);
   const [source, setSource] = useState(text.toString());
   const [view, setView] = useState<"split" | "source" | "graph">("split");
   const [imeDraft, setImeDraft] = useState("");
@@ -95,7 +96,7 @@ export default function MermaidWorkspace({ provider, format = "mermaid",onSelect
     </div>}
     <p className="px-3 pb-3 text-xs leading-5 text-slate-500">{markdown?'原生 Markdown 源码为内容标准，自动协作保存；支持GFM与Mermaid代码块，外部图片和原始HTML不执行。':'Mermaid 源码是图表的唯一内容标准，自动同步并保存。可拖入流程图元、拖动节点建立关系；语法错误也会保存草稿并显示诊断。'}</p>
     <div className={markdown?"":"grid min-w-0 items-start lg:grid-cols-[224px_minmax(0,1fr)]"}>
-    {!markdown && <MermaidComposer source={source} writable={provider.writable} commit={(before,after)=>{if(text.toString()!==before)throw Error('收到远端修改，请基于最新图表重试。');edit(after);}} />}
+    {!markdown && <MermaidComposer selectedId={canvasSelection[0]||''} onSelect={id=>setCanvasSelection([id])} source={source} writable={provider.writable} commit={(before,after)=>{if(text.toString()!==before)throw Error('收到远端修改，请基于最新图表重试。');edit(after);}} />}
     <div className="flex min-w-0 flex-col gap-3 bg-[#f5f6fa] p-3 xl:flex-row">
       {view !== "graph" && <textarea ref={editor} aria-label={markdown?"协作 Markdown 源码":"协作 Mermaid 源码"} spellCheck={false} readOnly={!provider.writable} maxLength={limit} value={source}
         onSelect={e=>{const el=e.currentTarget,a=to64(Y.encodeRelativePosition(Y.createRelativePositionFromTypeIndex(text,el.selectionStart))),b=to64(Y.encodeRelativePosition(Y.createRelativePositionFromTypeIndex(text,el.selectionEnd)));provider.selection({anchor:a,head:b});onSelection?.(el.selectionStart===el.selectionEnd?null:{quote:text.toString().slice(el.selectionStart,el.selectionEnd).slice(0,1000),anchor:{start:a,end:b}});}}
@@ -111,7 +112,7 @@ export default function MermaidWorkspace({ provider, format = "mermaid",onSelect
           if (composing.current) setSource(value); else edit(value);
         }}
         className="min-h-[640px] w-full min-w-0 flex-1 rounded-xl border border-slate-200 bg-white p-4 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300" />}
-      {view !== "source" && (markdown?<MarkdownPreview source={source}/>:<MermaidPreview source={source} />)}
+      {view !== "source" && (markdown?<MarkdownPreview source={source}/>:<MermaidPreview source={source} writable={provider.writable} selectedIds={canvasSelection} onSelect={setCanvasSelection} commit={(before,after)=>{if(text.toString()!==before)throw Error('收到远端修改，请基于最新图表重试。');edit(after);}} />)}
     </div>
     </div>
     {markdown&&<div aria-label="协作者源码位置" className="my-2 flex flex-wrap gap-2 text-xs text-slate-500">{provider.members.filter(m=>m.selection).map(m=>{try{const at=Y.createAbsolutePositionFromRelativePosition(Y.decodeRelativePosition(from64(m.selection!.anchor)),provider.doc);if(!at||at.type!==text)return null;const before=source.slice(0,at.index),line=before.split('\n').length,column=at.index-before.lastIndexOf('\n');return <span key={m.sessionId}>{m.name} · {line}行{column}列</span>;}catch{return null;}})}</div>}
