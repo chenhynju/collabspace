@@ -1,5 +1,7 @@
 # CollabSpace — 需求分析与产品决策
 
+2026-10-26追加：P/BR/D/AT-MPOS支持画布连接点拖线，复用共享源码、ACL和ACK。具体契约见[画布交互](MERMAID-POSITION.md)；实际验收见[直接连线报告](../../evidence/collaboration/MERMAID-CONNECT-2026-10-26.md)。
+
 2026-10-26定位修复已正式发布，线上4/4通过；契约：见[实际画布交互](MERMAID-POSITION.md)。以最新验收报告的发布身份为准，保留官方渲染与源码权限边界。
 
 2026-10-25开发阶段记录（已由10月26日正式验收取代）：实际画布拖入/移动、位置协作注释与模板节点部分删除，见[交接与剩余门槛](MERMAID-POSITION-HANDOFF.md)、[实际验收](../../evidence/collaboration/MERMAID-POSITION-2026-10-25.md)。此前仅自动布局的行为是本轮修复原因，不能把本地通过当作正式发布。
