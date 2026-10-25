@@ -1,5 +1,7 @@
 # Office 产品能力对照与持续交付
 
+2026-10-25后续发布：本批三类共用文件动作已上线，正式域名业务与PDF验证见 [发布记录](../../evidence/collaboration/RELEASE-2026-10-25.md)。这不改变下列其余格式专项待验状态。
+
 2026-10-25 用户要求继续完善Office，力争达到原生Microsoft Office 90%以上产品特性；明确选择Word、Excel、PowerPoint均衡推进。此要求扩展当前Office首版范围，保留既有租户、项目、文件权限及保存栅栏。
 
 ## 衡量方式

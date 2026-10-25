@@ -1,5 +1,7 @@
 # CollabSpace — 多人实时协作文档
 
+2026-10-25：协作助手（Word/PDF摘要、行动项、确认后邮件、中英翻译、朗读）、Office文件操作/PDF和本地图片准备已部署；入口 [协作助手](https://collabspace.purelamp.uk/assistant)。实际验收、运行版本、备份及回退见 [发布记录](evidence/collaboration/RELEASE-2026-10-25.md)。
+
 2026-10-24：多项目 Resend 回调验签、业务分流、持久化队列与其他项目适配补丁，见 [邮件回调路由](docs/collaboration/MAIL-WEBHOOK-ROUTING.md)。
 
 2026-10-24：新增富文本文档数学公式模板拖拽、LaTeX 输入与源码修改，P-MATH / BR-MATH / D-MATH / AT-MATH 及客户端升级要求见 [数学公式](docs/collaboration/MATH.md)。
