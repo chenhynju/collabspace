@@ -1,5 +1,6 @@
 // Isolated untrusted document parsing: parent enforces timeout and heap limit.
 export {};
+import {pdfTextLayout,pdfWordGaps} from './pdf-text-layout';
 const chunks: Buffer[] = [];
 process.stdin.on('data', (chunk: Buffer) => chunks.push(chunk));
 process.stdin.on('end', async () => {
@@ -20,7 +21,19 @@ process.stdin.on('end', async () => {
       text = (await require('mammoth').extractRawText({ buffer })).value;
     } else if (kind === 'pdf') {
       // PDF.js expects Uint8Array.slice to copy; Node Buffer.slice aliases memory.
-      text = (await require('pdf-parse/lib/pdf-parse.js')(new Uint8Array(buffer), { max: 30 })).text;
+      const pdfjs=require('pdf-parse/lib/pdf.js/v1.10.100/build/pdf.js');
+      pdfjs.PDFJS.disableFontFace=true;
+      pdfjs.PDFJS.isEvalSupported=false;
+      const doc=await pdfjs.getDocument({data:new Uint8Array(buffer),nativeImageDecoderSupport:'none',disableFontFace:true,isEvalSupported:false});
+      const pages:string[]=[];
+      try{for(let number=1;number<=Math.min(doc.numPages,30);number++){
+          const page=await doc.getPage(number);
+          const content=await page.getTextContent({normalizeWhitespace:true,disableCombineTextItems:false});
+          const ops=await page.getOperatorList();
+          const runs=ops.argsArray.filter((_:any,i:number)=>ops.fnArray[i]===pdfjs.OPS.showText).map((args:any)=>args[0]);
+          pages.push(pdfTextLayout(content.items,pdfWordGaps(runs)));
+      }}finally{await doc.destroy()}
+      text=pages.join('\n\n');
     } else text = buffer.toString('utf8');
     process.stdout.write(JSON.stringify({ text: text.slice(0,100000), truncated: text.length > 100000 }));
   } catch { process.exitCode = 1; }
