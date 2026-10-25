@@ -11,12 +11,13 @@
 
 参考：[Azure主权云](https://learn.microsoft.com/en-us/azure/ai-services/speech-service/sovereign-clouds)、[OpenAI转写](https://developers.openai.com/api/docs/guides/speech-to-text)、[TTS](https://developers.openai.com/api/docs/guides/text-to-speech)、[Realtime](https://developers.openai.com/api/docs/guides/realtime)。
 
-| 用户与部署场景 | 首选候选 | 本项目理由 |
+| 用户与部署场景 | 当前决策 | 本项目理由 |
 | --- | --- | --- |
-| 海外多语言协作 | Azure Speech STT + TTS | 已有服务端REST适配，变更较小；提供多语言及多地区能力，后续可评估viseme驱动卡通。不是当前适配已实现精确嘴型的声明 |
-| 国内中文与中英混说 | 阿里云百炼ASR + Qwen TTS/CosyVoice | 有短句语音输入、持续转写和合成系列；按实际语言、音色和地区选具体模型 |
-| 国内已有腾讯云体系 | 腾讯云ASR + TTS | 作为同云接入候选，拿相同样本比较效果、成本与运维 |
-| 海外实时转写专项 | Deepgram作为ASR备选 | 提供流式、多语言能力；不能由ASR语言数量推断TTS覆盖相同语言 |
+| 海外多语言协作 | Azure Speech STT + TTS | 继续现有适配，按目标用户区域选择资源；后续评估viseme，不冒充当前已实现精确嘴型 |
+| 国内用户 | 同样Azure STT + TTS | 按处理地域要求、资源资格和网络实测选择global或china部署；不能只改域名复用另一云凭据 |
+| 未来海外版专属 | OpenAI转写/TTS/Realtime可选适配 | 普通听写与持续语音Agent分别接入，当前不默认调用 |
+
+阿里云、腾讯云和Deepgram仅为前期调研材料，当前不实现相应主路或自动回退。
 
 这是基于现有适配和产品场景的工程建议，不是准确率或价格排行榜。现有Azure适配只有录音结束后REST识别，不能据供应商支持实时就声称项目已有流式转写。
 

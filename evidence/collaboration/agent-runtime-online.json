@@ -1,0 +1,40 @@
+{
+  "at": "2026-10-25T13:20:17.965Z",
+  "environment": "formal domain synthetic account + real existing DeepSeek",
+  "status": "PASSED",
+  "runId": "5a27ecf4-cb39-40c3-b563-977fc4bbcb68",
+  "event": {
+    "version": 1,
+    "runId": "5a27ecf4-cb39-40c3-b563-977fc4bbcb68",
+    "sequence": 2,
+    "source": "agent",
+    "authority": "runtime",
+    "state": "completed",
+    "resultRef": "assistant-run:5a27ecf4-cb39-40c3-b563-977fc4bbcb68"
+  },
+  "source": "Synthetic acceptance 91cacd90-34b2-4f1a-a0a5-d446af397b29. Alice owns delivery on Friday. Bob reviews tests Thursday. No email has been sent. Deployment requires explicit confirmation. The only remaining risk is incomplete test coverage.",
+  "result": {
+    "text": "**摘要**\n- Alice 负责周五的交付。\n- Bob 在周四审查测试。\n- 尚未发送任何邮件。\n- 部署需要明确确认。\n- 唯一剩余风险是测试覆盖不完整。\n\n**关键结论**\n- 交付与测试审查已明确责任人及时间安排。\n- 部署前必须获得明确确认。\n- 当前唯一识别的风险是测试覆盖不完整。\n\n**风险**\n- 测试覆盖不完整可能影响交付质量或部署决策。",
+    "usage": {
+      "prompt_tokens": 110,
+      "completion_tokens": 100,
+      "total_tokens": 210,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "prompt_cache_hit_tokens": 0,
+      "prompt_cache_miss_tokens": 110
+    },
+    "truncated": false,
+    "incomplete": false,
+    "cached": false
+  },
+  "projectFacts": {
+    "name": "官网 3.0 改版",
+    "taskCount": 3
+  },
+  "oneNewModelRequest": true,
+  "replaySameReceipt": true,
+  "foreignActorDenied": true,
+  "durable": false
+}

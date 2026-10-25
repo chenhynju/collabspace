@@ -19,7 +19,7 @@
 | Web生产构建 | .next-agent-voice-release构建退出0，38页面；后续焦点和展示调整由类型/浏览器及发布候选构建覆盖；存在既有lint警告 |
 | API串行回归 | 50项，44通过、6可选集成跳过、0失败，87.7秒；其后新增Azure路由定向验证，不把跳过计通过 |
 | 运行时+语音定向单测 | 9/9，含取消、撤权、不完整结果、幂等、进程内过期、global/china域名及失败关闭 |
-| 新听写浏览器 | im-dictation.spec.cjs最终4/4，2.0分钟；缺少配置解释、不自动上传、PCM替身转写、保留/编辑草稿、手动发送、录音取消释放、UNKNOWN保留录音/不重复调用 |
+| 新听写浏览器 | im-dictation.spec.cjs最终5/5，3.5分钟；缺少配置解释、不自动上传、PCM替身转写、保留/编辑草稿、手动发送、录音取消释放、UNKNOWN保留录音/不重复调用，以及时长上限停止后必须确认才上传 |
 | 语言偏好竞态追加 | 1/1，22.8秒；迟到的中文偏好不能覆盖用户已选English，上传locale为en-US |
 | 原有语音回归 | voice-persona.spec.cjs + voice-boundaries.spec.cjs 5/5，2.0分钟；原音、TTS停止/旧结果失效、邮件不外发、权限/坏文件等保留 |
 | 真实运行时浏览器 | assistant-runtime-real.spec.cjs 1/1，39.2秒；实际隔离PG读取+一次真实DeepSeek生成，207 token，非缓存，结果完整；同编号重放同结果、改输入409、另一actor404 |
@@ -31,6 +31,7 @@
 - 首次真实运行时浏览器在登录后dashboard跳转等待超时；trace显示真实登录201、profile/org200。未进入生成。测试改为真实API登录后直接访问助手，独立于无关dashboard编译，后续真实运行通过。
 - 新听写初次1/4通过：两项alert选择器与Next路由公告冲突；一项真实焦点回填失败。为提示增加可访问名称，焦点改为等待输入框解锁后恢复；最终4/4通过。没有删除相应断言。
 - 本地仍无Redis6399，既有invitation_delivery初始化缺失会报调度错误；不计为Redis/邀请或多worker验收。
+- 发布后复查发现达到录音上限会自动提交，改为59秒停止后进入待确认。新增加速浏览器时钟验证：停止后STT请求0次，点击确认后1次；本地最终5/5通过。此测试不代表实际59秒音频的识别质量。
 
 ## BLOCKED / NOT_RUN
 
@@ -41,3 +42,28 @@
 本地成绩以上述命令为准；正式发布身份与上线后验收在本节追加。目标为现有站点，API从已核对r20261025-04固定镜像增量覆盖6个JS，无依赖安装或数据库迁移；只重建API，WS/Office保持。回退API r20261025-04，前端回退dpl_3Ab9wM6uNvN9G79qA6m85xnmDfSv，不回滚业务数据。
 
 部署前服务器抽样：2CPU/3723MiB，总可用内存1691MiB，磁盘8.9GiB/85%，load1/5/15=1.46/1.02/0.89；API73.8MiB/384MiB、CPU0.12%、OOM=false、restart0。满足现门槛，不触发迁移43.130.127.57。
+
+### 本次正式发布身份
+
+- 应用源码提交7e1adf356856878006bdd6d5b83f0e2b0b2f1291。前端123文件快照哈希9474c6f65860952fbd77bb9032b9493f5a04b0f78c2fd222d60fab2677eaa1d5。
+- Vercel dpl_2VYGL3gHuLgKPv9uRqBDeiHpcr2G，候选https://collabspace-axbhqfh0t-purelamp.vercel.app，构建1分17秒、inspect Ready并promote成功。
+- API collabspace-api:r20261025-06，sha256:fd64a9f00b066bda9c828c47c543ae7860dcf44cdf35f8fb492992661ee104a8，在原r04上只覆盖6个JS；没有依赖安装或数据库迁移。
+- 上传包10232字节，SHA256 71f04d3e19a5c3d56a1c6c2f6aa95d1f89eccdfb44f1cd33144c89c50259ac96。远端逐文件清单/源码标签核对通过，离线构建限制256MiB/0.5CPU，Linux加载烟测192MiB/0.5CPU。
+- 首次烟测误用相对路径，实际镜像WORKDIR为/app/apps/api，故找不到模块；修正为绝对路径后加载通过，才切换API。新增smoke恢复阶段，未反复重建。服务器基础Node20.20.2，本地Node22；正式实际调用成绩需单独验证。
+- SFTP、传统SCP和直接stdin上传被直连重置，残留的是本轮0字节候选文件；正式应用未提前切换。通过本机既有HTTP代理CONNECT传输、保持StrictHostKeyChecking，上传成功并核对相同SHA256；没有修改全局代理、服务器网络/防火墙或证书验证。
+- 切换前配置备份/opt/collabspace/shared/env-before-r20261025-06与镜像身份image-before-r20261025-06。此轮没有新增整库备份或恢复演练，不把r04已有备份当成本轮新备份。回退不覆盖业务数据。
+- 只重建API，WS镜像与Office保持。切换后ready的DB/Redis均up、Office=true、OOM=false/restart0，API66.8MiB/384MiB、1CPU上限、CPU4.85%启动短样本；可用内存1721MiB、磁盘8.9GiB/85%、load2.00/1.47/1.25。不是长期容量/压测成绩。
+- 正式API辅助回归再次通过：语音状态、人类身份、未配置TTS503、外国组织403、Linux DOCX提取。Azure/真人仍未配置。
+
+### 上线后业务验收
+
+设置COLLAB_BROWSER_CONFIG=.test-runs/deploy/online-config.json、COLLAB_ACCEPTANCE_PROXY为本机既有代理，显式打开AGENT_REAL_ACCEPTANCE/AGENT_REAL_ONLINE/IM_DICTATION_ONLINE/VOICE_ONLINE_ACCEPTANCE，运行assistant-runtime-real.spec.cjs、im-dictation.spec.cjs、voice-persona-online.spec.cjs。**6/6通过，3.5分钟**，结果`.test-runs/dictation-runtime-online/.last-run.json`为passed、failedTests为空。
+
+- 正式真实DeepSeek工作流：210 token、非缓存、输出完整；项目事实实际读取（任务数3）、幂等重放同结果、输入更改409、另一actor404。语义逐项检查保留Alice/Bob职责、周五/周四、未发信、部署需确认与测试覆盖风险。证据agent-runtime-online.json/png。
+- 新听写四项：实际生产前端紧凑布局与未配置提示；假麦克风经真实MediaRecorder/PCM转换，**仅STT接口使用浏览器显式替身**；语言竞态保护、草稿追加/焦点恢复、人工编辑后手动文本发送；取消释放麦克风；UNKNOWN保留录音、不重复提交。不是Azure真实识别成绩。截图im-dictation-online-idle/recording.png。
+- 正式原音、3D偏好保存/恢复、第二账号私有媒体鉴权与重放、跨组织拒绝、邮件仅预览通过；真实邮件POST被拦截且计数0。没有真实测试发信或真人生成。
+- 发布候选构建使用源码7e1adf3，包含最终焦点和卡片调整；上线后测试验证实际生产bundle，而不是拿早先本地构建代替最后源代码验收。
+
+本轮测试启动器在正常关闭独立PG后结束，仅保留.test-runs合成数据和本地证据。源码及上线证据使用collabspace-20261025-dictation标签归档，压缩包与SHA256清单保存在.test-runs/archives；不纳入.env、凭据、node_modules或测试库。
+
+上线验收后再次核查：2026-10-25 21:25北京时间，MemAvailable1685MiB、磁盘8.9GiB/85%、load0.84/0.80/0.96，API66.63MiB/384MiB、CPU0.12%、OOM=false/restart0；DB/Redis up、Office=true。无迁移条件触发。5小时额度剩余50%，未达到低于10%的接力任务条件。

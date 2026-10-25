@@ -1,7 +1,9 @@
 const {test,expect}=require('@playwright/test'),{randomUUID}=require('node:crypto');
 const config=require('./config.cjs');
-test.skip(![config.WEB_URL,config.NEXT_PUBLIC_API_URL].every(v=>['localhost','127.0.0.1'].includes(new URL(v).hostname)),'Local fixture only');
-test.use({launchOptions:{args:['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']},permissions:['microphone']});
+const local=[config.WEB_URL,config.NEXT_PUBLIC_API_URL].every(v=>['localhost','127.0.0.1'].includes(new URL(v).hostname));
+const online=process.env.IM_DICTATION_ONLINE==='1'&&new URL(config.WEB_URL).hostname==='collabspace.purelamp.uk'&&new URL(config.NEXT_PUBLIC_API_URL).hostname==='collabspace-api.purelamp.uk'&&!config.DATABASE_ADMIN_URL;
+test.skip(!local&&!online,'Explicit disposable or synthetic formal-site fixture only');
+test.use({launchOptions:{args:['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']},permissions:['microphone'],...(process.env.COLLAB_ACCEPTANCE_PROXY?{proxy:{server:process.env.COLLAB_ACCEPTANCE_PROXY}}:{})});
 async function open(page,request){
  const response=await request.post(`${config.NEXT_PUBLIC_API_URL}/auth/login`,{data:{email:config.TEST_OWNER_EMAIL,password:config.TEST_PASSWORD}});expect(response.ok()).toBeTruthy();const token=(await response.json()).accessToken,h={Authorization:`Bearer ${token}`,'x-organization-id':config.TEST_ORG};
  const created=await request.post(`${config.NEXT_PUBLIC_API_URL}/conversations/direct`,{headers:h,data:{userId:config.TEST_MEMBER}});expect(created.ok()).toBeTruthy();const {id}=await created.json();
@@ -10,7 +12,7 @@ async function open(page,request){
 test('compact idle composer, unavailable dictation explains itself without upload or changing draft',async({page,request})=>{
  let calls=0;page.on('request',r=>{if(r.method()==='POST'&&r.url().endsWith('/voice/jobs'))calls++;});await open(page,request);await page.getByPlaceholder('输入消息...').fill('保留已有草稿');
  await expect(page.getByRole('button',{name:'转写到正文',exact:true})).not.toBeVisible();await page.getByRole('button',{name:'语音输入',exact:true}).click();await expect(page.getByRole('alert',{name:'听写提示'})).toContainText('尚未启用');expect(calls).toBe(0);await expect(page.getByPlaceholder('输入消息...')).toHaveValue('保留已有草稿');
- await page.screenshot({path:'evidence/collaboration/im-dictation-idle.png',fullPage:true});
+ await page.screenshot({path:`evidence/collaboration/im-dictation-${local?'':'online-'}idle.png`,fullPage:true});
 });
 test('explicit STT fixture: meter/confirm, PCM upload, append editable transcript, never automatically send',async({page,request})=>{
  await page.route('**/voice/status',r=>r.fulfill({json:{configured:true}}));let releasePreference;const preference=new Promise(resolve=>releasePreference=resolve);await page.route('**/voice/persona',async r=>{await preference;await r.fulfill({json:{identity:'human',style:'cartoon',locale:'zh-CN'}});});let posts=0,messagePosts=0,id,pcm=false,locale=false;
@@ -18,7 +20,7 @@ test('explicit STT fixture: meter/confirm, PCM upload, append editable transcrip
  await page.route('**/voice/jobs',async route=>{posts++;const bytes=route.request().postDataBuffer(),text=bytes.toString('utf8');id=text.match(/name="requestId"\r\n\r\n([^\r]+)/)?.[1];const at=bytes.indexOf(Buffer.from('RIFF'));pcm=at>=0&&bytes.readUInt32LE(at+24)===16000;locale=text.includes('en-US');await route.fulfill({json:{id,status:'QUEUED'}});});
  await page.route('**/voice/jobs/*',r=>r.fulfill({json:{id,status:'SUCCEEDED',text:'Synthetic editable dictation.'}}));await open(page,request);
  const draft=page.getByPlaceholder('输入消息...');await draft.fill('保留原文字');await page.getByLabel('听写语言',{exact:true}).selectOption('en-US');releasePreference();await expect(page.getByLabel('听写语言',{exact:true})).toHaveValue('en-US');await page.getByRole('button',{name:'语音输入',exact:true}).click();await expect(page.getByLabel('语音输入状态')).toBeVisible();await expect(page.getByRole('meter',{name:'麦克风音量'})).toBeVisible();await expect(draft).toBeDisabled();await expect(page.getByRole('button',{name:'发送',exact:true})).toBeDisabled();await page.waitForTimeout(700);
- await page.screenshot({path:'evidence/collaboration/im-dictation-recording.png',fullPage:true});await page.getByRole('button',{name:'确认转写',exact:true}).click();await expect(draft).toHaveValue('保留原文字\nSynthetic editable dictation.');await expect(draft).toBeFocused();expect(posts).toBe(1);expect(pcm).toBe(true);expect(locale).toBe(true);expect(messagePosts).toBe(0);
+ await page.screenshot({path:`evidence/collaboration/im-dictation-${local?'':'online-'}recording.png`,fullPage:true});await page.getByRole('button',{name:'确认转写',exact:true}).click();await expect(draft).toHaveValue('保留原文字\nSynthetic editable dictation.');await expect(draft).toBeFocused();expect(posts).toBe(1);expect(pcm).toBe(true);expect(locale).toBe(true);expect(messagePosts).toBe(0);
  await draft.fill('人工修订后的消息');const sent=page.waitForResponse(r=>r.url().endsWith('/messages')&&r.request().method()==='POST');await page.getByRole('button',{name:'发送',exact:true}).click();expect((await sent).ok()).toBeTruthy();expect(messagePosts).toBe(1);
 });
 test('cancel recording releases microphone and preserves draft without a speech request',async({page,request})=>{
@@ -26,4 +28,10 @@ test('cancel recording releases microphone and preserves draft without a speech 
 });
 test('uncertain transcription retains recording, preserves draft and does not blindly retry',async({page,request})=>{
  await page.route('**/voice/status',r=>r.fulfill({json:{configured:true}}));let posts=0;const id=randomUUID();await page.route('**/voice/jobs',r=>{posts++;return r.fulfill({json:{id,status:'RUNNING'}});});await page.route('**/voice/jobs/*',r=>r.fulfill({json:{id,status:'UNKNOWN',error:'Synthetic unknown, check before retry'}}));await open(page,request);await page.getByPlaceholder('输入消息...').fill('原草稿不丢失');await page.getByRole('button',{name:'语音输入',exact:true}).click();await expect(page.getByRole('button',{name:'确认转写',exact:true})).toBeVisible();await page.waitForTimeout(700);await page.getByRole('button',{name:'确认转写',exact:true}).click();await expect(page.getByRole('alert',{name:'听写提示'})).toContainText('Synthetic unknown');await expect(page.getByRole('link',{name:'保存本地录音'})).toBeVisible();await page.getByRole('button',{name:'语音输入',exact:true}).click();await expect(page.getByRole('alert',{name:'听写提示'})).toContainText('待核查');expect(posts).toBe(1);await expect(page.getByPlaceholder('输入消息...')).toHaveValue('原草稿不丢失');
+});
+test('duration limit stops locally and requires explicit confirmation before upload',async({page,request})=>{
+ await page.clock.install();await page.route('**/voice/status',r=>r.fulfill({json:{configured:true}}));let posts=0,id;
+ await page.route('**/voice/jobs',async r=>{posts++;id=r.request().postData()?.match(/name="requestId"\r\n\r\n([^\r]+)/)?.[1];await r.fulfill({json:{id,status:'QUEUED'}});});await page.route('**/voice/jobs/*',r=>r.fulfill({json:{id,status:'SUCCEEDED',text:'Confirmed after duration limit.'}}));
+ await open(page,request);await page.getByRole('button',{name:'语音输入',exact:true}).click();await expect(page.getByRole('meter',{name:'麦克风音量'})).toBeVisible();await page.waitForTimeout(700);await page.clock.fastForward(59000);await expect(page.getByText('录音已结束，确认后转写',{exact:true})).toBeVisible();expect(posts).toBe(0);
+ await page.getByRole('button',{name:'确认转写',exact:true}).click();await expect(page.getByPlaceholder('输入消息...')).toHaveValue('Confirmed after duration limit.');expect(posts).toBe(1);
 });

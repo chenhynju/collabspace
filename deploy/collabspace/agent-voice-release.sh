@@ -38,8 +38,13 @@ for f in m['files']:
 print('Verified source',m['commit'])
 PY
   DOCKER_BUILDKIT=0 docker build --network=none --memory=256m --cpu-quota=50000 -t "collabspace-api:$version" .
-  docker run --rm --network=none --memory=192m --cpus=0.5 --entrypoint node "collabspace-api:$version" -e "require('./apps/api/dist/modules/assistant/assistant.module');require('./apps/api/dist/modules/voice/speech-provider');console.log('Linux module load passed')"
+  docker run --rm --network=none --memory=192m --cpus=0.5 --entrypoint node "collabspace-api:$version" -e "require('/app/apps/api/dist/modules/assistant/assistant.module');require('/app/apps/api/dist/modules/voice/speech-provider');console.log('Linux module load passed')"
   docker image inspect "collabspace-api:$version" --format '{{.Id}}' > IMAGE_ID
+ ;;
+ smoke)
+  test "$(docker image inspect "collabspace-api:$version" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = "$(cat "$target/RELEASE_SOURCE")"
+  docker run --rm --network=none --memory=192m --cpus=0.5 --entrypoint node "collabspace-api:$version" -e "require('/app/apps/api/dist/modules/assistant/assistant.module');require('/app/apps/api/dist/modules/voice/speech-provider');console.log('Linux module load passed')"
+  docker image inspect "collabspace-api:$version" --format '{{.Id}}' > "$target/IMAGE_ID"
  ;;
  activate)
   resources

@@ -1,6 +1,9 @@
 const {test,expect}=require('@playwright/test'),{randomUUID}=require('node:crypto'),fs=require('node:fs');
 const config=require('./config.cjs');
-test.skip(process.env.AGENT_REAL_ACCEPTANCE!=='1'||![config.WEB_URL,config.NEXT_PUBLIC_API_URL].every(v=>['localhost','127.0.0.1'].includes(new URL(v).hostname)),'Explicit local, one real model call acceptance only');
+const local=[config.WEB_URL,config.NEXT_PUBLIC_API_URL].every(v=>['localhost','127.0.0.1'].includes(new URL(v).hostname));
+const online=process.env.AGENT_REAL_ONLINE==='1'&&new URL(config.WEB_URL).hostname==='collabspace.purelamp.uk'&&new URL(config.NEXT_PUBLIC_API_URL).hostname==='collabspace-api.purelamp.uk'&&!config.DATABASE_ADMIN_URL;
+test.skip(process.env.AGENT_REAL_ACCEPTANCE!=='1'||(!local&&!online),'Explicit one-real-model-call acceptance only');
+test.use(process.env.COLLAB_ACCEPTANCE_PROXY?{proxy:{server:process.env.COLLAB_ACCEPTANCE_PROXY}}:{});
 test('actual project read and DeepSeek run produce server receipt; replay does not execute twice',async({page,request})=>{
  const login=await request.post(`${config.NEXT_PUBLIC_API_URL}/auth/login`,{data:{email:config.TEST_OWNER_EMAIL,password:config.TEST_PASSWORD}});expect(login.ok()).toBeTruthy();const token=(await login.json()).accessToken,h={Authorization:`Bearer ${token}`,'x-organization-id':config.TEST_ORG};
  expect((await (await request.get(`${config.NEXT_PUBLIC_API_URL}/assistant/status`,{headers:h})).json()).agentRuntime).toBe(true);
@@ -14,6 +17,6 @@ test('actual project read and DeepSeek run produce server receipt; replay does n
  const replay=await request.post(`${config.NEXT_PUBLIC_API_URL}/assistant/runs`,{headers:h,data:{requestId:run.id,projectId:config.TEST_PROJECT,mode:'summary',text:source}});expect(replay.ok()).toBeTruthy();expect((await replay.json()).result.text).toBe(run.result.text);
  expect((await request.post(`${config.NEXT_PUBLIC_API_URL}/assistant/runs`,{headers:h,data:{requestId:run.id,projectId:config.TEST_PROJECT,mode:'summary',text:source+'changed'}})).status()).toBe(409);
  const peer=await request.post(`${config.NEXT_PUBLIC_API_URL}/auth/login`,{data:{email:config.TEST_MEMBER_EMAIL,password:config.TEST_PASSWORD}});expect(peer.ok()).toBeTruthy();expect((await request.get(`${config.NEXT_PUBLIC_API_URL}/assistant/runs/${run.id}`,{headers:{...h,Authorization:`Bearer ${(await peer.json()).accessToken}`}})).status()).toBe(404);
- await page.screenshot({path:'evidence/collaboration/agent-runtime-real.png',fullPage:true});
- fs.writeFileSync('evidence/collaboration/agent-runtime-real.json',JSON.stringify({at:new Date().toISOString(),environment:'local isolated PG + real existing DeepSeek',status:'PASSED',runId:run.id,event:run.event,source,result:run.result,projectFacts:run.projectFacts,oneNewModelRequest:true,replaySameReceipt:true,foreignActorDenied:true,durable:false},null,2));
+ await page.screenshot({path:`evidence/collaboration/agent-runtime-${local?'real':'online'}.png`,fullPage:true});
+ fs.writeFileSync(`evidence/collaboration/agent-runtime-${local?'real':'online'}.json`,JSON.stringify({at:new Date().toISOString(),environment:local?'local isolated PG + real existing DeepSeek':'formal domain synthetic account + real existing DeepSeek',status:'PASSED',runId:run.id,event:run.event,source,result:run.result,projectFacts:run.projectFacts,oneNewModelRequest:true,replaySameReceipt:true,foreignActorDenied:true,durable:false},null,2));
 });
