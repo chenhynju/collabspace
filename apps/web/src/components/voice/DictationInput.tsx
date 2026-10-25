@@ -50,6 +50,7 @@ export function DictationInput({conversationId,active=true,onTranscript,onBusyCh
    try{const ac=new AudioContext(),analyser=ac.createAnalyser();context.current=ac;ac.createMediaStreamSource(captured).connect(analyser);analyser.fftSize=256;const data=new Uint8Array(256);let last=0;const tick=()=>{if(!alive.current||n!==epoch.current||context.current!==ac)return;if(performance.now()-last>80){analyser.getByteTimeDomainData(data);setLevel(Math.min(1,Math.sqrt(data.reduce((sum,v)=>sum+((v-128)/128)**2,0)/data.length)*6));last=performance.now();}frame.current=requestAnimationFrame(tick);};tick();void ac.resume().catch(()=>{});}catch{/* Recording works even if a visual analyser is unavailable. */}
   }catch{if(alive.current&&n===epoch.current){release();setStage('idle');setError('无法使用麦克风，请允许浏览器访问后重试。');}}
  };
+ if(ready===false)return null;
  return <div className="min-w-0 flex-1">
   {stage==='idle'?<button type="button" aria-label="语音输入" title="单次最多60秒，确认后转写为可编辑文字" disabled={!active||ready===null} onClick={()=>void start()} className="flex h-9 items-center gap-2 rounded-full px-3 text-slate-600 hover:bg-slate-100 disabled:opacity-40"><Mic size={18}/><span className="hidden sm:inline">语音输入</span></button>:
    <div aria-label="语音输入状态" className="flex items-center gap-3 rounded-full bg-slate-100 px-3 py-2">

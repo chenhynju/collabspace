@@ -40,6 +40,6 @@ test('recording cancel/discard releases tracks and sends nothing; oversized loca
  await page.getByRole('button',{name:'停止语音',exact:true}).click();await expect(page.getByRole('button',{name:/^录音/})).toBeVisible();await expect(page.getByLabel('录音试听')).toHaveCount(0);
  await expect.poll(()=>page.evaluate(()=>window.__voiceStreams.every(s=>s.getTracks().every(t=>t.readyState==='ended')))).toBe(true);
  await page.getByRole('button',{name:/^录音/}).click();await page.waitForTimeout(600);await page.getByRole('button',{name:/^结束录音/}).click();await expect(page.getByLabel('录音试听')).toBeVisible();await page.getByRole('button',{name:'丢弃录音',exact:true}).click();await expect(page.getByLabel('录音试听')).toHaveCount(0);expect(writes).toBe(0);
- await page.getByText('我的数字形象',{exact:true}).click();await page.getByLabel('形象风格').selectOption('cartoon');
+ await page.getByText('我的数字形象',{exact:true}).click();await expect(page.getByLabel('形象风格')).toHaveCount(0);
  await page.getByLabel('预览VRM模型').setInputFiles({name:'synthetic-large.vrm',mimeType:'application/octet-stream',buffer:Buffer.alloc(10*1024*1024+1)});await expect(page.getByText('模型最大10MB',{exact:true})).toBeVisible();expect(writes).toBe(0);
 });

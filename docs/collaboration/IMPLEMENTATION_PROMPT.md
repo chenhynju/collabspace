@@ -1,5 +1,7 @@
 # 可直接交给开发 Agent 的 Prompt
 
+2026-10-25入口整理：操作区域按钮化、未提供功能的占位项移除，P/BR/D/AT-AUI见[功能入口规范](ACTION-UI.md)，范围和实际成绩见[验收记录](../../evidence/collaboration/ACTION-UI-2026-10-25.md)。
+
 2026-10-25后续入口：按[听写体验](VOICE-DICTATION-UX.md)、[供应商决策](SPEECH-PROVIDER-SELECTION.md)、[最新验收发布](../../evidence/collaboration/DICTATION-RUNTIME-2026-10-25.md)继续。当前Azure海内外统一选型、OpenAI仅未来海外适配；没有Azure/真人凭据，不编造真实语音/视频验收。受限助手真实DeepSeek已验证，后续需补持久运行、真实语音、真人视频、货币预算和定时物理清理。
 
 2026-10-25：语音与数字形象规划已确定，涵盖IM、邮件及未来Agent/Skill；采用独立模块融入现有体系。需求、技术栈、范围及AT-VP01–08见 [语音与数字形象](VOICE-PERSONA.md)。已完成部分本地实现，实际通过项、供应商阻塞与未完成范围见[本地验收报告](../../evidence/collaboration/VOICE-PERSONA-2026-10-25.md)，不代表完整验收或生产发布。

@@ -1,5 +1,7 @@
 # CollabSpace — 需求分析与产品决策
 
+2026-10-25入口整理：操作区域按钮化、未提供功能的占位项移除，P/BR/D/AT-AUI见[功能入口规范](ACTION-UI.md)，范围和实际成绩见[验收记录](../../evidence/collaboration/ACTION-UI-2026-10-25.md)。
+
 2026-10-25后续语音决策：海内外统一Azure STT/TTS，OpenAI为未来海外可选；IM听写与原音分开，转写回填可编辑草稿再手动发送。受限只读助手运行时与保留边界、AT-VP02/03/06/07/08的本轮验证见[听写体验](VOICE-DICTATION-UX.md)和[验收发布](../../evidence/collaboration/DICTATION-RUNTIME-2026-10-25.md)，真实Azure/真人仍未开通。
 
 2026-10-25：合并协作空间与助手、图标直达功能、上传控件及响应式布局，P-UX / BR / D / AT 见 [统一工作区 UI/UX](WORKSPACE-UX.md)。

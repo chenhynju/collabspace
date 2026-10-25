@@ -11,7 +11,7 @@ async function open(page,request){
 }
 test('compact idle composer, unavailable dictation explains itself without upload or changing draft',async({page,request})=>{
  let calls=0;page.on('request',r=>{if(r.method()==='POST'&&r.url().endsWith('/voice/jobs'))calls++;});await open(page,request);await page.getByPlaceholder('输入消息...').fill('保留已有草稿');
- await expect(page.getByRole('button',{name:'转写到正文',exact:true})).not.toBeVisible();await page.getByRole('button',{name:'语音输入',exact:true}).click();await expect(page.getByRole('alert',{name:'听写提示'})).toContainText('尚未启用');expect(calls).toBe(0);await expect(page.getByPlaceholder('输入消息...')).toHaveValue('保留已有草稿');
+ await expect(page.getByRole('button',{name:'转写到正文',exact:true})).not.toBeVisible();await page.getByRole('button',{name:'语音选项',exact:true}).click();await expect(page.getByText('Azure语音未配置',{exact:false})).toBeVisible();await expect(page.getByRole('button',{name:'语音输入',exact:true})).not.toBeVisible();await expect(page.getByRole('button',{name:'生成语音朗读',exact:true})).not.toBeVisible();expect(calls).toBe(0);await expect(page.getByPlaceholder('输入消息...')).toHaveValue('保留已有草稿');
  await page.screenshot({path:`evidence/collaboration/im-dictation-${local?'':'online-'}idle.png`,fullPage:true});
 });
 test('explicit STT fixture: meter/confirm, PCM upload, append editable transcript, never automatically send',async({page,request})=>{

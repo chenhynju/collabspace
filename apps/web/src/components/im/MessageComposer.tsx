@@ -1,9 +1,10 @@
-﻿﻿﻿﻿﻿﻿﻿'use client';
+'use client';
 import { useState, useRef, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { useImStore } from '@/store/im';
 import { VoiceTools } from '@/components/voice/VoiceTools';
 import { useAuthStore } from '@/store/auth';
+import {Disclosure} from '@/components/disclosure';
 import {DictationInput} from '@/components/voice/DictationInput';
 import {ArrowUp,ImagePlus,Paperclip,Volume2} from 'lucide-react';
 
@@ -106,7 +107,7 @@ export default function MessageComposer({ conversationId }: { conversationId: st
       </div>
       </div>
       <div className="mt-2 flex items-center justify-between gap-3 px-1 text-xs text-slate-400"><span>语音输入转成文字，检查后再发送</span><span className="hidden sm:inline">Enter 发送 · Shift + Enter 换行</span></div>
-      <details className="mt-2"><summary className="flex w-fit cursor-pointer list-none items-center gap-1 text-xs text-slate-500"><Volume2 size={14}/>语音选项</summary><div className="mt-2"><VoiceTools scope={{conversationId}} text={text} active={!dictationBusy&&!sending} onBusyChange={setLegacyBusy} onTranscript={acceptTranscript} onSendAudio={async file=>{
+      <Disclosure className="mt-2" title={<><Volume2 size={14}/>语音选项</>}><div><VoiceTools scope={{conversationId}} text={text} active={!dictationBusy&&!sending} onBusyChange={setLegacyBusy} onTranscript={acceptTranscript} onSendAudio={async file=>{
         if(sendingRef.current)throw Error('消息正在发送');
         sendingRef.current=true;setSending(true);
         try{
@@ -122,7 +123,7 @@ export default function MessageComposer({ conversationId }: { conversationId: st
           voiceIntent.current=null;
           appendMessage(response.data);setText('');
         }finally{sendingRef.current=false;setSending(false);}
-      }}/></div></details>
+      }}/></div></Disclosure>
       <input
         ref={imageInputRef}
         type="file"

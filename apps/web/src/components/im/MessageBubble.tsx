@@ -1,5 +1,5 @@
 'use client';
-import {useState} from 'react';
+import {Disclosure} from '@/components/disclosure';
 import { useAuthStore } from '@/store/auth';
 import type { Message } from '@/store/im';
 import { useImStore } from '@/store/im';
@@ -10,7 +10,6 @@ const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v
 export default function MessageBubble({ message }: { message: Message }) {
   const me = useAuthStore((s) => s.user);
   const conversationId=useImStore(s=>s.currentConversationId);
-  const [speechOpen,setSpeechOpen]=useState(false);
   const isMe = message.senderId === me?.id;
   const senderName = message.senderName || message.sender?.name || '';
 
@@ -49,7 +48,7 @@ export default function MessageBubble({ message }: { message: Message }) {
             </a>
           )}
         </div>
-        {message.type==='TEXT'&&conversationId&&<details onToggle={e=>setSpeechOpen(e.currentTarget.open)} className="text-slate-600"><summary className="cursor-pointer text-xs">朗读消息</summary>{speechOpen&&<VoiceTools scope={{conversationId}} text={message.content}/>}</details>}
+        {message.type==='TEXT'&&conversationId&&<Disclosure title="朗读消息" className="mt-1 text-slate-600" unmountOnClose><VoiceTools scope={{conversationId}} text={message.content}/></Disclosure>}
         <span className="text-[10px] text-slate-400 mt-0.5">
           {new Date(message.createdAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
         </span>
