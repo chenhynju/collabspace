@@ -1,9 +1,10 @@
 import {flowNodes,isFlowSource} from './mermaid-edit';
-import {nodePositions} from './mermaid-position';
+import {nodePositions,assertPositionable} from './mermaid-position';
 export type CanvasNode={id:string;label:string;x:number;y:number;width:number;height:number;diamond:boolean};
 /** Inspect generated SVG as inert XML; never execute or mount it in the parent document. */
 export function flowSvgLayout(source:string,markup:string){
  const xml=new DOMParser().parseFromString(markup,'image/svg+xml'),svg=xml.documentElement,positions=nodePositions(source);
+ if(Object.keys(positions).length)assertPositionable(source);
  const original=svg.getAttribute('viewBox')?.split(/[ ,]+/).map(Number)||[0,0,1000,700];
  const translate=(el:Element|null)=>{let x=0,y=0;for(let e=el;e&&e!==svg;e=e.parentElement){for(const m of (e.getAttribute('transform')||'').matchAll(/translate\(\s*([-\d.]+)[ ,]+([-\d.]+)\s*\)/g)){x+=+m[1];y+=+m[2];}}return{x,y};};
  const nodes:CanvasNode[]=[];if(isFlowSource(source))for(const n of flowNodes(source)){
@@ -23,8 +24,11 @@ export function flowSvgLayout(source:string,markup:string){
   const parent=translate(path.parentElement),dx=b.x-a.x,dy=b.y-a.y;
   const boundary=(node:CanvasNode)=>node.diamond?1/(Math.abs(dx)/(node.width/2)+Math.abs(dy)/(node.height/2)):Math.min(dx?node.width/2/Math.abs(dx):Infinity,dy?node.height/2/Math.abs(dy):Infinity);
   const sa=boundary(a),sb=boundary(b);if(!Number.isFinite(sa)||!Number.isFinite(sb))continue;
-  const start={x:a.x-parent.x+dx*sa,y:a.y-parent.y+dy*sa},end={x:b.x-parent.x-dx*sb,y:b.y-parent.y-dy*sb};path.setAttribute('d',`M${start.x},${start.y} L${end.x},${end.y}`);
-  const label=[...svg.querySelectorAll('[data-id]')].find(e=>e.getAttribute('data-id')===path.id);if(label&&label!==path){const p=translate(label.parentElement);label.setAttribute('transform',`translate(${(a.x+b.x)/2-p.x},${(a.y+b.y)/2-p.y})`);}
+  const start={x:a.x-parent.x+dx*sa,y:a.y-parent.y+dy*sa},end={x:b.x-parent.x-dx*sb,y:b.y-parent.y-dy*sb};
+  const reverse=[...svg.querySelectorAll('.edgePaths path')].some(e=>e!==path&&(e.id.startsWith(`L_${b.id}_${a.id}_`)||e.id.includes(`-L_${b.id}_${a.id}_`)));
+  const length=Math.hypot(dx,dy)||1,control={x:(start.x+end.x)/2-dy/length*50,y:(start.y+end.y)/2+dx/length*50};
+  path.setAttribute('d',reverse?`M${start.x},${start.y} Q${control.x},${control.y} ${end.x},${end.y}`:`M${start.x},${start.y} L${end.x},${end.y}`);
+  const labelContent=[...svg.querySelectorAll('.edgeLabels [data-id]')].find(e=>e.getAttribute('data-id')===path.id||path.id.endsWith('-'+e.getAttribute('data-id'))),label=labelContent?.closest('.edgeLabel');if(label){const p=translate(label.parentElement),x=reverse?(start.x+end.x)/4+control.x/2+parent.x:(a.x+b.x)/2,y=reverse?(start.y+end.y)/4+control.y/2+parent.y:(a.y+b.y)/2;label.setAttribute('transform',`translate(${x-p.x},${y-p.y})`);}
  }
  const width=Math.max(1000,original[0]+original[2]+40,...nodes.map(n=>n.x+200)),height=Math.max(800,original[1]+original[3]+40,...nodes.map(n=>n.y+140));
  if(nodes.length){svg.setAttribute('viewBox',`0 0 ${width} ${height}`);svg.setAttribute('width',String(width));svg.setAttribute('height',String(height));svg.removeAttribute('style');}

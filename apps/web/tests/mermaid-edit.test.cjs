@@ -1,5 +1,5 @@
 const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),ts=require('typescript'),vm=require('node:vm');
-const exports_={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(require('node:path').join(__dirname,'../src/lib/mermaid-edit.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{exports:exports_,require:(name)=>{if(name!=='./diagram-catalog')throw Error(name);const out={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(require('node:path').join(__dirname,'../src/lib/diagram-catalog.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{exports:out});return out;}});
+const exports_={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(require('node:path').join(__dirname,'../src/lib/mermaid-edit.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{exports:exports_,require:(name)=>{if(name!=='./diagram-catalog')throw Error(name);const out={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(require('node:path').join(__dirname,'../src/lib/diagram-catalog.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{exports:out});return out;}});
 const {addFlowNode,connectFlowNodes,flowNodes}=exports_;
 test('mindmap drag reparents the complete subtree and refuses cycles/root moves',()=>{
  const s='mindmap\n  root((Team))\n    Documents\n      Comments\n    People';
@@ -53,6 +53,11 @@ test('partial chain deletion preserves surviving edges, quoted labels and unrela
 });
 
 test('shared positions replace only their own annotation, validate limits and remain portable comments',()=>{
- const out={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(require('node:path').join(__dirname,'../src/lib/mermaid-position.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,{exports:out});
+ const out={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(require('node:path').join(__dirname,'../src/lib/mermaid-position.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{exports:out});
  const source='flowchart LR\n A[Keep] --> B[Keep too]\n%% unrelated annotation';const once=out.positionNode(source,'A',400.4,300.6),twice=out.positionNode(once,'A',800,600);assert.ok(twice.startsWith(source));assert.equal(twice.split('collab-position A').length,2);assert.equal(out.nodePositions(twice).A.x,800);assert.equal(out.nodePositions(twice).A.y,600);assert.equal(out.removeNodePositions(twice,new Set(['A'])),source);for(const x of [-1,Infinity,9000])assert.throws(()=>out.positionNode(source,'A',x,100));assert.throws(()=>out.positionNode(source,'A;B',100,100));
+});
+
+test('layout refuses subgraphs, custom edges, self loops and parallel edges without source mutation',()=>{
+ const out={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(require('node:path').join(__dirname,'../src/lib/mermaid-position.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{exports:out});
+ for(const source of ['flowchart LR\n A[One] --> A','flowchart LR\n A[One] --> B[Two]\n A --> B','flowchart LR\n A e1@--> B','flowchart LR\nsubgraph Team\n A[One]\nend'])assert.throws(()=>out.positionNode(source,'A',200,300));assert.doesNotThrow(()=>out.positionNode('flowchart LR\n A[One] --> B[Two] --> C[Three]','A',200,300));
 });
