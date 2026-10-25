@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-25",
+  "applicationSourceCommit": "6ece7c1db30e968739b53fed96c584464bbb0159",
+  "browser": {
+    "local": {
+      "status": "passed",
+      "failedTests": [],
+      "source": ".test-runs/voice-persona-browser-final/.last-run.json",
+      "tests": 3
+    },
+    "boundaries": {
+      "status": "passed",
+      "failedTests": [],
+      "source": ".test-runs/voice-boundaries-final/.last-run.json",
+      "tests": 2
+    },
+    "online": {
+      "status": "passed",
+      "failedTests": [],
+      "source": ".test-runs/voice-persona-online-final-proxy/.last-run.json",
+      "tests": 1
+    }
+  },
+  "unit": {
+    "voiceAndPersona": {
+      "passed": 4,
+      "failed": 0
+    },
+    "apiSerial": {
+      "passed": 39,
+      "failed": 0,
+      "skipped": 6
+    },
+    "web": {
+      "passed": 19,
+      "failed": 0
+    }
+  },
+  "isolatedPg": {
+    "status": "PASSED",
+    "port": 15449,
+    "provider": "explicit synthetic adapter",
+    "checks": [
+      "idempotency/conflict",
+      "org and actor RLS",
+      "forbidden scope",
+      "cancel clears media",
+      "hourly limit",
+      "concurrent refusal",
+      "two instances claim once",
+      "stale running unknown",
+      "expiry denial and cleanup",
+      "revocation during processing",
+      "redacted audit"
+    ]
+  },
+  "restart": {
+    "status": "PASSED",
+    "voiceJobsRetained": 14,
+    "personaProfilesRetained": 1
+  },
+  "realSpeech": "BLOCKED: no provider credentials",
+  "realisticVideo": "BLOCKED: no provider selected",
+  "actualAgentRuntime": "NOT_IMPLEMENTED",
+  "actualEmailSend": "NOT_RUN"
+}

@@ -24,6 +24,10 @@ test('Azure adapter is fail-closed; escaped SSML, final transcript, failed respo
   global.fetch=async()=>new Response(JSON.stringify({RecognitionStatus:'Success',DisplayText:'Synthetic hello 你好'}));
   assert.equal((await p.run('STT',wav(),'en-US',new AbortController().signal)).text,'Synthetic hello 你好');
   global.fetch=async()=>{calls++;return new Response('',{status:503});};const n=calls;await assert.rejects(p.run('TTS','x','en-US',new AbortController().signal));assert.equal(calls,n+1);
+  const aborted=new AbortController();aborted.abort();global.fetch=async(_url,opts)=>{calls++;assert.equal(opts.signal,aborted.signal);opts.signal.throwIfAborted();};
+  const beforeAbort=calls;await assert.rejects(p.run('STT',wav(),'zh-CN',aborted.signal),e=>e.name==='AbortError');assert.equal(calls,beforeAbort+1);
+  global.fetch=async()=>new Response(JSON.stringify({RecognitionStatus:'NoMatch',DisplayText:''}));await assert.rejects(p.run('STT',wav(),'zh-CN',new AbortController().signal));
+  global.fetch=async()=>new Response('not-riff');await assert.rejects(p.run('TTS','x','en-US',new AbortController().signal));
  }finally{global.fetch=old.fetch;for(const [k,v] of [['AZURE_SPEECH_KEY',old.key],['AZURE_SPEECH_REGION',old.region]]){if(v===undefined)delete process.env[k];else process.env[k]=v;}}
 });
 module.exports={wav};

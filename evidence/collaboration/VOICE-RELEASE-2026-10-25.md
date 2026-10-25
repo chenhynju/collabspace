@@ -1,5 +1,7 @@
 # 语音与数字形象正式站点发布
 
+当前前端为最终复核部署`dpl_3Ab9wM6uNvN9G79qA6m85xnmDfSv`，API仍为r20261025-04；下方按发布阶段保留历史身份。源码首个归档为`6ece7c1`/`collabspace-20261025-voice`，后续自测补充使用`collabspace-20261025-voice-selftest`标签。最终[功能清单](../../docs/collaboration/VOICE-PERSONA-STATUS.md)、[逐项自测](VOICE-SELFTEST-2026-10-25.md)为当前验收入口。
+
 2026-10-25，用户明确授权更新现有站点，并要求关注服务器CPU、内存和磁盘；资源不足时允许迁移到43.130.127.57。本次增量部署余量足够，未迁移项目，未修改其他项目、DNS或Office/正文WS服务。
 
 ## 运行身份

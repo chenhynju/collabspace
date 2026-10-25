@@ -15,6 +15,8 @@ const collabPort=Number(process.env.COLLAB_LOCAL_WS_PORT || 43122);
 for(const port of [dbPort,webPort,apiPort,collabPort])if(!Number.isInteger(port)||port<1024||port>65535)throw new Error('Invalid local port');
 const dir = join(root, ".test-runs", localName);
 mkdirSync(dir, { recursive: true });
+const skipSchemaPush=process.env.COLLAB_LOCAL_SKIP_SCHEMA_PUSH==='1';
+if(skipSchemaPush&&!existsSync(join(dir,'seeded')))throw new Error('Schema push may only be skipped for an initialized disposable database');
 const env = {
   ...process.env,
   DATABASE_ADMIN_URL:
@@ -81,7 +83,7 @@ async function main() {
     await admin.query("CREATE DATABASE collabspace");
   await admin.end();
   if(process.env.COLLAB_LOCAL_SKIP_GENERATE!=='1')await run([req.resolve("prisma/build/index.js"), "generate"]);
-  await run(
+  if(!skipSchemaPush) await run(
     [req.resolve("prisma/build/index.js"), "db", "push", "--skip-generate"],
     apiDir,
     { DATABASE_URL: env.DATABASE_ADMIN_URL },

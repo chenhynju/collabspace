@@ -32,6 +32,8 @@ node scripts/local-up.cjs
 
 local-up创建独立测试数据库并只对它执行迁移/seed。不得把生产DATABASE_URL替换进此流程。首次需现有Prisma客户端；没有生成产物时先用仓库db:generate脚本。测试角色为非owner的teamspace_app。
 
+已初始化且存在seeded标记的测试环境再次启动前，设置`COLLAB_LOCAL_SKIP_SCHEMA_PUSH=1`以保留由独立SQL管理的语音表，仍执行现有RLS和增量SQL迁移。未初始化环境不能使用该选项；不要用Prisma的accept-data-loss绕过保护。最终补测使用独立目录`voice-persona-final`、DB端口15449，其余端口不变；`VOICE_LOCAL_CONFIG=.test-runs/voice-persona-final/config.json`指定数据库补测配置，浏览器使用同目录COLLAB_BROWSER_CONFIG。不得与另一测试实例同时占用端口。
+
 ```powershell
 pnpm --filter @teamspace/api run build
 node --test apps/api/tests/voice.test.cjs

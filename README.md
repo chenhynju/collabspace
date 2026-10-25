@@ -1,5 +1,7 @@
 # CollabSpace — 多人实时协作文档
 
+2026-10-25：本轮语音与数字形象的[功能清单和待完成项](docs/collaboration/VOICE-PERSONA-STATUS.md)、[详细自测表](evidence/collaboration/VOICE-SELFTEST-2026-10-25.md)已整理；区分正式/本地成绩、替身、供应商阻塞和未验收项。
+
 2026-10-25：语音消息、3D卡通预览与邮件语音工具已更新到现有正式站点；云识别/合成和真人服务仍未配置。版本、CPU/内存/磁盘、备份与双账号正式验收见[语音与形象上线报告](evidence/collaboration/VOICE-RELEASE-2026-10-25.md)。
 
 2026-10-25：语音与数字形象规划已确定，涵盖IM、邮件及未来Agent/Skill；采用独立模块融入现有体系。需求、技术栈、范围及AT-VP01–08见 [语音与数字形象](docs/collaboration/VOICE-PERSONA.md)。已完成部分本地实现，实际通过项、供应商阻塞与未完成范围见[本地验收报告](evidence/collaboration/VOICE-PERSONA-2026-10-25.md)，不代表完整验收或生产发布。
