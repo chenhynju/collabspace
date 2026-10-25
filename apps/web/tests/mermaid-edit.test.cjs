@@ -61,3 +61,12 @@ test('layout refuses subgraphs, custom edges, self loops and parallel edges with
  const out={};vm.runInNewContext(ts.transpileModule(fs.readFileSync(require('node:path').join(__dirname,'../src/lib/mermaid-position.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}}).outputText,{exports:out});
  for(const source of ['flowchart LR\n A[One] --> A','flowchart LR\n A[One] --> B[Two]\n A --> B','flowchart LR\n A e1@--> B','flowchart LR\nsubgraph Team\n A[One]\nend'])assert.throws(()=>out.positionNode(source,'A',200,300));assert.doesNotThrow(()=>out.positionNode('flowchart LR\n A[One] --> B[Two] --> C[Three]','A',200,300));
 });
+
+test('canvas connection styles preserve position annotations and unsafe labels never mutate the source',()=>{
+ const source='flowchart LR\n A[Start]\n B[Finish]\n%% collab-position A 150 150\n%% collab-position B 450 300';
+ for(const [kind,op] of Object.entries({arrow:'-->',line:'---',dashed:'-.->',bold:'==>',both:'<-->'})){
+  const connected=connectFlowNodes(source,'A','B',kind,'Approved');assert.ok(connected.startsWith(source));assert.ok(connected.endsWith(`A ${op}|Approved| B`));assert.equal(connectFlowNodes(connected,'A','B',kind,'Approved'),connected);
+ }
+ for(const label of ['line\nbreak','bad|edge','<script>','"bad"'])assert.throws(()=>connectFlowNodes(source,'A','B','arrow',label));
+ assert.equal(source.split('collab-position').length,3);
+});

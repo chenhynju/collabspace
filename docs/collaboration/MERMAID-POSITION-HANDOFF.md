@@ -1,5 +1,7 @@
 # Mermaid 画布定位修复交接
 
+2026-10-26后续直接连线已完成：应用3e64a1d，r20261026-02，Vercel dpl_9ApApzADSftDrMha8xKY55dovWXg，正式4/4、Web23/23、生产构建38页通过。见[拖线验收](../../evidence/collaboration/MERMAID-CONNECT-2026-10-26.md)，标签collabspace-20261026-mermaid-connect。下文r01为前次发布，可回退。
+
 ## 已完成：2026-10-26正式发布
 
 本次接力已完成，勿重复启动。应用源码eb7966f，Vercel dpl_49sw1YognkLsUSiUkcpNt1ofFUCj，r20261026-01；正式4/4通过（3.6分钟），本地Web22项、38页生产构建通过。详见../../evidence/collaboration/MERMAID-POSITION-2026-10-25.md，中文演示链接在报告中。API/数据库未改；原r08部署保留回退。最终归档标签collabspace-20261026-mermaid。下面是历史交接资料，不是仍待执行清单。
