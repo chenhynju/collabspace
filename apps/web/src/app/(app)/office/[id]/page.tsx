@@ -6,6 +6,7 @@ import {api} from '@/lib/api';
 import {useAuthStore} from '@/store/auth';
 import {useRouter} from 'next/navigation';
 import {OfficeImagePreparation} from '@/components/office-image-preparation';
+import {OfficeFileActions} from '@/components/office-file-actions';
 
 export default function OfficePage({params}:{params:{id:string}}){
  const router=useRouter(),restoreIds=useRef<Record<string,string>>({});
@@ -34,6 +35,7 @@ export default function OfficePage({params}:{params:{id:string}}){
   <header className="flex flex-wrap gap-3 items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"><div><Link className="text-sm text-slate-500" href={state?.projectId?'/projects/'+state.projectId+'/content':'/collaboration'}>← 协作空间</Link><h1 className="font-semibold text-xl">{state?.title||'Office 协作文件'}</h1><p className="mt-1 text-xs text-slate-500">{state?.role==='OWNER'?'所有者':state?.role==='EDITOR'?'可编辑':state?.role==='VIEWER'?'只读':'正在验证权限'}</p></div><div className="flex flex-wrap items-center gap-3"><div aria-label="Office 在线参与者">{state?.users?.map((u:any)=><span className="mx-2" key={u.id}>{u.name}</span>)}</div><button className="rounded-lg border px-3 py-2 text-sm" onClick={()=>{const el=document.getElementById('office-history');el?.setAttribute('open','');el?.scrollIntoView({behavior:'smooth'});}}>历史版本</button>{state?.role==='OWNER'&&<button className="rounded-lg border px-3 py-2 text-sm" onClick={()=>document.getElementById('office-access')?.scrollIntoView({behavior:'smooth'})}>共享权限</button>}</div></header>
   <div className="flex flex-wrap gap-3 items-center rounded-xl border border-slate-200 bg-white p-3 text-sm"><span role="status">服务器版本 v{state?.revision||'—'} · {state?.phase||'正在连接'}</span><button className="px-3 py-1 border rounded" disabled={!['OWNER','EDITOR'].includes(state?.role)||state?.phase!=='OPEN'} onClick={async()=>{try{const r=await api.post(base+'/save');setMessage(r.data.error===0?'已请求检查点；请等待服务器版本号更新。':r.data.error===4?'引擎没有新增更改。':'检查点请求失败。')}catch{setMessage('保存请求失败，内容未确认持久化。')}}}>保存到服务器</button><button className="px-3 py-1 border rounded" onClick={()=>download()}>下载最新保存版本</button></div>
   {error&&<p role="alert" className="text-red-700">{error}</p>}<p className="text-sm text-slate-500">{message}</p>
+  {state&&<OfficeFileActions key={org+':'+params.id} documentId={params.id} title={state.title} role={state.role} versions={state.versions||[]} onRenamed={title=>setState((s:any)=>({...s,title}))} onCopy={id=>router.push('/office/'+id)}/>}
   {ready&&['OWNER','EDITOR'].includes(state?.role)&&<OfficeImagePreparation key={org+':'+params.id}/>}
   {state?.error&&state.phase!=='FROZEN'&&<p role="alert" className="text-amber-700">有未合并的保存结果，请文件所有者检查“恢复候选”；当前显示的版本号仅代表已确认保存。</p>}
   {state?.phase==='FROZEN'&&state?.role==='OWNER'&&<button className="border p-2" onClick={async()=>{try{await api.post(base+'/restart',{generation:state.generation});setEpoch(v=>v+1)}catch{setMessage('恢复失败，请重新核对会话状态。')}}}>确认从最后保存版本重新打开（不合并恢复候选）</button>}

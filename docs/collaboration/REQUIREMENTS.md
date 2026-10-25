@@ -1,5 +1,7 @@
 # CollabSpace — 需求分析与产品决策
 
+2026-10-25：用户要求三类Office均衡增强、以90%以上为目标；60项日常基线及非全量90%声明、文件操作/版本PDF的P-OFX与验收见 [OFFICE-PARITY.md](OFFICE-PARITY.md)。
+
 2026-10-25：Office插图前可选本地优化副本、保留原图与精确性能验收，P-IMG01–05 / BR / D / AT 见 [图片优化](OFFICE-IMAGE-PREPARATION.md)。
 
 2026-10-24 用户追加：DeepSeek协作助手、Word/PDF摘要、行动项、确认后项目邮件、文字朗读及中英文互译；P-A01–A07 / BR / D / AT 见 [协作助手](ASSISTANT.md)，覆盖旧的AI不在首版范围描述。

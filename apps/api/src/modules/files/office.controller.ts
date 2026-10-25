@@ -15,6 +15,15 @@ class CreateOfficeDto {
  @IsString() @Length(1,100) projectId:string;
  @IsUUID() requestId:string;
 }
+class RenameOfficeDto {
+ @IsString() @Length(1,150) title:string;
+ @IsString() @Length(1,160) expectedTitle:string;
+}
+class OfficeVersionDto { @IsUUID() versionId:string; }
+class CopyOfficeDto extends OfficeVersionDto {
+ @IsString() @Length(1,150) title:string;
+ @IsUUID() requestId:string;
+}
 
 @Controller('office')
 export class OfficeController {
@@ -31,6 +40,16 @@ export class OfficeController {
  state(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Param('id') id:string,@Query('sessionId') sessionId:string){return this.call('heartbeat',this.ctx(o,u),id,sessionId)}
  @Post(':id/save') @UseGuards(OrgContextGuard)
  save(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Param('id') id:string){return this.call('force',this.ctx(o,u),id)}
+ @Post(':id/name') @UseGuards(OrgContextGuard)
+ rename(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Param('id') id:string,@Body() b:RenameOfficeDto){return this.call('renameOffice',this.ctx(o,u),id,b)}
+ @Post(':id/copy') @UseGuards(OrgContextGuard,PermissionsGuard) @RequirePermissions('file:manage')
+ copy(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Param('id') id:string,@Body() b:CopyOfficeDto){return this.call('copyOffice',this.ctx(o,u),id,b)}
+ @Post(':id/export/pdf') @UseGuards(OrgContextGuard)
+ async exportPdf(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Param('id') id:string,@Body() b:OfficeVersionDto,@Res() res:Response){
+  const result=await this.call('exportPdf',this.ctx(o,u),id,b.versionId);
+  res.setHeader('Content-Type','application/pdf');res.setHeader('Cache-Control','no-store');res.setHeader('X-Content-Type-Options','nosniff');
+  res.setHeader('X-Office-Revision',String(result.revision));res.setHeader('Content-Disposition',"attachment; filename*=UTF-8''"+encodeURIComponent(result.name));res.send(result.bytes);
+ }
  @Post(':id/restart') @UseGuards(OrgContextGuard)
  restart(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Param('id') id:string,@Body() b:any){return this.call('restart',this.ctx(o,u),id,b.generation)}
  @Post(':id/restore') @UseGuards(OrgContextGuard)

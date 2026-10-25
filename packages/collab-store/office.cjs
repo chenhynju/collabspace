@@ -25,7 +25,7 @@ function validate(bytes,ext){
  return bytes;
 }
 class OfficeStore extends Store{
- constructor(url,options={}){super(url);this.options=options;this.registry=new Map();this.timer=null;this.busy=false;this.pendingDrops=new Set();this.dropped=new Set()}
+ constructor(url,options={}){super(url);this.options=options;this.registry=new Map();this.timer=null;this.busy=false;this.pendingDrops=new Set();this.dropped=new Set();this.exportJobs=new Set()}
  setting(key){return this.options[key]??process.env[key]}
  enabled(){return !!(this.setting('OFFICE_PUBLIC_URL')&&this.setting('OFFICE_INTERNAL_URL')&&this.setting('OFFICE_JWT_SECRET')&&this.setting('OFFICE_CAPABILITY_SECRET'))}
  async assertOfficeRuntime(){
@@ -112,7 +112,7 @@ class OfficeStore extends Store{
   if(session&&/^[0-9a-f-]{36}$/i.test(session))await c.query("UPDATE collab_office_lease SET expires_at=now()+interval '90 seconds' WHERE organization_id=$1 AND document_id=$2 AND user_id=$3 AND role=$4 AND generation=$5 AND id=$6",[ctx.org,id,ctx.user,d.role,h.generation,session]);
   const users=[];for(const sid of h.phase==='OPEN'?h.users:[]){const found=(await c.query('SELECT u.id,u.name FROM collab_office_lease l JOIN sys_user u ON u.id=l.user_id WHERE l.organization_id=$1 AND l.document_id=$2 AND l.id=$3',[ctx.org,id,sid])).rows[0];if(found&&!users.some(u=>u.id===found.id))users.push(found)}
   const versions=(await c.query("SELECT id,revision,created_at FROM collab_office_version WHERE organization_id=$1 AND document_id=$2 AND (revision IS NOT NULL OR $3='OWNER') ORDER BY created_at DESC LIMIT 50",[ctx.org,id,d.role])).rows;
-  return {id,projectId:d.project_id,title:d.title,role:d.role,revision:h.revision,generation:h.generation,phase:h.phase,error:h.error,users,versions};
+  return {id,projectId:d.project_id,title:d.title,extension:h.extension,role:d.role,revision:h.revision,generation:h.generation,phase:h.phase,error:h.error,users,versions};
  })}
  async leaseCheck(c,ctx,id,h){
   const leases=(await c.query('SELECT * FROM collab_office_lease WHERE organization_id=$1 AND document_id=$2 AND generation=$3 ORDER BY user_id,id',[ctx.org,id,h.generation])).rows;
@@ -147,15 +147,59 @@ class OfficeStore extends Store{
   for(const m of maps)try{await this.access(c,ctx,m.document_id)}catch(e){if([403,404,409].includes(e.status))hidden.add(m.file_id);else throw e}
   const map=new Map(maps.map(m=>[m.file_id,m]));return files.filter(f=>!hidden.has(f.id)).map(f=>{const m=map.get(f.id);return {...f,officeId:m?.document_id,officeRevision:m?.revision,lastEditedAt:m?.last_edited_at,lastEditor:m?.last_editor}});
  })}
- async restoreOffice(ctx,id,version,requestId){
+ async renameOffice(ctx,id,input){
+  return this.tx(ctx,async c=>{
+   const d=await this.access(c,ctx,id,'write'),h=await this.head(c,ctx,id);
+   const title=this.officeTitle(input?.title,h.extension);
+   if(input?.expectedTitle!==d.title)fail(409,'OFFICE_NAME_CONFLICT');
+   if(title===d.title)return {title};
+   await c.query('UPDATE collab_document SET title=$3,updated_at=now() WHERE organization_id=$1 AND id=$2',[ctx.org,id,title]);
+   await c.query('UPDATE prj_file SET name=$3 WHERE organization_id=$1 AND id=$2',[ctx.org,h.file_id,title]);
+   await this.audit(c,ctx,id,'office:rename',{titleHash:hash(d.title)},{titleHash:hash(title)});return {title};
+  });
+ }
+ officeTitle(value,extension){
+  const name=typeof value==='string'?value.trim():'';
+  if(!name||name.length>150||/[\x00-\x1f\x7f\\/\u202a-\u202e\u2066-\u2069]/.test(name))fail(400,'OFFICE_NAME_INVALID');
+  if(/\.(docx|xlsx|pptx)$/i.test(name)&&!name.toLowerCase().endsWith('.'+extension))fail(400,'OFFICE_NAME_EXTENSION');
+  const base=name.toLowerCase().endsWith('.'+extension)?name.slice(0,-extension.length-1):name;
+  if(!base.trim()||base==='.'||base==='..')fail(400,'OFFICE_NAME_INVALID');return base+'.'+extension;
+ }
+ async exportPdf(ctx,id,versionId){
+  if(!this.enabled())fail(503,'OFFICE_NOT_CONFIGURED');
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(versionId||''))fail(400,'OFFICE_EXPORT_VERSION');
+  const job=ctx.org+':'+ctx.user;if(this.exportJobs.has(job)||this.exportJobs.size>=2)fail(429,'OFFICE_EXPORT_BUSY');this.exportJobs.add(job);
+  try{
+   const source=await this.tx(ctx,async c=>{
+    const d=await this.access(c,ctx,id),h=await this.head(c,ctx,id);
+    const v=(await c.query('SELECT bytes,revision FROM collab_office_version WHERE organization_id=$1 AND document_id=$2 AND id=$3 AND revision IS NOT NULL',[ctx.org,id,versionId])).rows[0];
+    if(!v)fail(404,'NOT_FOUND');return {bytes:v.bytes,revision:v.revision,title:d.title,extension:h.extension};
+   });
+   const {convertPdf}=require('./office-pdf.cjs');
+   const bytes=await convertPdf({...source,org:ctx.org,id,versionId,internalUrl:this.setting('OFFICE_INTERNAL_URL'),signToken:p=>sign(p,this.setting('OFFICE_JWT_SECRET'))});
+   return await this.tx(ctx,async c=>{
+    await this.access(c,ctx,id);
+    await this.audit(c,ctx,id,'office:export-pdf',null,{versionId,revision:source.revision,size:bytes.length});
+    return {bytes,revision:source.revision,name:source.title.replace(/\.[^.]+$/,'')+'.pdf'};
+   });
+  }finally{this.exportJobs.delete(job)}
+ }
+ async copyOffice(ctx,id,input){
+  if(!input?.title)fail(400,'OFFICE_NAME_INVALID');
+  return this.restoreOffice(ctx,id,input.versionId,input.requestId,input.title);
+ }
+ async restoreOffice(ctx,id,version,requestId,copyTitle){
   const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   if(!uuid.test(version)||!uuid.test(requestId))fail(400,'OFFICE_RESTORE_ID');
   return this.tx(ctx,async c=>{
    const d=await this.access(c,ctx,id,'write'),h=await this.head(c,ctx,id);
+   await c.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))',['office:copy:'+ctx.org+':'+requestId]);
+   const requestedTitle=copyTitle===undefined?undefined:this.officeTitle(copyTitle,h.extension);
    const prior=(await c.query('SELECT * FROM collab_restore WHERE organization_id=$1 AND id=$2',[ctx.org,requestId])).rows[0];
-   if(prior){if(prior.document_id!==id||prior.version_id!==version||prior.actor_id!==ctx.user)fail(409,'OFFICE_RESTORE_CONFLICT');await this.access(c,ctx,prior.result_id);return {id:prior.result_id}}
+   if(prior){if(prior.document_id!==id||prior.version_id!==version||prior.actor_id!==ctx.user)fail(409,'OFFICE_RESTORE_CONFLICT');const result=await this.access(c,ctx,prior.result_id);if(requestedTitle&&result.title!==requestedTitle)fail(409,'OFFICE_RESTORE_CONFLICT');return {id:prior.result_id}}
    const v=(await c.query('SELECT * FROM collab_office_version WHERE organization_id=$1 AND document_id=$2 AND id=$3',[ctx.org,id,version])).rows[0];if(!v||(!v.revision&&d.role!=='OWNER'))fail(404,'NOT_FOUND');
-   const fileId=randomUUID(),generation=randomUUID(),name=('恢复副本-'+requestId.slice(0,8)+'-'+path.basename(d.title,path.extname(d.title))).slice(0,154)+'.'+h.extension;
+   if(requestedTitle&&!v.revision)fail(409,'OFFICE_COPY_UNCONFIRMED');
+   const fileId=randomUUID(),generation=randomUUID(),name=requestedTitle||('恢复副本-'+requestId.slice(0,8)+'-'+path.basename(d.title,path.extname(d.title))).slice(0,154)+'.'+h.extension;
    const root=path.resolve(this.setting('UPLOAD_ROOT')||'.uploads'),object=ctx.org+'/'+d.project_id+'/'+randomUUID(),target=path.resolve(root,object);
    if(!target.startsWith(root+path.sep))fail(400,'OFFICE_OBJECT_KEY');fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,v.bytes,{flag:'wx'});
    await c.query('INSERT INTO prj_file(id,organization_id,project_id,name,object_key,size,mime_type,version,uploaded_by,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,1,$8,now())',[fileId,ctx.org,d.project_id,name,object,v.bytes.length,'application/octet-stream',ctx.user]);

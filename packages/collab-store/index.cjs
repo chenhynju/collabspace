@@ -399,6 +399,7 @@ class Store {
       revision = z.number().int().positive().parse(input.revision);
     return this.tx(ctx, async (c) => {
       const d = await this.access(c, ctx, id, "write");
+      if (d.kind === 'OFFICE') fail(409, 'OFFICE_METADATA_REQUIRED');
       if (d.revision !== revision) fail(409, "REVISION_CONFLICT");
       await c.query(
         "UPDATE collab_document SET title=$1,revision=revision+1,updated_at=now() WHERE id=$2 AND organization_id=$3",
