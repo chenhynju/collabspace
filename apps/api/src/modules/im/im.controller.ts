@@ -20,6 +20,7 @@ import type { Request, Response } from 'express';
 import { mkdirSync, writeFileSync, createReadStream, statSync } from 'fs';
 import * as path from 'path';
 import { nanoid } from 'nanoid';
+import { wavInfo } from '../voice/voice-domain';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OrgContextGuard } from '../../common/guards/org-context.guard';
 import { PermissionsGuard } from '../../common/guards/permissions.guard';
@@ -446,8 +447,21 @@ export class ImController {
       });
       if (!myMs) throw new ForbiddenException({ code: 'NOT_MEMBER', message: '不是该会话成员' });
 
+      if(dto.requestId){
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${org.organizationId+':'+dto.requestId},0))`;
+        const existing=await tx.message.findFirst({where:{id:dto.requestId,organizationId:org.organizationId},include:{attachment:true}});
+        if(existing){
+          if(existing.conversationId!==id||existing.senderId!==me.id||existing.content!==dto.content||existing.type!==dto.type||existing.attachmentId!==(dto.attachmentId||null))throw new BadRequestException('发送编号已绑定不同消息');
+          return {...existing,attachment:existing.attachment?{...existing.attachment,size:existing.attachment.size.toString()}:null};
+        }
+      }
+      if(dto.attachmentId){
+        const attachment=await tx.messageAttachment.findFirst({where:{id:dto.attachmentId,organizationId:org.organizationId,conversationId:id,uploaderId:me.id}});
+        if(!attachment)throw new NotFoundException('附件不存在或不属于当前会话/发送人');
+      }
       const msg = await tx.message.create({
         data: {
+          ...(dto.requestId?{id:dto.requestId}:{}),
           organizationId: org.organizationId,
           conversationId: id,
           senderId: me.id,
@@ -471,7 +485,7 @@ export class ImController {
         action: 'im:message:send',
         resourceType: 'Message',
         resourceId: msg.id,
-        after: { type: dto.type, content: dto.content },
+        after: { type: dto.type, characters: dto.content.length, attachmentId:dto.attachmentId||null },
         traceId: req.traceId,
         ip: req.ip,
         requestMethod: 'POST',
@@ -515,6 +529,9 @@ export class ImController {
     @Req() req: Request,
   ) {
     if (!file) throw new BadRequestException({ code: 'FILE_REQUIRED', message: '缺少上传文件' });
+    if(file.mimetype==='audio/wav'||/\.wav$/i.test(file.originalname)){
+      wavInfo(file.buffer);file.mimetype='audio/wav';
+    }
 
     return this.prisma.withOrgUser(org.organizationId, me.id, async (tx) => {
       const myMs = await tx.conversationMember.findFirst({

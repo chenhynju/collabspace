@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import MessageBubble from './MessageBubble';
 import MessageComposer from './MessageComposer';
+import { PersonaPanel } from '@/components/personas/PersonaPanel';
 
 export default function ChatWindow() {
   const currentConversationId = useImStore((s) => s.currentConversationId);
@@ -42,6 +43,7 @@ export default function ChatWindow() {
     <>
       <div className="px-4 py-3 border-b border-slate-200 bg-white">
         <h2 className="font-semibold text-slate-800">{conv.title || '未命名会话'}</h2>
+        <PersonaPanel/>
       </div>
       <div className="flex-1 overflow-y-auto p-4 bg-slate-50">
         {messages.map((msg) => (
@@ -49,7 +51,7 @@ export default function ChatWindow() {
         ))}
         <div ref={bottomRef} />
       </div>
-      <MessageComposer conversationId={conv.id} />
+      <MessageComposer key={`${currentOrgId}:${conv.id}`} conversationId={conv.id} />
     </>
   );
 }

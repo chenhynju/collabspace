@@ -1,11 +1,16 @@
 'use client';
+import {useState} from 'react';
 import { useAuthStore } from '@/store/auth';
 import type { Message } from '@/store/im';
+import { useImStore } from '@/store/im';
+import { PrivateAudio, VoiceTools } from '@/components/voice/VoiceTools';
 
 const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1').replace('/api/v1', '');
 
 export default function MessageBubble({ message }: { message: Message }) {
   const me = useAuthStore((s) => s.user);
+  const conversationId=useImStore(s=>s.currentConversationId);
+  const [speechOpen,setSpeechOpen]=useState(false);
   const isMe = message.senderId === me?.id;
   const senderName = message.senderName || message.sender?.name || '';
 
@@ -31,7 +36,8 @@ export default function MessageBubble({ message }: { message: Message }) {
               className="max-w-[240px] max-h-[240px] rounded"
             />
           )}
-          {message.type === 'FILE' && message.attachment && (
+          {message.type === 'FILE' && message.attachment?.mimeType==='audio/wav' && <><PrivateAudio attachmentId={message.attachment.id}/><div className="whitespace-pre-wrap">{message.content}</div></>}
+          {message.type === 'FILE' && message.attachment && message.attachment.mimeType!=='audio/wav' && (
             <a
               href={`${apiBase}/messages/attachments/${message.attachment.id}/download`}
               target="_blank"
@@ -43,6 +49,7 @@ export default function MessageBubble({ message }: { message: Message }) {
             </a>
           )}
         </div>
+        {message.type==='TEXT'&&conversationId&&<details onToggle={e=>setSpeechOpen(e.currentTarget.open)} className="text-slate-600"><summary className="cursor-pointer text-xs">朗读消息</summary>{speechOpen&&<VoiceTools scope={{conversationId}} text={message.content}/>}</details>}
         <span className="text-[10px] text-slate-400 mt-0.5">
           {new Date(message.createdAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
         </span>

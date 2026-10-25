@@ -1,15 +1,21 @@
 ﻿﻿﻿﻿﻿﻿﻿'use client';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { api } from '@/lib/api';
 import { useImStore } from '@/store/im';
+import { VoiceTools } from '@/components/voice/VoiceTools';
+import { useAuthStore } from '@/store/auth';
 
 export default function MessageComposer({ conversationId }: { conversationId: string }) {
+  const org=useAuthStore(s=>s.currentOrgId),user=useAuthStore(s=>s.user?.id),alive=useRef(true);
+  useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
+  const current=()=>alive.current&&useAuthStore.getState().currentOrgId===org&&useAuthStore.getState().user?.id===user&&useImStore.getState().currentConversationId===conversationId;
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const sendingRef = useRef(false);
   const appendMessage = useImStore((s) => s.appendMessage);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const voiceIntent=useRef<{file:File;hash:string;content:string;requestId:string;attachmentId?:string}|null>(null);
 
   const sendText = async () => {
     if (!text.trim() || sendingRef.current) return;
@@ -20,6 +26,7 @@ export default function MessageComposer({ conversationId }: { conversationId: st
         type: 'TEXT',
         content: text.trim(),
       });
+      if(!current())return;
       appendMessage(res.data);
       setText('');
     } catch (e) {
@@ -47,11 +54,13 @@ export default function MessageComposer({ conversationId }: { conversationId: st
       const attRes = await api.post(`/conversations/${conversationId}/attachments`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
+      if(!current())return;
       const msgRes = await api.post(`/conversations/${conversationId}/messages`, {
         type,
         content: file.name,
         attachmentId: attRes.data.id,
       });
+      if(!current())return;
       appendMessage(msgRes.data);
     } catch (e) {
       console.error('upload failed', e);
@@ -94,6 +103,23 @@ export default function MessageComposer({ conversationId }: { conversationId: st
           发送
         </button>
       </div>
+      <VoiceTools scope={{conversationId}} text={text} onTranscript={value=>setText(value)} onSendAudio={async file=>{
+        if(sendingRef.current)throw Error('消息正在发送');
+        sendingRef.current=true;setSending(true);
+        try{
+          const content=text.trim()||'语音消息';
+          const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',await file.arrayBuffer()))).map(v=>v.toString(16).padStart(2,'0')).join('');
+          if(!current())throw Error('会话已切换，已停止发送');
+          if(!voiceIntent.current||voiceIntent.current.content!==content||voiceIntent.current.hash!==hash)voiceIntent.current={file,hash,content,requestId:crypto.randomUUID()};
+          const intent=voiceIntent.current;
+          if(!intent.attachmentId){const form=new FormData();form.append('file',intent.file);const attachment=await api.post(`/conversations/${conversationId}/attachments`,form);intent.attachmentId=attachment.data.id;}
+          if(!current())throw Error('会话已切换，已停止发送');
+          const response=await api.post(`/conversations/${conversationId}/messages`,{type:'FILE',content:intent.content,attachmentId:intent.attachmentId,requestId:intent.requestId});
+          if(!current())return;
+          voiceIntent.current=null;
+          appendMessage(response.data);setText('');
+        }finally{sendingRef.current=false;setSending(false);}
+      }}/>
       <input
         ref={imageInputRef}
         type="file"

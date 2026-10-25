@@ -27,6 +27,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { DocumentsController } from './modules/documents/documents.controller';
 import { GroupsModule } from './modules/groups/groups.module';
 import { AssistantModule } from './modules/assistant/assistant.module';
+import { VoiceModule } from './modules/voice/voice.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { AssistantModule } from './modules/assistant/assistant.module';
     PrismaModule,
     GroupsModule,
     AssistantModule,
+    VoiceModule,
     RealtimeModule,
     AuthModule,
     UsersModule,

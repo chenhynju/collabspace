@@ -1,0 +1,14 @@
+{
+  "at": "2026-10-25T10:55:29.401Z",
+  "api": "https://collabspace-api.purelamp.uk/api/v1",
+  "status": "PASSED",
+  "checks": [
+    "authenticated voice status",
+    "human persona read",
+    "unconfigured TTS refuses 503 without paid call",
+    "foreign organization rejected 403",
+    "existing Linux DOCX parser synthetic round trip"
+  ],
+  "cloudSpeechConfigured": false,
+  "realisticConfigured": false
+}

@@ -6,6 +6,8 @@ import { Modal,Button,Card,inputCls } from '@/components/ui';
 import {FilePicker} from '@/components/file-picker';
 import {assistantTools} from './assistant-tools';
 import {Sparkles} from 'lucide-react';
+import {VoiceTools} from '@/components/voice/VoiceTools';
+import {PersonaPanel} from '@/components/personas/PersonaPanel';
 
 export default function AssistantPanel({initialMode='summary',projectId='',active=true,onProjectChange}:{initialMode?:string;projectId?:string;active?:boolean;onProjectChange?:(id:string)=>void}) {
   const org = useAuthStore(s=>s.currentOrgId);
@@ -52,6 +54,7 @@ function AssistantWorkspace({org,user,initialMode,projectId,active,onProjectChan
   },[org,user,draftKey]);
   const stop=()=>{window.speechSynthesis?.cancel();setSpeaking(false);};
   const reset=()=>{generation.current++;controller.current?.abort();setBusy(false);stop();setResult('');setInfo('');setError('');};
+  useEffect(()=>{if(projectId!==project){reset();setText('');setTo('');setHistory([]);setProject(projectId);}},[projectId]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(()=>{if(!active){generation.current++;controller.current?.abort();setBusy(false);window.speechSynthesis?.cancel();setSpeaking(false);}},[active]);
   const failure=(e:any)=>setError(typeof e.response?.data?.message==='string'?e.response.data.message:'操作失败，请检查网络后重试');
   const generate=async()=>{
@@ -93,14 +96,17 @@ function AssistantWorkspace({org,user,initialMode,projectId,active,onProjectChan
     <label className="block">项目<select aria-label="项目" className={cls} disabled={mailBusy} value={project} onChange={e=>{reset();setHistory([]);setText('');setTo('');setProject(e.target.value);onProjectChange?.(e.target.value);}}><option value="">请选择可访问项目</option>{projects.map(p=><option key={p.id} value={p.id}>{p.name}</option>)}</select></label>
     <FilePicker key={project} label="导入资料" disabled={!project||busy||mailBusy} accept=".docx,.pdf,.txt,.md" onFile={f=>void upload(f)} hint="DOCX、文字型 PDF（前30页）、TXT、MD · 最大5MB。仅提取文字，扫描件需先OCR。"/>
     <label className="block">资料正文<textarea aria-label="资料正文" className={cls} rows={9} maxLength={100000} value={text} onChange={e=>{reset();setText(e.target.value);}} placeholder="粘贴会议纪要、需求或交付说明（至少50字）"/></label>
+    {project&&<VoiceTools scope={{projectId:project}} text={text} active={active} onTranscript={value=>{reset();setText(value);}}/>}
     <div className="flex flex-wrap items-center gap-3"><Button disabled={!project||text.trim().length<(translating?1:50)||(translating&&text.length>1200)||busy||mailBusy||configured!==true} onClick={generate}><Sparkles size={16}/>{busy?'处理中…':'生成'}</Button><span className="text-xs text-slate-500">{text.length}字；{translating&&text.length>1200?'超过翻译上限，请分段；':''}无自动重试</span></div>
     <p className="text-xs leading-5 text-slate-500">仅点击生成时调用 DeepSeek。{translating?'翻译每次最多1200字。':'摘要、行动项与邮件使用前6000字。'}生成前请核对资料。</p>
     <details className="text-xs leading-5 text-slate-500"><summary className="cursor-pointer">用量、隐私与朗读说明</summary><p className="mt-2">摘要/行动项/邮件输出上限700 token；翻译1200 token。每个组织用户每小时10次，相同内容15分钟内复用，无自动付费重试。生成时将文本发送至DeepSeek。朗读前4000字，不消耗模型 token；系统语音可能使用浏览器供应商的在线服务。</p></details>
     </Card>
     <div className="min-w-0 space-y-4">
+    <PersonaPanel active={active}/>
     {error&&<p role="alert" className="text-red-700">{error}</p>}{info&&<p role="status" className="text-sm text-slate-600">{info}</p>}
     {!result&&mode!=='email'&&<Card className="flex min-h-80 flex-col items-center justify-center gap-3 p-8 text-center"><Sparkles size={32} className="text-indigo-300"/><h3 className="font-semibold">生成结果将显示在这里</h3><p className="text-sm text-slate-500">上传或粘贴资料，点击生成。你可以编辑、复制和朗读结果。</p></Card>}
     {(result||mode==='email')&&<section className="space-y-3 rounded-xl border bg-white p-5"><h2 className="font-semibold">{mode==='email'?'邮件草稿（也可直接编写）':'生成结果'}</h2><label className="block">可修改结果<textarea aria-label="可修改结果" className={cls} disabled={mailBusy} rows={9} maxLength={10000} value={result} onChange={e=>{stop();setResult(e.target.value);}}/></label>
+      {project&&<VoiceTools scope={{projectId:project}} text={result} active={active&&!mailBusy} onTranscript={value=>{stop();setResult(value);}}/>}
       <div className="flex flex-wrap gap-3"><button className={button} disabled={!result.trim()} onClick={async()=>{try{await navigator.clipboard.writeText(result);setInfo('已复制');}catch{setError('复制失败，请选中文字手动复制');}}}>复制</button><button className={button} disabled={!speechAvailable||!result.trim()} onClick={speaking?()=>{if(window.speechSynthesis.paused)window.speechSynthesis.resume();else window.speechSynthesis.pause();}:speak}>{speaking?'暂停 / 继续朗读':'朗读结果'}</button><button className={button} disabled={!speaking} onClick={stop}>停止朗读</button></div>
       {mode==='email'&&<form className="space-y-3 border-t pt-4" onSubmit={e=>{e.preventDefault();const hash=JSON.stringify([project,to.trim(),subject.trim(),result.trim()]);if(mailUncertain&&mailIntent.current?.hash!==hash){setError('上次发送结果待核查，请先刷新记录；如需重试，请恢复原收件人、主题和正文，勿新建重复邮件。');return;}if(mailIntent.current?.hash!==hash)mailIntent.current={hash,id:crypto.randomUUID()};setPreview({to:to.trim(),subject:subject.trim(),text:result.trim(),projectId:project,requestId:mailIntent.current.id});}}><label className="block">收件人<input className={cls} disabled={mailBusy} type="email" required value={to} onChange={e=>setTo(e.target.value)}/></label><label className="block">主题<input className={cls} disabled={mailBusy} required maxLength={160} value={subject} onChange={e=>setSubject(e.target.value)}/></label><div className="flex flex-wrap gap-3"><button className={button} type="submit" disabled={!project||!result.trim()||!mailReady||mailBusy}>预览并发送邮件</button><button className={button} type="button" disabled={!project} onClick={()=>void loadHistory()}>刷新发送记录</button></div><p className="text-xs text-slate-500">{mailReady?'使用现有Resend服务，需有项目写入及邀请发送权限；每小时最多20封。':'未配置真实邮件服务，当前不能发信。'} 发送记录不保存收件人和正文；结果不确定时保留相同编号重试，不自动重发。</p></form>}
     </section>}

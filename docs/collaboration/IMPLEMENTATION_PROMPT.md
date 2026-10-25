@@ -1,5 +1,7 @@
 # 可直接交给开发 Agent 的 Prompt
 
+2026-10-25：语音与数字形象规划已确定，涵盖IM、邮件及未来Agent/Skill；采用独立模块融入现有体系。需求、技术栈、范围及AT-VP01–08见 [语音与数字形象](VOICE-PERSONA.md)。已完成部分本地实现，实际通过项、供应商阻塞与未完成范围见[本地验收报告](../../evidence/collaboration/VOICE-PERSONA-2026-10-25.md)，不代表完整验收或生产发布。
+
 2026-10-24 最新授权增加协作助手。按 [ASSISTANT.md](ASSISTANT.md) 实现与验收摘要、行动项、中英互译、朗读和预览确认后的项目邮件。DeepSeek按需且有限额；开发不发真实测试邮件，不自动部署生产。保留共享工作树，实际进展见 ../../evidence/collaboration/ASSISTANT-2026-10-24.md。
 
 2026-10-24：统一协作空间、空白 Office 创建和入口/权限验收，见 [UNIFIED-WORKSPACE.md](UNIFIED-WORKSPACE.md)。

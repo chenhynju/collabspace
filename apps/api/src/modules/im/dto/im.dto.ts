@@ -25,6 +25,9 @@ export class AddMembersDto {
 }
 
 export class SendMessageDto {
+  @IsOptional()
+  @IsUUID('4')
+  requestId?: string;
   @IsIn(['TEXT', 'IMAGE', 'FILE'])
   type!: 'TEXT' | 'IMAGE' | 'FILE';
 

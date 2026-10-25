@@ -1,5 +1,9 @@
 # CollabSpace — 多人实时协作文档
 
+2026-10-25：语音消息、3D卡通预览与邮件语音工具已更新到现有正式站点；云识别/合成和真人服务仍未配置。版本、CPU/内存/磁盘、备份与双账号正式验收见[语音与形象上线报告](evidence/collaboration/VOICE-RELEASE-2026-10-25.md)。
+
+2026-10-25：语音与数字形象规划已确定，涵盖IM、邮件及未来Agent/Skill；采用独立模块融入现有体系。需求、技术栈、范围及AT-VP01–08见 [语音与数字形象](docs/collaboration/VOICE-PERSONA.md)。已完成部分本地实现，实际通过项、供应商阻塞与未完成范围见[本地验收报告](evidence/collaboration/VOICE-PERSONA-2026-10-25.md)，不代表完整验收或生产发布。
+
 2026-10-25：协作助手（Word/PDF摘要、行动项、确认后邮件、中英翻译、朗读）、Office文件操作/PDF和本地图片准备已部署；入口 [协作助手](https://collabspace.purelamp.uk/assistant)。实际验收、运行版本、备份及回退见 [发布记录](evidence/collaboration/RELEASE-2026-10-25.md)。
 
 2026-10-24：多项目 Resend 回调验签、业务分流、持久化队列与其他项目适配补丁，见 [邮件回调路由](docs/collaboration/MAIL-WEBHOOK-ROUTING.md)。

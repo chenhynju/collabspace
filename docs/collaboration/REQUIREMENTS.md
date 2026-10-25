@@ -2,6 +2,8 @@
 
 2026-10-25：合并协作空间与助手、图标直达功能、上传控件及响应式布局，P-UX / BR / D / AT 见 [统一工作区 UI/UX](WORKSPACE-UX.md)。
 
+2026-10-25：语音与数字形象规划已确定，涵盖IM、邮件及未来Agent/Skill；采用独立模块融入现有体系。需求、技术栈、范围及AT-VP01–08见 [语音与数字形象](VOICE-PERSONA.md)。已完成部分本地实现，实际通过项、供应商阻塞与未完成范围见[本地验收报告](../../evidence/collaboration/VOICE-PERSONA-2026-10-25.md)，不代表完整验收或生产发布。
+
 2026-10-25：用户要求三类Office均衡增强、以90%以上为目标；60项日常基线及非全量90%声明、文件操作/版本PDF的P-OFX与验收见 [OFFICE-PARITY.md](OFFICE-PARITY.md)。
 
 2026-10-25：Office插图前可选本地优化副本、保留原图与精确性能验收，P-IMG01–05 / BR / D / AT 见 [图片优化](OFFICE-IMAGE-PREPARATION.md)。
