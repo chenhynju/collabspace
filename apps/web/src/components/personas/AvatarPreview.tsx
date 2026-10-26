@@ -1,40 +1,32 @@
-'use client';
+"use client";
 import {useEffect,useRef,useState} from 'react';
+import {characters,mouthAt,type VisemeFrame} from './character-catalog';
+export type CharacterPlayback={track:VisemeFrame[];audio:HTMLAudioElement};
 
-export default function AvatarPreview({speaking=false,active=true,vrmUrl}:{speaking?:boolean;active?:boolean;vrmUrl?:string}){
- const host=useRef<HTMLDivElement>(null),[error,setError]=useState('');
- const motion=useRef(speaking);motion.current=speaking;
- const level=useRef(0);
- useEffect(()=>{const listener=(event:Event)=>{level.current=(event as CustomEvent<number>).detail||0;};window.addEventListener('collabspace:voice-level',listener);return()=>window.removeEventListener('collabspace:voice-level',listener);},[]);
+/** Real VRM assets only. A portrait fallback must never claim to be animated 3D. */
+export default function AvatarPreview({active=true,vrmUrl,playback}:{speaking?:boolean;active?:boolean;vrmUrl?:string;playback?:CharacterPlayback|null}){
+ const host=useRef<HTMLDivElement>(null),[error,setError]=useState(''),[loaded,setLoaded]=useState(false),current=useRef(playback);current.current=playback;
  useEffect(()=>{
-  if(!active||!host.current)return;
-  let disposed=false,frame=0,renderer:any,scene:any,vrm:any,observer:ResizeObserver|undefined;
-  const element=host.current;
-  const resources:any[]=[];
-  void (async()=>{
-   const THREE=await import('three');if(disposed)return;
-   scene=new THREE.Scene();scene.background=new THREE.Color('#eef2ff');
-   const camera=new THREE.PerspectiveCamera(32,1,0.1,100);camera.position.set(0,1.3,4.4);camera.lookAt(0,1.05,0);
-   renderer=new THREE.WebGLRenderer({antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));element.appendChild(renderer.domElement);
-   scene.add(new THREE.HemisphereLight(0xffffff,0x556688,2));const light=new THREE.DirectionalLight(0xffffff,3);light.position.set(2,3,4);scene.add(light);
-   const head=new THREE.Group();head.position.y=1.4;scene.add(head);
-   const sphere=(parent:any,color:number,x:number,y:number,z:number,sx:number,sy:number,sz:number)=>{const g=new THREE.SphereGeometry(1,24,16),m=new THREE.MeshStandardMaterial({color,roughness:0.65});resources.push(g,m);const mesh=new THREE.Mesh(g,m);mesh.position.set(x,y,z);mesh.scale.set(sx,sy,sz);parent.add(mesh);return mesh;};
-   sphere(head,0xffcfad,0,0,0,0.43,0.48,0.38);sphere(head,0x26334d,0,0.3,-0.04,0.44,0.24,0.37);
-   sphere(head,0x26334d,-0.15,0.03,0.35,0.04,0.055,0.03);sphere(head,0x26334d,0.15,0.03,0.35,0.04,0.055,0.03);
-   const mouth=sphere(head,0x9b3448,0,-0.18,0.36,0.12,0.025,0.025);
-   sphere(scene,0x6366f1,0,0.54,0,0.55,0.5,0.29);
-   if(vrmUrl){
-    const [{GLTFLoader},{VRMLoaderPlugin}]=await Promise.all([import('three/addons/loaders/GLTFLoader.js'),import('@pixiv/three-vrm')]);if(disposed)return;
-    const loader=new GLTFLoader();loader.register(parser=>new VRMLoaderPlugin(parser));
-    const gltf=await loader.loadAsync(vrmUrl);vrm=gltf.userData.vrm;
-    if(disposed){gltf.scene.traverse((o:any)=>{o.geometry?.dispose();const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach((m:any)=>m?.dispose());});return;}
-    if(!vrm)throw Error('不是有效VRM模型');
-    head.visible=false;scene.children.filter((o:any)=>o.isMesh).forEach((o:any)=>o.visible=false);scene.add(vrm.scene);vrm.scene.rotation.y=Math.PI;
-   }
-   observer=new ResizeObserver(()=>{if(!renderer)return;const width=element.clientWidth;renderer.setSize(width,230);camera.aspect=width/230;camera.updateProjectionMatrix();});observer.observe(element);
-   const clock=new THREE.Clock();const animate=()=>{if(disposed)return;frame=requestAnimationFrame(animate);const dt=clock.getDelta(),t=clock.elapsedTime,amount=motion.current?Math.abs(Math.sin(t*15))*.5:level.current;head.rotation.y=Math.sin(t*.5)*.06;mouth.scale.y=.025+amount*.18;vrm?.expressionManager?.setValue('aa',amount);vrm?.update(dt);renderer.render(scene,camera);};animate();
-  })().catch(()=>{if(!disposed)setError('3D预览不可用，请检查WebGL或模型文件');});
-  return()=>{disposed=true;cancelAnimationFrame(frame);observer?.disconnect();scene?.traverse((o:any)=>{o.geometry?.dispose();const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach((m:any)=>{if(m){Object.values(m).forEach((v:any)=>{if(v?.isTexture)v.dispose();});m.dispose();}});});resources.forEach(r=>r.dispose());renderer?.dispose();renderer?.domElement.remove();};
+  setError('');setLoaded(false);if(!active||!vrmUrl||!host.current)return;
+  let disposed=false,frame=0,renderer:any,scene:any,vrm:any,observer:ResizeObserver|undefined;const element=host.current;
+  const disposeScene=(root:any)=>root?.traverse((o:any)=>{o.geometry?.dispose();const ms=Array.isArray(o.material)?o.material:[o.material];ms.forEach((m:any)=>{if(m){Object.values(m).forEach((v:any)=>{if(v?.isTexture)v.dispose();});m.dispose();}});});
+  const contextLost=(event:Event)=>{event.preventDefault();cancelAnimationFrame(frame);setLoaded(false);setError('3D渲染已停止，显示静态形象。请重新打开预览。');};
+  void(async()=>{
+   const [THREE,{GLTFLoader},{VRMLoaderPlugin}]=await Promise.all([import('three'),import('three/addons/loaders/GLTFLoader.js'),import('@pixiv/three-vrm')]);if(disposed)return;
+   const loader=new GLTFLoader();loader.register(parser=>new VRMLoaderPlugin(parser));const gltf=await loader.loadAsync(vrmUrl);if(disposed){disposeScene(gltf.scene);return;}
+   vrm=gltf.userData.vrm;if(!vrm){disposeScene(gltf.scene);throw Error('不是有效VRM模型');}
+   scene=new THREE.Scene();scene.background=new THREE.Color('#f3f0fa');scene.add(vrm.scene);vrm.scene.rotation.y=Math.PI;
+   const camera=new THREE.PerspectiveCamera(30,1,.1,30);const head=vrm.humanoid?.getNormalizedBoneNode('head');const at=new THREE.Vector3(0,1.45,0);if(head)head.getWorldPosition(at);camera.position.set(at.x,at.y,at.z+1.8);camera.lookAt(at.x,at.y-.12,at.z);
+   renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.domElement.addEventListener('webglcontextlost',contextLost);element.appendChild(renderer.domElement);
+   scene.add(new THREE.HemisphereLight(0xffffff,0x7c7490,2));const light=new THREE.DirectionalLight(0xffffff,2);light.position.set(2,3,4);scene.add(light);
+   observer=new ResizeObserver(()=>{const w=element.clientWidth;if(!w)return;renderer.setSize(w,300);camera.aspect=w/300;camera.updateProjectionMatrix();});observer.observe(element);
+   const clock=new THREE.Clock();let last=0;const reduced=window.matchMedia('(prefers-reduced-motion: reduce)');
+   const animate=()=>{if(disposed)return;frame=requestAnimationFrame(animate);if(document.hidden||clock.elapsedTime-last<1/30){clock.getDelta();return;}const dt=Math.min(clock.getDelta(),.1),t=clock.elapsedTime;last=t;const p=current.current,w=mouthAt(p?.track||[],p?.audio.currentTime||0,!!p&&!p.audio.paused&&!p.audio.ended&&!document.hidden);Object.entries(w).forEach(([k,v])=>vrm.expressionManager?.setValue(k,v));
+    if(!reduced.matches){const blink=Math.max(0,1-Math.abs((t%4.7)-.12)/.09);vrm.expressionManager?.setValue('blink',blink);const neck=vrm.humanoid?.getNormalizedBoneNode('neck');if(neck)neck.rotation.y=Math.sin(t*.35)*.025;}else vrm.expressionManager?.setValue('blink',0);
+    vrm.update(dt);renderer.render(scene,camera);
+   };setLoaded(true);animate();
+  })().catch(()=>{if(!disposed){setLoaded(false);setError('模型无法加载，显示静态形象。');}});
+  return()=>{disposed=true;cancelAnimationFrame(frame);observer?.disconnect();disposeScene(scene);renderer?.domElement.removeEventListener('webglcontextlost',contextLost);renderer?.dispose();renderer?.domElement.remove();};
  },[active,vrmUrl]);
- return <div><div ref={host} aria-label="3D卡通预览" className="h-[230px] w-full overflow-hidden rounded-xl"/>{error&&<p role="alert">{error}</p>}</div>;
+ return <div className="overflow-hidden rounded-2xl border border-violet-100 bg-violet-50"><div className="relative h-[300px]" aria-label={vrmUrl?'VRM角色预览':'Agent静态形象'}>{(!loaded||!vrmUrl)&&<img src={characters[0].poster} alt="原创Agent小岚，短发、浅紫外套的职场助手" className="h-full w-full object-cover object-[center_25%]"/>}<div ref={host} className={loaded?'absolute inset-0':'hidden'}/></div><p className="px-3 py-2 text-xs text-slate-500">{loaded?'本地VRM预览；仅有真实口型轨道时驱动嘴型。':'静态角色外观稿 · 可动3D模型尚未交付'}</p>{error&&<p role="alert" className="px-3 pb-2 text-xs text-red-700">{error}</p>}</div>;
 }

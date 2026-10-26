@@ -28,7 +28,7 @@ export class VoiceController {
  }
  @Get('persona') persona(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string}){return this.prisma.withOrgUser(o.organizationId,u.id,async tx=>{
    const rows=await tx.$queryRaw<any[]>`SELECT style,locale FROM persona_profile WHERE organization_id=${o.organizationId} AND actor_id=${u.id}`;
-   return {identity:'human',actorId:u.id,...(rows[0]||{style:'cartoon',locale:'zh-CN'}),realisticAvailable:false};
+   return {identity:'human',actorId:u.id,...(rows[0]||{style:'realistic',locale:'zh-CN'}),realisticAvailable:false};
  });}
  @Put('persona') save(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Body() b:any,@Req() req:Request){
    const language=locale(b?.locale);if(!['cartoon','realistic'].includes(b?.style))throw new BadRequestException('无效形象');

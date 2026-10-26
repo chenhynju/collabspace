@@ -9,14 +9,14 @@ test('actual local IM recording sends private PCM audio with editable text; pers
  const r=await request.post(`${config.NEXT_PUBLIC_API_URL}/conversations/direct`,{headers,data:{userId:config.TEST_MEMBER}});expect(r.ok()).toBeTruthy();const {id}=await r.json();
  await login(page,config.TEST_OWNER_EMAIL);await page.goto(`${config.WEB_URL}/im?c=${id}`);
  await expect(page.getByPlaceholder('输入消息...')).toBeVisible();
- await page.getByText('我的数字形象',{exact:true}).click();
+ await page.getByText('我的数字分身',{exact:true}).click();
  await expect(page.getByLabel('形象风格')).toHaveCount(0);
- await expect(page.getByLabel('3D卡通预览')).toBeVisible();
- await expect(page.getByLabel('3D卡通预览').locator('canvas')).toBeVisible({timeout:90000});
- await page.screenshot({path:'evidence/collaboration/voice-persona-cartoon.png',fullPage:true});
+ await expect(page.getByRole('radio',{name:'照片生成',exact:true})).toBeVisible();
+ await expect(page.getByLabel('3D卡通预览')).toHaveCount(0);
+ await page.screenshot({path:'evidence/collaboration/digital-human-local-employee.png',fullPage:true});
  await expect(page.getByText('Agent形象：尚未启用。',{exact:true})).toHaveCount(0);await page.getByLabel('形象默认语言').selectOption('en-US');
- await page.getByRole('button',{name:'保存形象偏好'}).click();await expect(page.getByText('已保存当前组织的个人偏好',{exact:false})).toBeVisible();
- await page.reload();await page.getByText('我的数字形象',{exact:true}).click();await expect(page.getByLabel('形象默认语言')).toHaveValue('en-US');
+ await page.getByRole('button',{name:'保存形象偏好'}).click();await expect(page.getByText('已保存当前组织的个人语言偏好',{exact:false})).toBeVisible();
+ await page.reload();await page.getByText('我的数字分身',{exact:true}).click();await expect(page.getByLabel('形象默认语言')).toHaveValue('en-US');
  const text=`voice-${randomUUID()}`;await page.getByPlaceholder('输入消息...').fill(text);
  await page.getByText('语音选项',{exact:true}).click();await expect(page.getByRole('button',{name:'生成语音朗读',exact:true})).not.toBeVisible();
  await page.getByRole('button',{name:/^录音/}).click();await expect(page.getByRole('button',{name:/^结束录音/})).toBeVisible();
@@ -31,7 +31,7 @@ test('actual local IM recording sends private PCM audio with editable text; pers
  const download=await request.get(`${config.NEXT_PUBLIC_API_URL}/messages/attachments/${message.attachment.id}/download`,{headers:memberHeaders});expect(download.ok()).toBeTruthy();const bytes=await download.body();expect(bytes.toString('ascii',0,4)).toBe('RIFF');expect(bytes.readUInt32LE(24)).toBe(16000);
  const otherHeaders={...headers,'x-organization-id':config.TEST_OTHER_ORG};expect((await request.get(`${config.NEXT_PUBLIC_API_URL}/messages/attachments/${message.attachment.id}/download`,{headers:otherHeaders})).ok()).toBeFalsy();
  const context=await browser.newContext();try{const peer=await context.newPage();await login(peer,config.TEST_MEMBER_EMAIL);await peer.goto(`${config.WEB_URL}/im?c=${id}`);await expect(peer.getByText(text,{exact:true})).toBeVisible();await peer.getByRole('button',{name:'加载语音（鉴权）'}).last().click();await expect(peer.getByLabel('语音消息').last()).toBeVisible();}finally{await context.close();}
- await page.screenshot({path:'evidence/collaboration/voice-persona-im.png',fullPage:true});
+ await page.screenshot({path:'evidence/collaboration/digital-human-local-im.png',fullPage:true});
 });
 test('explicit STT/TTS UI fixtures: review transcript, stop speech and invalidate old audio after editing',async({page,request})=>{
  // This isolates frontend orchestration. It does not prove Azure recognition quality or a real TTS call.
@@ -61,6 +61,6 @@ test('mail dictation toolbar cannot send mail; denied microphone reports error; 
  await page.getByRole('button',{name:/写邮件/}).click();await page.getByLabel('项目',{exact:true}).selectOption(config.TEST_PROJECT);
  await page.getByRole('button',{name:/^录音/}).last().click();await expect(page.getByText('无法使用麦克风',{exact:false})).toBeVisible();
  await page.getByLabel('可修改结果').fill('Synthetic mail draft, never sent.');await expect(page.getByRole('button',{name:'预览并发送邮件'})).toBeDisabled();expect(mails).toBe(0);
- await page.screenshot({path:'evidence/collaboration/voice-persona-mail.png',fullPage:true});
+ await page.screenshot({path:'evidence/collaboration/digital-human-local-mail.png',fullPage:true});
  }finally{await context.close();}
 });

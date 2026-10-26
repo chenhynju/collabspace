@@ -1,5 +1,9 @@
 # CollabSpace — 多人实时协作文档
 
+2026-10-27数字人第一阶段本地开发：[实际验收和剩余项](evidence/collaboration/DIGITAL-HUMAN-2026-10-27.md)。当前为原创静态角色、后台配置及真人私有素材草稿基础，完整3D、20款/捏脸和真实真人生成未完成，未更新线上站点。
+
+2026-10-27：[数字人详细设计](docs/collaboration/DIGITAL-HUMAN-DESIGN.md)明确Agent卡通与真人同事照片/视频数字分身两条必交付路线，包含美术、技术、授权、IM/邮件集成及验收；当前为设计基线。
+
 2026-10-26追加：画布蓝色连接点可直接拖到另一图元连线，支持箭头样式/文字、取消、位置保留及多人同步；[契约](docs/collaboration/MERMAID-POSITION.md)、[实际验收](evidence/collaboration/MERMAID-CONNECT-2026-10-26.md)。
 
 2026-10-26：Mermaid实际画布拖入/移动、位置保存与局部删除已上线，正式4/4验收通过；[中文演示白板](https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/f4752774-d481-49a8-a5f9-f84c6870de05)、[范围](docs/collaboration/MERMAID-POSITION.md)、[验收发布](evidence/collaboration/MERMAID-POSITION-2026-10-25.md)。复杂结构自由定位仍明确限制，原图不被擅自覆盖。

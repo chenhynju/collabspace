@@ -4,23 +4,24 @@ import {api} from '@/lib/api';
 import {useAuthStore} from '@/store/auth';
 import {Button,inputCls} from '@/components/ui';
 import {Disclosure} from '@/components/disclosure';
+import {publishCharacter} from '@/components/personas/character-playback';
 import {toWav} from './audio';
 
 type Scope={projectId?:string;conversationId?:string};
 const errorText=(e:any)=>typeof e.response?.data?.message==='string'?e.response.data.message:e.message||'语音操作失败';
-export function VoiceTools({scope,text,onTranscript,onSendAudio,active=true,onBusyChange}:{scope:Scope;text:string;onTranscript?:(text:string)=>void;onSendAudio?:(file:File)=>Promise<void>;active?:boolean;onBusyChange?:(busy:boolean)=>void}){
+export function VoiceTools({scope,text,onTranscript,onSendAudio,active=true,onBusyChange,personaSubject}:{scope:Scope;personaSubject?:string;text:string;onTranscript?:(text:string)=>void;onSendAudio?:(file:File)=>Promise<void>;active?:boolean;onBusyChange?:(busy:boolean)=>void}){
  const org=useAuthStore(s=>s.currentOrgId),user=useAuthStore(s=>s.user?.id);
- return <VoiceSession key={`${org}:${user}:${scope.projectId||scope.conversationId}`} scope={scope} text={text} onTranscript={onTranscript} onSendAudio={onSendAudio} active={active} onBusyChange={onBusyChange}/>;
+ return <VoiceSession key={`${org}:${user}:${scope.projectId||scope.conversationId}`} scope={scope} text={text} onTranscript={onTranscript} onSendAudio={onSendAudio} active={active} onBusyChange={onBusyChange} personaSubject={personaSubject}/>;
 }
-function VoiceSession({scope,text,onTranscript,onSendAudio,active,onBusyChange}:{scope:Scope;text:string;onTranscript?:(text:string)=>void;onSendAudio?:(file:File)=>Promise<void>;active:boolean;onBusyChange?:(busy:boolean)=>void}){
+function VoiceSession({scope,text,onTranscript,onSendAudio,active,onBusyChange,personaSubject}:{scope:Scope;personaSubject?:string;text:string;onTranscript?:(text:string)=>void;onSendAudio?:(file:File)=>Promise<void>;active:boolean;onBusyChange?:(busy:boolean)=>void}){
  const [recording,setRecording]=useState(false),[blob,setBlob]=useState<Blob|null>(null),[url,setUrl]=useState(''),[language,setLanguage]=useState('zh-CN');
  const [ready,setReady]=useState(false),[error,setError]=useState(''),[busy,setBusy]=useState(false),[speaking,setSpeaking]=useState(false),[supported,setSupported]=useState(false);
  const [history,setHistory]=useState<any[]>([]);
  useEffect(()=>{onBusyChange?.(recording||busy);},[recording,busy,onBusyChange]);
  const localeTouched=useRef(false);
  const recorder=useRef<MediaRecorder|null>(null),stream=useRef<MediaStream|null>(null),timer=useRef<ReturnType<typeof setTimeout>>(),epoch=useRef(0),alive=useRef(true),audio=useRef<HTMLAudioElement|null>(null),request=useRef<AbortController|null>(null),job=useRef<string|null>(null),pending=useRef<{id:string;payload:string}|null>(null);
- const playback=useRef<{url:string;context?:AudioContext;frame?:number}|null>(null),previewAudio=useRef<HTMLAudioElement|null>(null);
- const stopPlayback=()=>{audio.current?.pause();audio.current=null;previewAudio.current?.pause();const p=playback.current;if(p){URL.revokeObjectURL(p.url);if(p.frame)cancelAnimationFrame(p.frame);void p.context?.close();playback.current=null;}window.dispatchEvent(new CustomEvent('collabspace:voice-level',{detail:0}));window.speechSynthesis?.cancel();setSpeaking(false);};
+ const playback=useRef<{url:string;context?:AudioContext;frame?:number;releaseCharacter?:()=>void}|null>(null),previewAudio=useRef<HTMLAudioElement|null>(null);
+ const stopPlayback=()=>{audio.current?.pause();audio.current=null;previewAudio.current?.pause();const p=playback.current;if(p){p.releaseCharacter?.();URL.revokeObjectURL(p.url);if(p.frame)cancelAnimationFrame(p.frame);void p.context?.close();playback.current=null;}window.dispatchEvent(new CustomEvent('collabspace:voice-level',{detail:0}));window.speechSynthesis?.cancel();setSpeaking(false);};
  const release=()=>{recorder.current?.state==='recording'&&recorder.current.stop();stream.current?.getTracks().forEach(t=>t.stop());clearTimeout(timer.current);};
  const cancel=()=>{epoch.current++;request.current?.abort();release();stopPlayback();if(job.current){void api.delete(`/voice/jobs/${job.current}`).catch(()=>{});pending.current=null;}job.current=null;setBusy(false);setRecording(false);};
  useEffect(()=>{
@@ -69,7 +70,7 @@ function VoiceSession({scope,text,onTranscript,onSendAudio,active,onBusyChange}:
    else{
     const response=await api.get(`/voice/jobs/${id}/audio`,{responseType:'blob',signal:c.signal});if(!alive.current||n!==epoch.current)return;
     job.current=null;const u=URL.createObjectURL(response.data),a=new Audio(u);audio.current=a;playback.current={url:u};
-    try{const context=new AudioContext(),analyser=context.createAnalyser();analyser.fftSize=256;const source=context.createMediaElementSource(a);source.connect(analyser);analyser.connect(context.destination);playback.current.context=context;await context.resume();const values=new Uint8Array(analyser.fftSize);const tick=()=>{if(!playback.current)return;analyser.getByteTimeDomainData(values);const rms=Math.sqrt(values.reduce((sum,v)=>sum+((v-128)/128)**2,0)/values.length);window.dispatchEvent(new CustomEvent('collabspace:voice-level',{detail:Math.min(1,rms*5)}));playback.current.frame=requestAnimationFrame(tick);};tick();}catch{/* Audio playback still works without visual analysis. */}
+    if(personaSubject){const state=useAuthStore.getState();playback.current.releaseCharacter=publishCharacter(JSON.stringify([state.currentOrgId,state.user?.id,scope.projectId||scope.conversationId,personaSubject]),{audio:a,track:Array.isArray(data.visemes)?data.visemes:[]});}
     const end=()=>{if(alive.current)stopPlayback();};a.onended=end;a.onerror=end;setSpeaking(true);await a.play();
    }
   }catch(e){if(alive.current&&n===epoch.current){stopPlayback();setError(errorText(e));}}finally{if(alive.current&&n===epoch.current)setBusy(false);}

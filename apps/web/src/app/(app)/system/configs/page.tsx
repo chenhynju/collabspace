@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState, useCallback } from 'react';
+import {AgentAppearanceSettings} from '@/components/personas/AgentAppearanceSettings';
 import PageHeader from '@/components/PageHeader';
 import {
   Card, Button, Modal, Input, Field, Empty, InlineError, Badge,
@@ -98,6 +99,7 @@ export default function ConfigManagePage() {
       <PageHeader title="参数设置" description="运营可调的系统参数，避免把易变配置硬编码进代码">
         {hasPerm('config:add') && <Button onClick={openCreate}><Plus className="w-4 h-4" /> 新增参数</Button>}
       </PageHeader>
+      {hasPerm('config:edit')&&<AgentAppearanceSettings/>}
 
       <Card className="p-4 mb-4">
         <Input

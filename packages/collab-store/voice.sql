@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS voice_job (
  FOREIGN KEY(project_id,organization_id) REFERENCES prj_project(id,organization_id)
 );
 CREATE INDEX IF NOT EXISTS voice_job_budget ON voice_job(organization_id,actor_id,created_at);
+ALTER TABLE voice_job ADD COLUMN IF NOT EXISTS result_visemes jsonb;
 CREATE UNIQUE INDEX IF NOT EXISTS im_conversation_id_org_voice ON im_conversation(id,organization_id);
 DO $$ BEGIN
  IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname='voice_conversation_scope' AND conrelid='voice_job'::regclass) THEN

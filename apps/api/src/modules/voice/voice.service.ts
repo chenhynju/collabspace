@@ -7,7 +7,7 @@ import { SpeechProvider } from './speech-provider';
 import { digest, locale, wavInfo } from './voice-domain';
 
 type Scope={projectId?:string;conversationId?:string};
-type Job={id:string;organization_id:string;actor_id:string;project_id:string|null;conversation_id:string|null;kind:'STT'|'TTS';locale:'zh-CN'|'en-US';input_hash:string;input_text:string|null;input_audio:Buffer|null;result_text:string|null;result_audio:Buffer|null;status:string;error:string|null;expires_at:Date;updated_at:Date;trace_id:string};
+type Job={id:string;organization_id:string;actor_id:string;project_id:string|null;conversation_id:string|null;kind:'STT'|'TTS';locale:'zh-CN'|'en-US';input_hash:string;input_text:string|null;input_audio:Buffer|null;result_text:string|null;result_audio:Buffer|null;result_visemes?:{offsetMs:number;id:number}[]|null;status:string;error:string|null;expires_at:Date;updated_at:Date;trace_id:string};
 @Injectable()
 export class VoiceService implements OnModuleInit,OnModuleDestroy {
   private running=new Map<string,AbortController>();
@@ -62,7 +62,7 @@ export class VoiceService implements OnModuleInit,OnModuleDestroy {
     if(result.status==='QUEUED')void this.dispatch(org,user,b.requestId).catch(()=>{});
     return result;
   }
-  private public(j:Job){return {id:j.id,status:j.status,kind:j.kind,locale:j.locale,text:j.result_text,error:j.error,hasAudio:!!j.result_audio||!!(j as any).has_audio,expiresAt:j.expires_at};}
+  private public(j:Job){return {id:j.id,status:j.status,kind:j.kind,locale:j.locale,text:j.result_text,error:j.error,hasAudio:!!j.result_audio||!!(j as any).has_audio,expiresAt:j.expires_at,visemes:j.result_visemes||[]};}
   async history(org:string,user:string,scope:Scope){return this.prisma.withOrgUser(org,user,async tx=>{
     await this.authorize(tx,org,user,scope);
     const rows=await tx.$queryRaw<Job[]>`SELECT id,kind,locale,status,result_text,error,expires_at,updated_at,(result_audio IS NOT NULL) AS has_audio FROM voice_job WHERE organization_id=${org} AND actor_id=${user} AND project_id IS NOT DISTINCT FROM ${scope.projectId||null} AND conversation_id IS NOT DISTINCT FROM ${scope.conversationId||null} AND expires_at>now() ORDER BY created_at DESC LIMIT 10`;
@@ -82,10 +82,10 @@ export class VoiceService implements OnModuleInit,OnModuleDestroy {
       await this.authorize(tx,org,user,{projectId:j.project_id||undefined,conversationId:j.conversation_id||undefined});return j;
     });
   }
-  async cancel(org:string,user:string,id:string){const j=await this.load(org,user,id);this.running.get(id)?.abort();await this.prisma.withOrgUser(org,user,async tx=>{await tx.$executeRaw`UPDATE voice_job SET status='CANCELLED',input_audio=NULL,input_text=NULL,result_audio=NULL,result_text=NULL,updated_at=now() WHERE id=${id}::uuid AND organization_id=${org} AND actor_id=${user}`;await this.audit.record(tx,{organizationId:org,actorId:user,title:'语音',action:'voice:cancel',resourceType:'VoiceJob',resourceId:id,traceId:j.trace_id,before:{status:j.status},after:{status:'CANCELLED'}});});return {id,status:'CANCELLED'};}
-  private async finish(org:string,user:string,id:string,status:string,text:string|null,audio:Buffer|null,error:string|null){
+  async cancel(org:string,user:string,id:string){const j=await this.load(org,user,id);this.running.get(id)?.abort();await this.prisma.withOrgUser(org,user,async tx=>{await tx.$executeRaw`UPDATE voice_job SET status='CANCELLED',input_audio=NULL,input_text=NULL,result_audio=NULL,result_visemes=NULL,result_text=NULL,updated_at=now() WHERE id=${id}::uuid AND organization_id=${org} AND actor_id=${user}`;await this.audit.record(tx,{organizationId:org,actorId:user,title:'语音',action:'voice:cancel',resourceType:'VoiceJob',resourceId:id,traceId:j.trace_id,before:{status:j.status},after:{status:'CANCELLED'}});});return {id,status:'CANCELLED'};}
+  private async finish(org:string,user:string,id:string,status:string,text:string|null,audio:Buffer|null,error:string|null,visemes:{offsetMs:number;id:number}[]=[]){
     return this.prisma.withOrgUser(org,user,async tx=>{
-      const changed=await tx.$queryRaw<{trace_id:string}[]>`UPDATE voice_job SET status=${status},result_text=${text},result_audio=${audio},input_audio=NULL,input_text=NULL,error=${error},updated_at=now() WHERE id=${id}::uuid AND organization_id=${org} AND actor_id=${user} AND status='RUNNING' AND expires_at>now() RETURNING trace_id`;
+      const changed=await tx.$queryRaw<{trace_id:string}[]>`UPDATE voice_job SET status=${status},result_text=${text},result_audio=${audio},result_visemes=${JSON.stringify(visemes)}::jsonb,input_audio=NULL,input_text=NULL,error=${error},updated_at=now() WHERE id=${id}::uuid AND organization_id=${org} AND actor_id=${user} AND status='RUNNING' AND expires_at>now() RETURNING trace_id`;
       if(changed[0])await this.audit.record(tx,{organizationId:org,actorId:user,title:'语音',action:'voice:finish',resourceType:'VoiceJob',resourceId:id,traceId:changed[0].trace_id,before:{status:'RUNNING'},after:{status}});
     });
   }
@@ -99,7 +99,7 @@ export class VoiceService implements OnModuleInit,OnModuleDestroy {
       try{
         const result=await this.provider.run(j.kind,j.kind==='STT'?j.input_audio!:j.input_text!,j.locale,c.signal);
         await this.load(org,user,id); // revoke access before materializing results
-        await this.finish(org,user,id,'SUCCEEDED',result.text||null,result.audio||null,null);
+        await this.finish(org,user,id,'SUCCEEDED',result.text||null,result.audio||null,null,result.visemes||[]);
       }catch{await this.finish(org,user,id,'UNKNOWN',null,null,'语音未完成或结果待核查，不会自动重试；可保留录音并核查后新建请求');}
     }finally{clearTimeout(timer);this.running.delete(id);}
   }

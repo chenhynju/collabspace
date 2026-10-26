@@ -1,5 +1,6 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
 import { Locale, VOICES, xml } from './voice-domain';
+import {synthesizeWithVisemes,type SpeechViseme} from './azure-viseme';
 import { UnconfiguredAvatarProvider } from './avatar-provider';
 
 @Injectable()
@@ -7,11 +8,13 @@ export class SpeechProvider {
   private avatar=new UnconfiguredAvatarProvider();
   get cloud(){return process.env.AZURE_SPEECH_CLOUD||'global';}
   get ready(){const region=process.env.AZURE_SPEECH_REGION||'';return !!process.env.AZURE_SPEECH_KEY && /^[a-z0-9-]+$/.test(region)&&['global','china'].includes(this.cloud)&&(this.cloud==='china'?['chinaeast2','chinanorth2','chinanorth3'].includes(region):!region.startsWith('china'));}
-  status(){return {provider:'azure',cloud:this.cloud,configured:this.ready,locales:Object.keys(VOICES),voices:VOICES,preciseVisemes:false,realistic:{configured:this.avatar.configured,reason:'尚未选定并配置真人服务'},maxSeconds:60,maxText:4000};}
-  async run(kind:'STT'|'TTS',input:Buffer|string,language:Locale,signal:AbortSignal):Promise<{text?:string;audio?:Buffer}> {
+  get visemesEnabled(){return process.env.AZURE_VISEME_ENABLED==='true';}
+  status(){return {provider:'azure',cloud:this.cloud,configured:this.ready,locales:Object.keys(VOICES),voices:VOICES,preciseVisemes:this.ready&&this.visemesEnabled,realistic:{configured:this.avatar.configured,reason:'尚未选定并配置真人服务'},maxSeconds:60,maxText:4000};}
+  async run(kind:'STT'|'TTS',input:Buffer|string,language:Locale,signal:AbortSignal):Promise<{text?:string;audio?:Buffer;visemes?:SpeechViseme[]}> {
     if(!this.ready)throw new ServiceUnavailableException('Azure语音未配置，未调用供应商');
     const region=process.env.AZURE_SPEECH_REGION!;
     const key=process.env.AZURE_SPEECH_KEY!;
+    if(kind==='TTS'&&this.visemesEnabled)return synthesizeWithVisemes(input as string,language,region,this.cloud,key,signal);
     const domain=this.cloud==='china'?'azure.cn':'microsoft.com';
     const url=kind==='STT'
       ?`https://${region}.stt.speech.${domain}/speech/recognition/conversation/cognitiveservices/v1?language=${language}&format=simple`
