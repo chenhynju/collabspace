@@ -1,10 +1,11 @@
 const {test,expect}=require('@playwright/test');
 const {randomUUID}=require('node:crypto');
 const config=require('./config.cjs');
+const evidencePrefix=process.env.VOICE_EVIDENCE_PREFIX||'digital-human-local';
 test.use({launchOptions:{args:['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']},permissions:['microphone']});
 async function login(page,email){await page.goto(`${config.WEB_URL}/login`);await page.locator('input[type=email]').fill(email);await page.locator('input[type=password]').fill(config.TEST_PASSWORD);await page.getByRole('button',{name:'登录',exact:true}).click();await page.waitForURL('**/dashboard');}
 async function session(request,email){const r=await request.post(`${config.NEXT_PUBLIC_API_URL}/auth/login`,{data:{email,password:config.TEST_PASSWORD}});expect(r.ok()).toBeTruthy();return {Authorization:`Bearer ${(await r.json()).accessToken}`,'x-organization-id':config.TEST_ORG};}
-test('actual local IM recording sends private PCM audio with editable text; persona persists; Azure missing fails closed',async({page,request,browser})=>{
+test('synthetic IM recording sends private PCM audio with editable text; persona persists; Azure missing fails closed',async({page,request,browser})=>{
  const headers=await session(request,config.TEST_OWNER_EMAIL);
  const r=await request.post(`${config.NEXT_PUBLIC_API_URL}/conversations/direct`,{headers,data:{userId:config.TEST_MEMBER}});expect(r.ok()).toBeTruthy();const {id}=await r.json();
  await login(page,config.TEST_OWNER_EMAIL);await page.goto(`${config.WEB_URL}/im?c=${id}`);
@@ -13,7 +14,7 @@ test('actual local IM recording sends private PCM audio with editable text; pers
  await expect(page.getByLabel('形象风格')).toHaveCount(0);
  await expect(page.getByRole('radio',{name:'照片生成',exact:true})).toBeVisible();
  await expect(page.getByLabel('3D卡通预览')).toHaveCount(0);
- await page.screenshot({path:'evidence/collaboration/digital-human-local-employee.png',fullPage:true});
+ await page.screenshot({path:`evidence/collaboration/${evidencePrefix}-employee.png`,fullPage:true});
  await expect(page.getByText('Agent形象：尚未启用。',{exact:true})).toHaveCount(0);await page.getByLabel('形象默认语言').selectOption('en-US');
  await page.getByRole('button',{name:'保存形象偏好'}).click();await expect(page.getByText('已保存当前组织的个人语言偏好',{exact:false})).toBeVisible();
  await page.reload();await page.getByText('我的数字分身',{exact:true}).click();await expect(page.getByLabel('形象默认语言')).toHaveValue('en-US');
@@ -31,7 +32,7 @@ test('actual local IM recording sends private PCM audio with editable text; pers
  const download=await request.get(`${config.NEXT_PUBLIC_API_URL}/messages/attachments/${message.attachment.id}/download`,{headers:memberHeaders});expect(download.ok()).toBeTruthy();const bytes=await download.body();expect(bytes.toString('ascii',0,4)).toBe('RIFF');expect(bytes.readUInt32LE(24)).toBe(16000);
  const otherHeaders={...headers,'x-organization-id':config.TEST_OTHER_ORG};expect((await request.get(`${config.NEXT_PUBLIC_API_URL}/messages/attachments/${message.attachment.id}/download`,{headers:otherHeaders})).ok()).toBeFalsy();
  const context=await browser.newContext();try{const peer=await context.newPage();await login(peer,config.TEST_MEMBER_EMAIL);await peer.goto(`${config.WEB_URL}/im?c=${id}`);await expect(peer.getByText(text,{exact:true})).toBeVisible();await peer.getByRole('button',{name:'加载语音（鉴权）'}).last().click();await expect(peer.getByLabel('语音消息').last()).toBeVisible();}finally{await context.close();}
- await page.screenshot({path:'evidence/collaboration/digital-human-local-im.png',fullPage:true});
+ await page.screenshot({path:`evidence/collaboration/${evidencePrefix}-im.png`,fullPage:true});
 });
 test('explicit STT/TTS UI fixtures: review transcript, stop speech and invalidate old audio after editing',async({page,request})=>{
  // This isolates frontend orchestration. It does not prove Azure recognition quality or a real TTS call.
@@ -57,10 +58,12 @@ test('explicit STT/TTS UI fixtures: review transcript, stop speech and invalidat
 test('mail dictation toolbar cannot send mail; denied microphone reports error; no real vendor calls',async({browser})=>{
  const context=await browser.newContext({permissions:[]});try{const page=await context.newPage();await page.addInitScript(()=>{navigator.mediaDevices.getUserMedia=async()=>{throw new DOMException('denied','NotAllowedError');};});
  let mails=0;page.on('request',r=>{if(r.method()==='POST'&&r.url().endsWith('/assistant/mail'))mails++;});
+ await page.route('**/assistant/mail',route=>route.request().method()==='POST'?route.abort():route.continue());
  await login(page,config.TEST_OWNER_EMAIL);await page.goto(`${config.WEB_URL}/assistant`);
  await page.getByRole('button',{name:/写邮件/}).click();await page.getByLabel('项目',{exact:true}).selectOption(config.TEST_PROJECT);
  await page.getByRole('button',{name:/^录音/}).last().click();await expect(page.getByText('无法使用麦克风',{exact:false})).toBeVisible();
- await page.getByLabel('可修改结果').fill('Synthetic mail draft, never sent.');await expect(page.getByRole('button',{name:'预览并发送邮件'})).toBeDisabled();expect(mails).toBe(0);
- await page.screenshot({path:'evidence/collaboration/digital-human-local-mail.png',fullPage:true});
+ await page.getByLabel('可修改结果').fill('Synthetic mail draft, never sent.');const preview=page.getByRole('button',{name:'预览并发送邮件'});
+ if(await preview.isEnabled()){await page.getByLabel('收件人',{exact:true}).fill(config.TEST_OWNER_EMAIL);await page.getByLabel('主题',{exact:true}).fill('Synthetic preview only');await preview.click();await expect(page.getByRole('button',{name:'确认发送',exact:true})).toBeVisible();}else{await expect(page.getByText('未配置真实邮件服务，当前不能发信。',{exact:false})).toBeVisible();}expect(mails).toBe(0);
+ await page.screenshot({path:`evidence/collaboration/${evidencePrefix}-mail.png`,fullPage:true});
  }finally{await context.close();}
 });

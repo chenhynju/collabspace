@@ -16,7 +16,16 @@ for line in Path('/opt/collabspace/shared/.env.production').read_text().splitlin
 url = urlsplit(values['DATABASE_ADMIN_URL'])
 if url.path != '/collabspace':
     raise SystemExit('Unexpected database')
-env = dict(os.environ, PGHOST=url.hostname, PGPORT=str(url.port or 5432),
+# Historical admin URLs can retain the retired Docker hostname after the native
+# PostgreSQL move. Bind admin credentials to the already-running API's target.
+target = __import__('json').loads(subprocess.check_output(['docker', 'exec', 'collabspace-api-1', 'node', '-e',
+    'const u=new URL(process.env.DATABASE_URL);console.log(JSON.stringify({host:u.hostname,port:u.port,database:u.pathname}))'], text=True))
+if target['database'] != url.path:
+    raise SystemExit('Administrative/runtime database mismatch')
+if target['host'] == '172.25.0.1' and target['port'] == '5543':
+    # Verified native collabspace cluster: use its existing loopback listener.
+    target['host'] = '127.0.0.1'
+env = dict(os.environ, PGHOST=target['host'], PGPORT=str(target['port'] or 5432),
            PGDATABASE=url.path[1:], PGUSER=unquote(url.username or ''),
            PGPASSWORD=unquote(url.password or ''))
 for key, value in parse_qs(url.query).items():
