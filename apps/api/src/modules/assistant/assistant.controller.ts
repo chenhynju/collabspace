@@ -54,13 +54,19 @@ export class AssistantController {
       try{extracted = await new Promise((resolve,reject)=>{
         const worker=join(__dirname,'extract-worker.js');
         const args=existsSync(worker)?[worker,kind]:['-r',require.resolve('ts-node/register/transpile-only'),join(__dirname,'extract-worker.ts'),kind];
-        const child = execFile(process.execPath,['--max-old-space-size=128',...args],{timeout:10000,maxBuffer:700000,windowsHide:true},(error,stdout)=>{
-          if(error)return reject(error);
+        let ready=false,timedOut=false,marker='';
+        let timer:ReturnType<typeof setTimeout>;
+        const child = execFile(process.execPath,['--max-old-space-size=128',...args],{timeout:30000,maxBuffer:700000,windowsHide:true},(error,stdout)=>{
+          clearTimeout(timer);
+          if(error){const failure=new Error('Isolated extraction failed');failure.name=timedOut||error.killed||!ready?'EXTRACT_UNAVAILABLE':'EXTRACT_INVALID';return reject(failure);}
           try{resolve(JSON.parse(stdout));}catch(e){reject(e);}
         });
-        child.stdin?.on('error',()=>{});child.stdin?.end(f.buffer);
+        const expire=()=>{timedOut=true;child.kill();};
+        timer=setTimeout(expire,20000);
+        child.stderr?.on('data',chunk=>{marker=(marker+chunk.toString()).slice(-128);if(!ready&&marker.split(/\r?\n/).includes('EXTRACT_READY')){ready=true;clearTimeout(timer);timer=setTimeout(expire,10000);child.stdin?.end(f.buffer);}});
+        child.stdin?.on('error',()=>{});
       });}finally{this.parsing--;}
-    } catch { throw new HttpException('无法解析文件：支持 DOCX、文字型 PDF（前30页）、TXT、MD；旧版DOC及扫描件请先转换', 400); }
+    } catch(error) { if(error instanceof Error&&error.name==='EXTRACT_UNAVAILABLE')throw new HttpException({code:'EXTRACT_UNAVAILABLE',message:'文档解析暂时繁忙或超时，请稍后重试',retryable:true},503);throw new HttpException('无法解析文件：支持 DOCX、文字型 PDF（前30页）、TXT、MD；旧版DOC及扫描件请先转换', 400); }
     if (extracted.text.trim().length < 50) throw new HttpException('未提取到足够文字，扫描件请先做OCR', 400);
     await this.authorize(o,u,p);
     return { ...extracted, persisted: false };

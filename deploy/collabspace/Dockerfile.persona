@@ -1,0 +1,16 @@
+# Bounded additive runtime patch over the verified current Linux image.
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+ARG SOURCE_REVISION
+USER root
+RUN npm install --prefix /opt/persona-runtime --omit=dev --ignore-scripts --no-audit --no-fund microsoft-cognitiveservices-speech-sdk@1.53.0
+COPY dist /app/apps/api/dist
+COPY protocol /app/packages/collab-protocol
+COPY api-package.json /app/apps/api/package.json
+RUN mkdir -p /app/apps/api/node_modules/@collabspace \
+ && ln -sfn /app/packages/collab-protocol /app/apps/api/node_modules/@collabspace/protocol \
+ && ln -sfn /opt/persona-runtime/node_modules/microsoft-cognitiveservices-speech-sdk /app/apps/api/node_modules/microsoft-cognitiveservices-speech-sdk
+COPY tests /app/apps/api/tests
+COPY agent-lan-v1.png /app/apps/web/public/personas/agent-lan-v1.png
+LABEL org.opencontainers.image.revision=${SOURCE_REVISION}
+USER app
