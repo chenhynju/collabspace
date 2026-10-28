@@ -1,0 +1,11 @@
+{
+  "id": "male-09-v1",
+  "name": "艾文",
+  "gender": "male",
+  "createdAt": "2026-10-27",
+  "tool": "built-in image_gen",
+  "representation": "portrait",
+  "generatedFilename": "exec-d2b2e03f-8d43-4f1d-9352-a3d340d46312.png",
+  "sha256": "49803DA31BDB99DE87939AC95006D17F23A44C1E3822AA3C06F8F37326119B1A",
+  "prompt": "Create one independent original premium stylized 3D cartoon chest-up portrait for CollabSpace professional AI assistant library. Match only the reference portrait's art direction: sophisticated matte materials, soft studio key and fill lighting, pale lavender solid background, generous headroom, both shoulders fully visible, centered slight natural three-quarter turn. Do NOT reuse the reference person's facial identity: this is a different adult person with different bone structure, nose, jaw and facial proportions. Subject: adult Latino man age 33, warm olive skin, short dark curls, clean-shaven strong face, warm gray blazer over muted burgundy top, friendly focused expression. Clearly adult, natural expressive eyes and restrained friendly smile, coherent stylized anatomy, not anime, not photorealistic, not toy spheres, no oversized eyes. No text, logos, UI, badges or collage. One distinct original character."
+}

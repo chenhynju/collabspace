@@ -1,5 +1,9 @@
 # CollabSpace — 多人实时协作文档
 
+2026-10-28第二阶段：已交付男10女10静态稿及共享目录，补支付Controller注册/部署变量缺口；实际测试与未完成边界以[接力记录](evidence/collaboration/RELAY-2026-10-28-0544.md)为准。完整3D/捏脸、真实真人生成及官方沙盒支付重验仍不能声明通过，未发布。
+
+[第三方服务与API Key获取清单](docs/collaboration/THIRD-PARTY-SERVICES.md)：区分现有接口、待开通、候选/海外版，含控制台入口、实际环境变量、回调和配置存放位置。
+
 2026-10-27数字人第一阶段本地开发：[实际验收和剩余项](evidence/collaboration/DIGITAL-HUMAN-2026-10-27.md)。当前为原创静态角色、后台配置及真人私有素材草稿基础，完整3D、20款/捏脸和真实真人生成未完成，未更新线上站点。
 
 2026-10-27：[数字人详细设计](docs/collaboration/DIGITAL-HUMAN-DESIGN.md)明确Agent卡通与真人同事照片/视频数字分身两条必交付路线，包含美术、技术、授权、IM/邮件集成及验收；当前为设计基线。

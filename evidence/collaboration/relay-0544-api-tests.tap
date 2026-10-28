@@ -1,0 +1,344 @@
+TAP version 13
+# Subtest: real nonprivileged PostgreSQL: mail intent commit, replay, payload binding, tenant RLS and foreign project refusal
+ok 1 - real nonprivileged PostgreSQL: mail intent commit, replay, payload binding, tenant RLS and foreign project refusal # SKIP
+  ---
+  duration_ms: 8.6801
+  type: 'test'
+  ...
+# Subtest: bounded runtime: real tool result receipt, actor isolation, duplicate replay and input conflict
+ok 2 - bounded runtime: real tool result receipt, actor isolation, duplicate replay and input conflict
+  ---
+  duration_ms: 75.4501
+  type: 'test'
+  ...
+# Subtest: authorization and skill allowlist reject before model calls; one active workflow per actor
+ok 3 - authorization and skill allowlist reject before model calls; one active workflow per actor
+  ---
+  duration_ms: 43.6628
+  type: 'test'
+  ...
+# Subtest: cancel signals provider and ignores late result; same request cannot restart or pretend completion
+ok 4 - cancel signals provider and ignores late result; same request cannot restart or pretend completion
+  ---
+  duration_ms: 25.8144
+  type: 'test'
+  ...
+# Subtest: revoked permission and incomplete model output cannot produce completed receipt
+ok 5 - revoked permission and incomplete model output cannot produce completed receipt
+  ---
+  duration_ms: 60.8561
+  type: 'test'
+  ...
+# Subtest: expired receipts are inaccessible and a new service instance does not invent recovery
+ok 6 - expired receipts are inaccessible and a new service instance does not invent recovery
+  ---
+  duration_ms: 17.6328
+  type: 'test'
+  ...
+# Subtest: bounded generation, scope-separated cache, modes, usage, rate limit and upstream recovery
+ok 7 - bounded generation, scope-separated cache, modes, usage, rate limit and upstream recovery
+  ---
+  duration_ms: 47.6128
+  type: 'test'
+  ...
+# Subtest: concurrent duplicate is refused without a second paid call; lock releases on failure
+ok 8 - concurrent duplicate is refused without a second paid call; lock releases on failure
+  ---
+  duration_ms: 3.1814
+  type: 'test'
+  ...
+# Subtest: both translation directions preserve source, share budget, reject oversized input and report incomplete output
+ok 9 - both translation directions preserve source, share budget, reject oversized input and report incomplete output
+  ---
+  duration_ms: 4.1751
+  type: 'test'
+  ...
+# Subtest: authorization before external generation and after completion, no source in audit
+ok 10 - authorization before external generation and after completion, no source in audit
+  ---
+  duration_ms: 9.007
+  type: 'test'
+  ...
+# Subtest: real DOCX and text parser, invalid file refusal, no attachment persistence
+not ok 11 - real DOCX and text parser, invalid file refusal, no attachment persistence
+  ---
+  duration_ms: 11295.8346
+  type: 'test'
+  location: 'D:\\appspace\\collaboration\\apps\\api\\tests\\assistant.test.cjs:56:1'
+  failureType: 'testCodeFailure'
+  error: '无法解析文件：支持 DOCX、文字型 PDF（前30页）、TXT、MD；旧版DOC及扫描件请先转换'
+  code: 'ERR_TEST_FAILURE'
+  name: 'HttpException'
+  stack: |-
+    AssistantController.extract (D:\appspace\collaboration\apps\api\dist\modules\assistant\assistant.controller.js:100:19)
+    process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    async TestContext.<anonymous> (D:\appspace\collaboration\apps\api\tests\assistant.test.cjs:61:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)
+  ...
+# Subtest: real synthetic PDF parsing and inflated ZIP rejection
+ok 12 - real synthetic PDF parsing and inflated ZIP rejection
+  ---
+  duration_ms: 5274.0138
+  type: 'test'
+  ...
+# Subtest: real HTTP + nonprivileged PG: personal invitations, decisions, RLS, encrypted outbox and invited registration
+ok 13 - real HTTP + nonprivileged PG: personal invitations, decisions, RLS, encrypted outbox and invited registration # SKIP
+  ---
+  duration_ms: 8.0259
+  type: 'test'
+  ...
+# [Nest] 119624  - 2026/10/28 14:04:30     LOG [MailService] 邮件已发送 via Resend id=synthetic-receipt to=test@example.test
+# [Nest] 119624  - 2026/10/28 14:04:30     LOG [MailService] 邮件已发送 via Resend id=synthetic-receipt to=test@example.test
+# [Nest] 119624  - 2026/10/28 14:04:30     LOG [MailService] 邮件已发送 via Resend id=synthetic-receipt to=test@example.test
+# [Nest] 119624  - 2026/10/28 14:04:30   ERROR [MailService] Resend 发信失败: null
+# Subtest: all CollabSpace mail entrypoints automatically carry stable project/business tags
+ok 14 - all CollabSpace mail entrypoints automatically carry stable project/business tags
+  ---
+  duration_ms: 28.7648
+  type: 'test'
+  ...
+# Subtest: routing metadata accepts array/object tags and removes private fields
+ok 15 - routing metadata accepts array/object tags and removes private fields
+  ---
+  duration_ms: 10.0825
+  type: 'test'
+  ...
+# Subtest: controller requires real signature, rejects tamper/stale, and propagates persistence failure
+ok 16 - controller requires real signature, rejects tamper/stale, and propagates persistence failure
+  ---
+  duration_ms: 295.9034
+  type: 'test'
+  ...
+# Subtest: same project routes business modules to separate fixed destinations; insecure routes rejected
+ok 17 - same project routes business modules to separate fixed destinations; insecure routes rejected
+  ---
+  duration_ms: 11.9321
+  type: 'test'
+  ...
+# Subtest: real nonprivileged PostgreSQL: duplicate/conflict, local module separation, unrouted and atomic failure
+ok 18 - real nonprivileged PostgreSQL: duplicate/conflict, local module separation, unrouted and atomic failure # SKIP
+  ---
+  duration_ms: 0.5152
+  type: 'test'
+  ...
+# Subtest: OAuth real Redis: browser binding, provider binding, PKCE, verified email, single-use state and handoff
+ok 19 - OAuth real Redis: browser binding, provider binding, PKCE, verified email, single-use state and handoff # SKIP
+  ---
+  duration_ms: 5.0795
+  type: 'test'
+  ...
+# Subtest: Office file actions real HTTP: authentication, rename conflict, copy replay and viewer refusal
+ok 20 - Office file actions real HTTP: authentication, rename conflict, copy replay and viewer refusal # SKIP
+  ---
+  duration_ms: 4.3918
+  type: 'test'
+  ...
+# Subtest: credential stamps are opaque, reject legacy/malformed and change with the password hash
+ok 21 - credential stamps are opaque, reject legacy/malformed and change with the password hash
+  ---
+  duration_ms: 54.3395
+  type: 'test'
+  ...
+# Subtest: change-password DTO rejects weak input and client-selected target identity
+ok 22 - change-password DTO rejects weak input and client-selected target identity
+  ---
+  duration_ms: 85.6655
+  type: 'test'
+  ...
+# Subtest: real nonprivileged PG: change password CAS, stale JWT/WS/ticket, reset invalidation, tenant audit and Office lease expiry
+ok 23 - real nonprivileged PG: change password CAS, stale JWT/WS/ticket, reset invalidation, tenant audit and Office lease expiry # SKIP
+  ---
+  duration_ms: 0.4646
+  type: 'test'
+  ...
+# Subtest: PayPal active with verified paid state grants plan; duplicate ignored
+ok 24 - PayPal active with verified paid state grants plan; duplicate ignored
+  ---
+  duration_ms: 24.5438
+  type: 'test'
+  ...
+# Subtest: PayPal approval without payment cannot grant paid rights
+ok 25 - PayPal approval without payment cannot grant paid rights
+  ---
+  duration_ms: 5.025
+  type: 'test'
+  ...
+# Subtest: PayPal cancellation revokes and recovery restores rights
+ok 26 - PayPal cancellation revokes and recovery restores rights
+  ---
+  duration_ms: 9.9808
+  type: 'test'
+  ...
+# Subtest: PayPal stale payload follows current provider state
+ok 27 - PayPal stale payload follows current provider state
+  ---
+  duration_ms: 5.0945
+  type: 'test'
+  ...
+# Subtest: PayPal requires transmission headers
+ok 28 - PayPal requires transmission headers
+  ---
+  duration_ms: 11.3005
+  type: 'test'
+  ...
+# Subtest: PayPal rejects failed official verification
+ok 29 - PayPal rejects failed official verification
+  ---
+  duration_ms: 3.5315
+  type: 'test'
+  ...
+# Subtest: PayPal defaults to sandbox endpoint
+ok 30 - PayPal defaults to sandbox endpoint
+  ---
+  duration_ms: 0.909
+  type: 'test'
+  ...
+# Subtest: PDF extraction keeps geometric word gaps without splitting adjacent letters or Chinese glyphs
+ok 31 - PDF extraction keeps geometric word gaps without splitting adjacent letters or Chinese glyphs
+  ---
+  duration_ms: 5.0838
+  type: 'test'
+  ...
+# Subtest: Office PDF kerning separates words but preserves ordinary letter spacing
+ok 32 - Office PDF kerning separates words but preserves ordinary letter spacing
+  ---
+  duration_ms: 2.8789
+  type: 'test'
+  ...
+# Subtest: persona private drafts: explicit consent, actual container, dimensions, kind and limits
+ok 33 - persona private drafts: explicit consent, actual container, dimensions, kind and limits
+  ---
+  duration_ms: 63.9918
+  type: 'test'
+  ...
+# Subtest: SDK contract fixture: one synthesis binds offsets to its own audio and closes on success/abort
+ok 34 - SDK contract fixture: one synthesis binds offsets to its own audio and closes on success/abort
+  ---
+  duration_ms: 96.4818
+  type: 'test'
+  ...
+# [Nest] 115856  - 2026/10/28 14:05:26     LOG [MailService] 邮件已发送 via Resend id=synthetic-id to=test@example.test
+# Subtest: confirmation, permission and live configuration required before any external call
+ok 35 - confirmation, permission and live configuration required before any external call
+  ---
+  duration_ms: 34.3098
+  type: 'test'
+  ...
+# Subtest: durable intent, duplicate replay and content binding prevent duplicate mail
+ok 36 - durable intent, duplicate replay and content binding prevent duplicate mail
+  ---
+  duration_ms: 6.3498
+  type: 'test'
+  ...
+# Subtest: unknown send result retains idempotency key, blocks immediate retry and expires safely
+ok 37 - unknown send result retains idempotency key, blocks immediate retry and expires safely
+  ---
+  duration_ms: 8.5325
+  type: 'test'
+  ...
+# Subtest: project emails escape HTML and use existing routing tags and provider idempotency
+ok 38 - project emails escape HTML and use existing routing tags and provider idempotency
+  ---
+  duration_ms: 21.8162
+  type: 'test'
+  ...
+# Subtest: production demo seed rejects missing or short private passwords before database access
+ok 39 - production demo seed rejects missing or short private passwords before database access
+  ---
+  duration_ms: 16315.9604
+  type: 'test'
+  ...
+# Subtest: duplicate delivery does not grant twice
+ok 40 - duplicate delivery does not grant twice
+  ---
+  duration_ms: 16.9154
+  type: 'test'
+  ...
+# Subtest: old cancellation payload cannot override current active Stripe state
+ok 41 - old cancellation payload cannot override current active Stripe state
+  ---
+  duration_ms: 1.9931
+  type: 'test'
+  ...
+# Subtest: past due revokes paid entitlement; recovery restores it
+ok 42 - past due revokes paid entitlement; recovery restores it
+  ---
+  duration_ms: 4.0778
+  type: 'test'
+  ...
+# Subtest: canceled subscriptions return to FREE
+ok 43 - canceled subscriptions return to FREE
+  ---
+  duration_ms: 3.7641
+  type: 'test'
+  ...
+# Subtest: unknown price fails without granting rights
+ok 44 - unknown price fails without granting rights
+  ---
+  duration_ms: 3.5
+  type: 'test'
+  ...
+# Subtest: provider outage is retryable and event is not marked processed
+ok 45 - provider outage is retryable and event is not marked processed
+  ---
+  duration_ms: 3.8175
+  type: 'test'
+  ...
+# Subtest: live events cannot enter test billing
+ok 46 - live events cannot enter test billing
+  ---
+  duration_ms: 1.4791
+  type: 'test'
+  ...
+# Subtest: official SDK rejects invalid webhook signature before DB access
+ok 47 - official SDK rejects invalid webhook signature before DB access
+  ---
+  duration_ms: 42.4909
+  type: 'test'
+  ...
+# Subtest: missing price mapping cannot open checkout
+ok 48 - missing price mapping cannot open checkout
+  ---
+  duration_ms: 4.3535
+  type: 'test'
+  ...
+# Subtest: checkout uses standard Billing even when account defaults to Managed Payments
+ok 49 - checkout uses standard Billing even when account defaults to Managed Payments
+  ---
+  duration_ms: 4.2755
+  type: 'test'
+  ...
+# Subtest: actual WAV duration and PCM validation rejects MIME spoof, overlong, stereo and truncation
+ok 50 - actual WAV duration and PCM validation rejects MIME spoof, overlong, stereo and truncation
+  ---
+  duration_ms: 11.9282
+  type: 'test'
+  ...
+# Subtest: Agent completion requires runtime result; event does not execute skills
+ok 51 - Agent completion requires runtime result; event does not execute skills
+  ---
+  duration_ms: 1.2286
+  type: 'test'
+  ...
+# Subtest: Azure adapter is fail-closed; escaped SSML, final transcript, failed response and abort propagate without retries
+ok 52 - Azure adapter is fail-closed; escaped SSML, final transcript, failed response and abort propagate without retries
+  ---
+  duration_ms: 109.2728
+  type: 'test'
+  ...
+# Subtest: Azure global and China routing are explicit and invalid cloud/region fail closed
+ok 53 - Azure global and China routing are explicit and invalid cloud/region fail closed
+  ---
+  duration_ms: 5.5872
+  type: 'test'
+  ...
+1..53
+# tests 53
+# suites 0
+# pass 46
+# fail 1
+# cancelled 0
+# skipped 6
+# todo 0
+# duration_ms 153756.5862

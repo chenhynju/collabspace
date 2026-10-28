@@ -4,10 +4,15 @@ import { AuditModule } from '../audit/audit.module';
 import { RealtimeModule } from '../realtime/realtime.module';
 import { WebhookIngestService } from './webhook-ingest.service';
 import { BillingLifecycleService } from './billing-lifecycle.service';
+import { StripeController } from './stripe.controller';
+import { PayPalController } from './paypal.controller';
+import { StripeBillingService } from './stripe.service';
+import { PayPalBillingService } from './paypal.service';
+import { CheckoutCoordinator } from './checkout-coordinator.service';
 
 @Module({
   imports: [AuditModule, RealtimeModule],
-  controllers: [BillingController],
-  providers: [WebhookIngestService, BillingLifecycleService],
+  controllers: [BillingController, StripeController, PayPalController],
+  providers: [WebhookIngestService, BillingLifecycleService, CheckoutCoordinator, StripeBillingService, PayPalBillingService],
 })
 export class BillingModule {}

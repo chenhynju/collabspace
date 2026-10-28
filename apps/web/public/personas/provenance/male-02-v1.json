@@ -1,0 +1,11 @@
+{
+  "id": "male-02-v1",
+  "name": "亦辰",
+  "gender": "male",
+  "createdAt": "2026-10-27",
+  "tool": "built-in image_gen",
+  "representation": "portrait",
+  "generatedFilename": "exec-1145a1bb-7636-460c-bd0a-3e107f594333.png",
+  "sha256": "863ED5EAE642BB3E68EEA7D324B11D9BA130CBF4AC4119B80D2C6F24881F7445",
+  "prompt": "Create one independent original premium stylized 3D cartoon chest-up portrait for CollabSpace professional AI assistant library. Match only the reference portrait's art direction: sophisticated matte materials, soft studio key and fill lighting, pale lavender solid background, generous headroom, both shoulders fully visible, centered slight natural three-quarter turn. Do NOT reuse the reference person's facial identity: this is a different adult person with different bone structure, nose, jaw and facial proportions. Subject: adult East Asian man age 34, neatly side-parted dark hair, subtle rectangular glasses, slender angular face, navy blazer and ivory shirt, thoughtful gentle expression. Clearly adult, natural expressive eyes and restrained friendly smile, coherent stylized anatomy, not anime, not photorealistic, not toy spheres, no oversized eyes. No text, logos, UI, badges or collage. One distinct original character."
+}

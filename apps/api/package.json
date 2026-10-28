@@ -16,6 +16,7 @@
     "test:acceptance": "ts-node --transpile-only scripts/acceptance.ts && ts-node --transpile-only scripts/acceptance-im.ts && ts-node --transpile-only scripts/acceptance-system.ts && ts-node --transpile-only scripts/acceptance-foundation.ts"
   },
   "dependencies": {
+    "@collabspace/protocol": "workspace:*",
     "@collabspace/store": "workspace:*",
     "@nestjs/common": "^10.4.0",
     "@nestjs/config": "^3.2.0",

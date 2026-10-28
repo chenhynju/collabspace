@@ -4,7 +4,8 @@ import {characters,mouthAt,type VisemeFrame} from './character-catalog';
 export type CharacterPlayback={track:VisemeFrame[];audio:HTMLAudioElement};
 
 /** Real VRM assets only. A portrait fallback must never claim to be animated 3D. */
-export default function AvatarPreview({active=true,vrmUrl,playback}:{speaking?:boolean;active?:boolean;vrmUrl?:string;playback?:CharacterPlayback|null}){
+export default function AvatarPreview({active=true,vrmUrl,playback,characterId='lan-v1'}:{speaking?:boolean;active?:boolean;vrmUrl?:string;playback?:CharacterPlayback|null;characterId?:string}){
+ const character=characters.find(c=>c.id===characterId)||characters[0];
  const host=useRef<HTMLDivElement>(null),[error,setError]=useState(''),[loaded,setLoaded]=useState(false),current=useRef(playback);current.current=playback;
  useEffect(()=>{
   setError('');setLoaded(false);if(!active||!vrmUrl||!host.current)return;
@@ -28,5 +29,5 @@ export default function AvatarPreview({active=true,vrmUrl,playback}:{speaking?:b
   })().catch(()=>{if(!disposed){setLoaded(false);setError('模型无法加载，显示静态形象。');}});
   return()=>{disposed=true;cancelAnimationFrame(frame);observer?.disconnect();disposeScene(scene);renderer?.domElement.removeEventListener('webglcontextlost',contextLost);renderer?.dispose();renderer?.domElement.remove();};
  },[active,vrmUrl]);
- return <div className="overflow-hidden rounded-2xl border border-violet-100 bg-violet-50"><div className="relative h-[300px]" aria-label={vrmUrl?'VRM角色预览':'Agent静态形象'}>{(!loaded||!vrmUrl)&&<img src={characters[0].poster} alt="原创Agent小岚，短发、浅紫外套的职场助手" className="h-full w-full object-cover object-[center_25%]"/>}<div ref={host} className={loaded?'absolute inset-0':'hidden'}/></div><p className="px-3 py-2 text-xs text-slate-500">{loaded?'本地VRM预览；仅有真实口型轨道时驱动嘴型。':'静态角色外观稿 · 可动3D模型尚未交付'}</p>{error&&<p role="alert" className="px-3 pb-2 text-xs text-red-700">{error}</p>}</div>;
+ return <div className="overflow-hidden rounded-2xl border border-violet-100 bg-violet-50"><div className="relative h-[300px]" aria-label={vrmUrl?'VRM角色预览':'Agent静态形象'}>{(!loaded||!vrmUrl)&&<img src={character.poster} alt={character.name+'原创Agent静态形象'} className="h-full w-full object-cover object-[center_25%]"/>}<div ref={host} className={loaded?'absolute inset-0':'hidden'}/></div><p className="px-3 py-2 text-xs text-slate-500">{loaded?'本地VRM预览；仅有真实口型轨道时驱动嘴型。':'静态角色外观稿 · 可动3D模型尚未交付'}</p>{error&&<p role="alert" className="px-3 pb-2 text-xs text-red-700">{error}</p>}</div>;
 }

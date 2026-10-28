@@ -1,0 +1,11 @@
+{
+  "id": "male-05-v1",
+  "name": "承远",
+  "gender": "male",
+  "createdAt": "2026-10-27",
+  "tool": "built-in image_gen",
+  "representation": "portrait",
+  "generatedFilename": "exec-60cf2523-a752-4644-be96-b1e528a6c0ac.png",
+  "sha256": "2D895ADAF6A313809BFB1CB4810F7907D89E8F0747A541F0E103D9F37EEC4EC8",
+  "prompt": "Create one independent original premium stylized 3D cartoon chest-up portrait for CollabSpace professional AI assistant library. Match only the reference portrait's art direction: sophisticated matte materials, soft studio key and fill lighting, pale lavender solid background, generous headroom, both shoulders fully visible, centered slight natural three-quarter turn. Do NOT reuse the reference person's facial identity: this is a different adult person with different bone structure, nose, jaw and facial proportions. Subject: adult East Asian man age 45, short salt-and-pepper hair, wider face, gentle smile lines, charcoal jacket and light blue shirt, experienced calm expression. Clearly adult, natural expressive eyes and restrained friendly smile, coherent stylized anatomy, not anime, not photorealistic, not toy spheres, no oversized eyes. No text, logos, UI, badges or collage. One distinct original character."
+}

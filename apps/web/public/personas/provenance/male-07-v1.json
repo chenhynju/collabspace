@@ -1,0 +1,11 @@
+{
+  "id": "male-07-v1",
+  "name": "睿文",
+  "gender": "male",
+  "createdAt": "2026-10-27",
+  "tool": "built-in image_gen",
+  "representation": "portrait",
+  "generatedFilename": "exec-1bc3d156-5604-468d-8c04-f00842c6afbe.png",
+  "sha256": "BDF63D97C347EA728A82A1CD98F19FED7AB04FFC208081380A75D61AB68D3520",
+  "prompt": "Create one independent original premium stylized 3D cartoon chest-up portrait for CollabSpace professional AI assistant library. Match only the reference portrait's art direction: sophisticated matte materials, soft studio key and fill lighting, pale lavender solid background, generous headroom, both shoulders fully visible, centered slight natural three-quarter turn. Do NOT reuse the reference person's facial identity: this is a different adult person with different bone structure, nose, jaw and facial proportions. Subject: adult South Asian man age 31, medium brown skin, thick dark wavy hair, neatly trimmed short beard, distinct elongated nose, slate blue jacket over ivory top, intelligent welcoming expression. Clearly adult, natural expressive eyes and restrained friendly smile, coherent stylized anatomy, not anime, not photorealistic, not toy spheres, no oversized eyes. No text, logos, UI, badges or collage. One distinct original character."
+}

@@ -1,0 +1,11 @@
+{
+  "id": "male-06-v1",
+  "name": "泽言",
+  "gender": "male",
+  "createdAt": "2026-10-27",
+  "tool": "built-in image_gen",
+  "representation": "portrait",
+  "generatedFilename": "exec-e103f7b8-2547-4c23-9355-c1d0c7a7355a.png",
+  "sha256": "21BFDD5A956BF9183C4620496BCAE0A67E107EEF559718BB9CD51A049D281C9A",
+  "prompt": "Create one independent original premium stylized 3D cartoon chest-up portrait for CollabSpace professional AI assistant library. Match only the reference portrait's art direction: sophisticated matte materials, soft studio key and fill lighting, pale lavender solid background, generous headroom, both shoulders fully visible, centered slight natural three-quarter turn. Do NOT reuse the reference person's facial identity: this is a different adult person with different bone structure, nose, jaw and facial proportions. Subject: adult Black man age 32, dark brown skin, close-cropped natural hair, neat short beard, strong nose and cheekbones, light taupe blazer and navy top, confident friendly expression. Clearly adult, natural expressive eyes and restrained friendly smile, coherent stylized anatomy, not anime, not photorealistic, not toy spheres, no oversized eyes. No text, logos, UI, badges or collage. One distinct original character."
+}

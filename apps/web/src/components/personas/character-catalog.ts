@@ -1,9 +1,5 @@
-export const characters = [{
- id:'lan-v1',name:'小岚',revision:'1',poster:'/personas/agent-lan-v1.png',
- description:'原创职场助手 · 温和、专注',
- // A portrait is not a rigged model. Only ship a model URL after asset validation.
- modelUrl:null as string|null,
-}] as const;
+import {CHARACTER_CATALOG} from '@collabspace/protocol/personas';
+export const characters=CHARACTER_CATALOG;
 
 export type MouthWeights={aa:number;ih:number;ou:number;ee:number;oh:number};
 export type VisemeFrame={offsetMs:number;id:number};

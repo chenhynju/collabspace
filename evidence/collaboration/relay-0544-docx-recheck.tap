@@ -1,0 +1,27 @@
+TAP version 13
+# Subtest: real DOCX and text parser, invalid file refusal, no attachment persistence
+not ok 1 - real DOCX and text parser, invalid file refusal, no attachment persistence
+  ---
+  duration_ms: 10477.0947
+  type: 'test'
+  location: 'D:\\appspace\\collaboration\\apps\\api\\tests\\assistant.test.cjs:56:1'
+  failureType: 'testCodeFailure'
+  error: '无法解析文件：支持 DOCX、文字型 PDF（前30页）、TXT、MD；旧版DOC及扫描件请先转换'
+  code: 'ERR_TEST_FAILURE'
+  name: 'HttpException'
+  stack: |-
+    AssistantController.extract (D:\appspace\collaboration\apps\api\dist\modules\assistant\assistant.controller.js:100:19)
+    process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    async TestContext.<anonymous> (D:\appspace\collaboration\apps\api\tests\assistant.test.cjs:61:10)
+    async Test.run (node:internal/test_runner/test:1054:7)
+    async startSubtestAfterBootstrap (node:internal/test_runner/harness:296:3)
+  ...
+1..1
+# tests 1
+# suites 0
+# pass 0
+# fail 1
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 15981.2822

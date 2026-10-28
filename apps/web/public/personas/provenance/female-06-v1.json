@@ -1,0 +1,11 @@
+{
+  "id": "female-06-v1",
+  "name": "明悦",
+  "gender": "female",
+  "createdAt": "2026-10-27",
+  "tool": "built-in image_gen",
+  "representation": "portrait",
+  "generatedFilename": "exec-66a627e5-36f4-4205-a916-dd401ad77d1a.png",
+  "sha256": "D9D1D02DC197C1FD6145D221C1FF530402EA0DE3D2F2FC3673553B158F76DB86",
+  "prompt": "Create one independent original premium stylized 3D cartoon chest-up portrait for CollabSpace professional AI assistant library. Match only the reference portrait's art direction: sophisticated matte materials, soft studio key and fill lighting, pale lavender solid background, generous headroom, both shoulders fully visible, centered slight natural three-quarter turn. Do NOT reuse the reference person's facial identity: this is a different adult person with different bone structure, nose, jaw and facial proportions. Subject: adult Black woman age 31, rich dark brown skin, natural short curls, broad elegant nose and radiant smile, plum blazer and ivory blouse, warm confident expression. Clearly adult, natural expressive eyes and restrained friendly smile, coherent stylized anatomy, not anime, not photorealistic, not toy spheres, no oversized eyes. No text, logos, UI, badges or collage. One distinct original character."
+}

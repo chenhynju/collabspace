@@ -1,0 +1,11 @@
+{
+  "id": "male-03-v1",
+  "name": "景川",
+  "gender": "male",
+  "createdAt": "2026-10-27",
+  "tool": "built-in image_gen",
+  "representation": "portrait",
+  "generatedFilename": "exec-69713699-54bd-4f60-8f92-79b2dfd515d0.png",
+  "sha256": "43366E6D1D6BF2A3B7709A6CBCBE72FAC4C163FA6062BF4E94B8A4CA4AA324CD",
+  "prompt": "Create one independent original premium stylized 3D cartoon chest-up portrait for CollabSpace professional AI assistant library. Match only the reference portrait's art direction: sophisticated matte materials, soft studio key and fill lighting, pale lavender solid background, generous headroom, both shoulders fully visible, centered slight natural three-quarter turn. Do NOT reuse the reference person's facial identity: this is a different adult person with different bone structure, nose, jaw and facial proportions. Subject: adult East Asian man age 39, short brushed-back dark hair, defined broad jaw and subtle stubble, forest-green overshirt and light cream top, dependable warm expression. Clearly adult, natural expressive eyes and restrained friendly smile, coherent stylized anatomy, not anime, not photorealistic, not toy spheres, no oversized eyes. No text, logos, UI, badges or collage. One distinct original character."
+}

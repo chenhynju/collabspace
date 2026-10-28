@@ -1,0 +1,11 @@
+{
+  "id": "female-08-v1",
+  "name": "可乔",
+  "gender": "female",
+  "createdAt": "2026-10-27",
+  "tool": "built-in image_gen",
+  "representation": "portrait",
+  "generatedFilename": "exec-cf844256-3df1-4777-8d67-2279d9a9d3f4.png",
+  "sha256": "DABBEC89BF2AC941327EA1AB75D4C08438FDE0896CA3989510487DED787203F6",
+  "prompt": "Create one independent original premium stylized 3D cartoon chest-up portrait for CollabSpace professional AI assistant library. Match only the reference portrait's art direction: sophisticated matte materials, soft studio key and fill lighting, pale lavender solid background, generous headroom, both shoulders fully visible, centered slight natural three-quarter turn. Do NOT reuse the reference person's facial identity: this is a different adult person with different bone structure, nose, jaw and facial proportions. Subject: adult European woman age 35, fair skin, dark blonde hair tied in a low bun, subtle oval glasses, distinct longer nose and soft cheekbones, navy blazer over pale blue top, intelligent gentle expression. Clearly adult, natural expressive eyes and restrained friendly smile, coherent stylized anatomy, not anime, not photorealistic, not toy spheres, no oversized eyes. No text, logos, UI, badges or collage. One distinct original character."
+}

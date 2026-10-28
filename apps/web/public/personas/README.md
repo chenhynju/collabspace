@@ -1,6 +1,6 @@
 # 原创角色外观稿
 
-agent-lan-v1.png为2026-10-27通过内置imagegen生成的原创静态外观稿；用户已倾向保留该方向。它不是VRM/GLB、骨骼、表情包或可动数字人，也不代表已交付20个角色。默认不对图片做假嘴型动画。
+截至2026-10-28，本目录已保存20张独立原创静态外观稿（男10、女10，含小岚agent-lan-v1.png）。各图生成提示与来源见provenance/，文件SHA256见manifest.json；运行node scripts/build-persona-catalog.cjs检查注册表与文件一致性。全部modelUrl为null，不是VRM/GLB、骨骼、表情包或可动数字人。默认不对图片做假嘴型动画，后台与Agent展示的最终浏览器验收仍待完成。
 
 生成方式：built-in image_gen，非CLI；原始生成文件保留，项目引用此目录副本。后续正式建模应以用户认可的外观为参考，补齐资产许可、动作和面部绑定后独立验收。
 

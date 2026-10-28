@@ -1,0 +1,202 @@
+[
+  {
+    "id": "lan-v1",
+    "name": "小岚",
+    "gender": "female",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-lan-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "female-02-v1",
+    "name": "知夏",
+    "gender": "female",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-female-02-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "female-03-v1",
+    "name": "沐晴",
+    "gender": "female",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-female-03-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "female-04-v1",
+    "name": "书宁",
+    "gender": "female",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-female-04-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "female-05-v1",
+    "name": "若溪",
+    "gender": "female",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-female-05-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "female-06-v1",
+    "name": "明悦",
+    "gender": "female",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-female-06-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "female-07-v1",
+    "name": "安雅",
+    "gender": "female",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-female-07-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "female-08-v1",
+    "name": "可乔",
+    "gender": "female",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-female-08-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "female-09-v1",
+    "name": "乔伊",
+    "gender": "female",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-female-09-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "female-10-v1",
+    "name": "思衡",
+    "gender": "female",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-female-10-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "male-01-v1",
+    "name": "知行",
+    "gender": "male",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-male-01-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "male-02-v1",
+    "name": "亦辰",
+    "gender": "male",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-male-02-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "male-03-v1",
+    "name": "景川",
+    "gender": "male",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-male-03-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "male-04-v1",
+    "name": "予安",
+    "gender": "male",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-male-04-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "male-05-v1",
+    "name": "承远",
+    "gender": "male",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-male-05-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "male-06-v1",
+    "name": "泽言",
+    "gender": "male",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-male-06-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "male-07-v1",
+    "name": "睿文",
+    "gender": "male",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-male-07-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "male-08-v1",
+    "name": "诺亚",
+    "gender": "male",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-male-08-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "male-09-v1",
+    "name": "艾文",
+    "gender": "male",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-male-09-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  },
+  {
+    "id": "male-10-v1",
+    "name": "时序",
+    "gender": "male",
+    "description": "原创职场助手 · 固定静态外观",
+    "revision": "1",
+    "poster": "/personas/agent-male-10-v1.png",
+    "representation": "portrait",
+    "modelUrl": null
+  }
+]

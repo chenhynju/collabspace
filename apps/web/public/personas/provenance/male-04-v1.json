@@ -1,0 +1,11 @@
+{
+  "id": "male-04-v1",
+  "name": "予安",
+  "gender": "male",
+  "createdAt": "2026-10-27",
+  "tool": "built-in image_gen",
+  "representation": "portrait",
+  "generatedFilename": "exec-237f860a-dda3-4c6b-828b-68e836b9ec26.png",
+  "sha256": "BEF8BB96F24FA58F99307D580B00CF462508C1BBEDAC2A6437C63185846B4870",
+  "prompt": "Create one independent original premium stylized 3D cartoon chest-up portrait for CollabSpace professional AI assistant library. Match only the reference portrait's art direction: sophisticated matte materials, soft studio key and fill lighting, pale lavender solid background, generous headroom, both shoulders fully visible, centered slight natural three-quarter turn. Do NOT reuse the reference person's facial identity: this is a different adult person with different bone structure, nose, jaw and facial proportions. Subject: adult East Asian man age 27, soft wavy dark chestnut hair, youthful but adult face with high cheekbones, muted blue casual blazer and white crew-neck top, friendly creative expression. Clearly adult, natural expressive eyes and restrained friendly smile, coherent stylized anatomy, not anime, not photorealistic, not toy spheres, no oversized eyes. No text, logos, UI, badges or collage. One distinct original character."
+}
