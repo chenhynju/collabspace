@@ -1,0 +1,17 @@
+
+Running 8 tests using 1 worker
+
+(node:96516) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:96516) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ok 1 tests\browser\hub-direct.fixture.spec.cjs:18:1 › project document card opens directly once, without repeating type or project selection (22.0s)
+  ok 2 tests\browser\hub-direct.fixture.spec.cjs:19:1 › one document filter includes rich text and Markdown, and existing Markdown opens its own route (14.7s)
+  ok 3 tests\browser\hub-direct.fixture.spec.cjs:20:1 › global entry asks for a project with buttons only, then immediately creates in that project (10.1s)
+  ok 4 tests\browser\hub-direct.fixture.spec.cjs:21:87 › Word card directly creates and opens the appropriate editor (6.7s)
+  ok 5 tests\browser\hub-direct.fixture.spec.cjs:21:87 › Excel card directly creates and opens the appropriate editor (15.4s)
+  ok 6 tests\browser\hub-direct.fixture.spec.cjs:21:87 › PowerPoint card directly creates and opens the appropriate editor (13.9s)
+  ok 7 tests\browser\hub-direct.fixture.spec.cjs:22:1 › unknown create outcome disables repeated creation until the list is refreshed (8.4s)
+  ok 8 tests\browser\hub-direct.fixture.spec.cjs:23:1 › permission rejection stays on the list and shows the server error without opening an editor (11.0s)
+
+  8 passed (2.5m)

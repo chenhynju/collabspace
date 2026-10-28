@@ -1,6 +1,6 @@
 # CollabSpace — 多人实时协作文档
 
-2026-10-28第二阶段：已交付男10女10静态稿及共享目录，补支付Controller注册/部署变量缺口；实际测试与未完成边界以[接力记录](evidence/collaboration/RELAY-2026-10-28-0544.md)为准。完整3D/捏脸、真实真人生成及官方沙盒支付重验仍不能声明通过，未发布。
+2026-10-28：20款静态形象及组织配置、私有素材基础、支付路由与DOCX解析改进已发布；[当前交付与剩余项](docs/collaboration/CURRENT-STATUS-2026-10-28.md)、[发布验收](evidence/collaboration/DEPLOYMENT-PERSONA-2026-10-28.md)。完整3D、真人供应商生成、真实语音和官方沙盒付款仍未完成。
 
 [第三方服务与API Key获取清单](docs/collaboration/THIRD-PARTY-SERVICES.md)：区分现有接口、待开通、候选/海外版，含控制台入口、实际环境变量、回调和配置存放位置。
 

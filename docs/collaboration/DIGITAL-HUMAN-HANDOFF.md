@@ -76,3 +76,11 @@ Node22.20.0绝对路径；当前pnpm经现存fallback为11.25.0，新SDK包和lo
 最终服务按归属关闭，PG数据保留，四端口无监听，移除Next临时tsconfig路径。归档开发分支codex/digital-human-20261027、标签collabspace-20261028-digital-human-phase2-local（实际Git结果以工具输出/refs为准），不合并main。下一步先解决DOCX解析并核对邀请迁移，再规划支付修复的受控上线/官方沙盒完整验收；真人凭据/素材及正式VRM/捏脸资产依旧缺。此轮automation_update不可用，无法正式删除一次性任务，未直接改调度文件，COUNT=1保留。
 
 最终补充：停止本轮所有服务和构建后，DOCX隔离单项1/1通过，全量API串行47通过/0失败/6跳过（44178ms），未改10秒限制；前面两次资源并行时失败保留，负载可靠性问题仍开放。源码58a6c21及phase2-local标签已推送并远端SHA确认，归档tar.gz SHA256 de84c67fabc8c98b9256c16ba8015751e89a299be993eff7d2a43a58178c25d5。最终空闲复核为追加证据提交，标签不移动。仍未发布，官方沙盒未付款，下一步先准备支付模块单独受控发布及测试环境配置核验，避免把数字人新SQL带入未经授权的生产迁移。
+
+## 2026-10-28 已正式发布（覆盖前述未发布状态）
+
+数字人基础/支付路由/DOCX已发布，见evidence/collaboration/DEPLOYMENT-PERSONA-2026-10-28.md；用户另行明确批准了两张persona表、权限/RLS/清理函数及配套口型列的附加迁移，先完成全库私密备份。API源码0daaeb5、镜像e5bbfc70a1c9、r20261028-01；旧镜像和备份保留，WS不变。真实供应商及官方沙盒凭据仍空，不能当作真实语音/真人/付款通过。
+
+协作空间已按新指令合并富文本/Markdown入口，项目类型卡片直达编辑器；应用源码de082c0，前端dpl_5spsPt4k1AiWkxir67ecY8pWF8Zp / collabspace-mg9scybdw-purelamp.vercel.app已绑定正式域名。无API重启或SQL变更。本地8项交互+1项防重复核、26单元及38页生产构建通过；线上文档/Markdown及三类Office入口4项通过。记录evidence/collaboration/HUB-DIRECT-2026-10-28.md，剩余项见CURRENT-STATUS-2026-10-28.md。保留类型与Yjs内容，不做富文本/Markdown数据转换；通用新建仍可自定义名称，卡片不重复选择。
+
+本轮归档标签collabspace-20261028-persona-hub-online；最终提交/推送/压缩包校验以实际Git与sha256文件为准。原单次接力00:42/05:44已通过恢复可用的automation工具删除，无重复调度。工作树另有RTC交接/relay文件，非本轮改动，保留不纳入。只关闭了自己14420端口本地前端，未停用其他项目服务。

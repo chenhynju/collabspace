@@ -1,0 +1,52 @@
+
+Running 4 tests using 1 worker
+
+(node:135200) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:135200) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  x  1 tests\browser\hub-direct-online.spec.cjs:4:1 › formal site: one document entry directly opens rich text and existing Markdown without another selector (19.7s)
+(node:136768) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:136768) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"status":"PASSED","extension":"docx","document":"683bd7a1-3308-4823-938f-3858d31d2e44","editorRoute":true}
+  ok 2 tests\browser\hub-direct-online.spec.cjs:12:85 › formal site: Word card directly creates the correct document and opens Office route (18.2s)
+{"status":"PASSED","extension":"xlsx","document":"f1eaf2ad-1ef5-42c7-bea1-d22e8cdb5f81","editorRoute":true}
+  ok 3 tests\browser\hub-direct-online.spec.cjs:12:85 › formal site: Excel card directly creates the correct document and opens Office route (13.6s)
+{"status":"PASSED","extension":"pptx","document":"ecca5160-95a7-4956-9117-f8549cc515f6","editorRoute":true}
+  ok 4 tests\browser\hub-direct-online.spec.cjs:12:85 › formal site: PowerPoint card directly creates the correct document and opens Office route (12.3s)
+
+
+  1) tests\browser\hub-direct-online.spec.cjs:4:1 › formal site: one document entry directly opens rich text and existing Markdown without another selector 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+    Received: [31mfalse[39m
+
+       5 |  const h=await enter(page,request,`/projects/${c.TEST_PROJECT}/content`),suffix=randomUUID().slice(0,8);await expect(page.getByRole('button',{name:'新建 Markdown',exact:true})).toHaveCount(0);
+       6 |  const created=page.waitForResponse(r=>r.url().endsWith('/documents')&&r.request().method()==='POST');await page.getByRole('button',{name:'新建 文档',exact:true}).click();const r=await created;expect(r.ok()).toBeTruthy();const rich=await r.json();await expect(page).toHaveURL(c.WEB_URL+`/projects/${c.TEST_PROJECT}/documents/${rich.id}`);await expect(page.getByRole('dialog')).toHaveCount(0);await expect(page.getByRole('textbox',{name:'协作文档正文',exact:true})).toBeVisible({timeout:90000});
+    >  7 |  const title='Synthetic direct rich '+suffix;expect((await request.patch(c.NEXT_PUBLIC_API_URL+'/documents/'+rich.id,{headers:h,data:{title}})).ok()).toBeTruthy();
+         |                                                                                                                                                       ^
+       8 |  const source='# Synthetic Markdown '+suffix+'\n\nOriginal **Markdown** source remains unchanged.';const m=await request.post(c.NEXT_PUBLIC_API_URL+'/documents',{headers:h,data:{projectId:c.TEST_PROJECT,title:'Synthetic existing Markdown '+suffix,kind:'MARKDOWN',source}});expect(m.ok()).toBeTruthy();const md=await m.json();
+       9 |  await page.goto(c.WEB_URL+`/projects/${c.TEST_PROJECT}/documents`);await expect(page.getByLabel('内容类型')).toHaveValue('DOCUMENT');await expect(page.getByRole('link',{name:new RegExp(title)})).toBeVisible();const link=page.getByRole('link',{name:new RegExp('Synthetic existing Markdown '+suffix)});await expect(link).toBeVisible();await page.screenshot({path:'evidence/collaboration/hub-unified-online-20261028.png',fullPage:true});await link.click();await expect(page).toHaveURL(c.WEB_URL+`/projects/${c.TEST_PROJECT}/documents/${md.id}`);await expect(page.getByLabel('协作 Markdown 源码')).toHaveValue(source,{timeout:90000});await expect(page.getByRole('dialog')).toHaveCount(0);await page.screenshot({path:'evidence/collaboration/hub-markdown-direct-online-20261028.png',fullPage:true});
+      10 |  console.log(JSON.stringify({status:'PASSED',rich:rich.id,markdown:md.id,scope:'synthetic acceptance project',sourceConverted:false}));
+        at D:\appspace\collaboration\tests\browser\hub-direct-online.spec.cjs:7:151
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    .test-runs\hub-direct-online\hub-direct-online-formal-s-5c224-wn-without-another-selector\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: .test-runs\hub-direct-online\hub-direct-online-formal-s-5c224-wn-without-another-selector\error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    .test-runs\hub-direct-online\hub-direct-online-formal-s-5c224-wn-without-another-selector\trace.zip
+    Usage:
+
+        npx playwright show-trace .test-runs\hub-direct-online\hub-direct-online-formal-s-5c224-wn-without-another-selector\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    tests\browser\hub-direct-online.spec.cjs:4:1 › formal site: one document entry directly opens rich text and existing Markdown without another selector 
+  3 passed (1.6m)

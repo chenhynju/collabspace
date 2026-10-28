@@ -1,0 +1,166 @@
+TAP version 13
+# Subtest: mouth track uses audio clock, silence/closures, bounded weights and stop/seek behavior
+ok 1 - mouth track uses audio clock, silence/closures, bounded weights and stop/seek behavior
+  ---
+  duration_ms: 1020.2225
+  type: 'test'
+  ...
+# Subtest: character playback isolates identities and an old release never stops a new session
+ok 2 - character playback isolates identities and an old release never stops a new session
+  ---
+  duration_ms: 144.428
+  type: 'test'
+  ...
+# Subtest: the public character catalog only accepts available preset IDs and bounded configuration revisions
+ok 3 - the public character catalog only accepts available preset IDs and bounded configuration revisions
+  ---
+  duration_ms: 11.3406
+  type: 'test'
+  ...
+# Subtest: history dates use yyyy-mm-dd and the product timezone across UTC midnight
+ok 4 - history dates use yyyy-mm-dd and the product timezone across UTC midnight
+  ---
+  duration_ms: 306.6198
+  type: 'test'
+  ...
+# Subtest: formula renders matrices, calculus and non trusted input safely; rejects malformed/oversized source
+ok 5 - formula renders matrices, calculus and non trusted input safely; rejects malformed/oversized source
+  ---
+  duration_ms: 145.8007
+  type: 'test'
+  ...
+# Subtest: formula source survives Yjs peer sync, edits and fresh history lineage
+ok 6 - formula source survives Yjs peer sync, edits and fresh history lineage
+  ---
+  duration_ms: 50.8938
+  type: 'test'
+  ...
+# Subtest: all reused palette templates render
+ok 7 - all reused palette templates render
+  ---
+  duration_ms: 1282.3442
+  type: 'test'
+  ...
+# Subtest: one durable message is rendered once: POST before realtime
+ok 8 - one durable message is rendered once: POST before realtime
+  ---
+  duration_ms: 3004.6404
+  type: 'test'
+  ...
+# Subtest: one durable message is rendered once: realtime before POST
+ok 9 - one durable message is rendered once: realtime before POST
+  ---
+  duration_ms: 109.6002
+  type: 'test'
+  ...
+# Subtest: login returns only to local invitation routes and rejects external/control-character redirects
+ok 10 - login returns only to local invitation routes and rejects external/control-character redirects
+  ---
+  duration_ms: 8.401
+  type: 'test'
+  ...
+# Subtest: mindmap drag reparents the complete subtree and refuses cycles/root moves
+ok 11 - mindmap drag reparents the complete subtree and refuses cycles/root moves
+  ---
+  duration_ms: 79.6477
+  type: 'test'
+  ...
+# Subtest: drag append preserves comments, subgraphs and styling; connections validate actual defined nodes
+ok 12 - drag append preserves comments, subgraphs and styling; connections validate actual defined nodes
+  ---
+  duration_ms: 7.3537
+  type: 'test'
+  ...
+# Subtest: unsupported diagrams and unsafe labels are preserved by refusing graphical mutation
+ok 13 - unsupported diagrams and unsafe labels are preserved by refusing graphical mutation
+  ---
+  duration_ms: 7.6944
+  type: 'test'
+  ...
+# Subtest: modern shape definitions, labeled edges, layout and properties preserve surrounding source
+ok 14 - modern shape definitions, labeled edges, layout and properties preserve surrounding source
+  ---
+  duration_ms: 7.2267
+  type: 'test'
+  ...
+# Subtest: leading collaboration comments preserve graphical editing and direction changes
+ok 15 - leading collaboration comments preserve graphical editing and direction changes
+  ---
+  duration_ms: 35.4971
+  type: 'test'
+  ...
+# Subtest: deletion removes generated and template nodes without losing other definitions
+ok 16 - deletion removes generated and template nodes without losing other definitions
+  ---
+  duration_ms: 11.0074
+  type: 'test'
+  ...
+# Subtest: partial chain deletion preserves surviving edges, quoted labels and unrelated comments
+ok 17 - partial chain deletion preserves surviving edges, quoted labels and unrelated comments
+  ---
+  duration_ms: 1.96
+  type: 'test'
+  ...
+# Subtest: shared positions replace only their own annotation, validate limits and remain portable comments
+ok 18 - shared positions replace only their own annotation, validate limits and remain portable comments
+  ---
+  duration_ms: 195.838
+  type: 'test'
+  ...
+# Subtest: layout refuses subgraphs, custom edges, self loops and parallel edges without source mutation
+ok 19 - layout refuses subgraphs, custom edges, self loops and parallel edges without source mutation
+  ---
+  duration_ms: 93.8958
+  type: 'test'
+  ...
+# Subtest: canvas connection styles preserve position annotations and unsafe labels never mutate the source
+ok 20 - canvas connection styles preserve position annotations and unsafe labels never mutate the source
+  ---
+  duration_ms: 3.0258
+  type: 'test'
+  ...
+# Subtest: runtime events ignore reordered/duplicate events and cannot resurrect terminal runs
+ok 21 - runtime events ignore reordered/duplicate events and cannot resurrect terminal runs
+  ---
+  duration_ms: 6.4881
+  type: 'test'
+  ...
+# Subtest: tenant switch immediately clears cached messages and permissions; logout also clears IM
+ok 22 - tenant switch immediately clears cached messages and permissions; logout also clears IM
+  ---
+  duration_ms: 867.4941
+  type: 'test'
+  ...
+# Subtest: late response from B cannot overwrite A permissions after A-B-A switch
+ok 23 - late response from B cannot overwrite A permissions after A-B-A switch
+  ---
+  duration_ms: 236.3595
+  type: 'test'
+  ...
+# Subtest: new login discards previous identity, organization and permissions before profile load
+ok 24 - new login discards previous identity, organization and permissions before profile load
+  ---
+  duration_ms: 214.7
+  type: 'test'
+  ...
+# Subtest: reload repairs a foreign cached organization and ignores a suspended membership
+ok 25 - reload repairs a foreign cached organization and ignores a suspended membership
+  ---
+  duration_ms: 182.1108
+  type: 'test'
+  ...
+# Subtest: old-account profile and organization replies cannot overwrite a new login
+ok 26 - old-account profile and organization replies cannot overwrite a new login
+  ---
+  duration_ms: 192.3404
+  type: 'test'
+  ...
+1..26
+# tests 26
+# suites 0
+# pass 26
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 37481.3026

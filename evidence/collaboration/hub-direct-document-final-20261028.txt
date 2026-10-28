@@ -1,0 +1,11 @@
+
+Running 1 test using 1 worker
+
+(node:137548) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+(node:137548) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"status":"PASSED","rich":"6ee042a8-b9ea-4b52-b872-986190739f60","markdown":"b8b20d93-5df4-445e-9856-9d3b3ad0bfe9","scope":"synthetic acceptance project","sourceConverted":false}
+  ok 1 tests\browser\hub-direct-online.spec.cjs:4:1 › formal site: one document entry directly opens rich text and existing Markdown without another selector (26.5s)
+
+  1 passed (46.2s)
