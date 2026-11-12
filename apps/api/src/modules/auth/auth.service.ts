@@ -17,6 +17,8 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import {credentialVersion} from './credential-version';
+import {requireJwtSecret} from './jwt-secret';
+import {LoginThrottle} from './login-throttle';
 import {ChangePasswordDto} from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { OAuthService } from './oauth.service';
@@ -30,6 +32,8 @@ type ProviderKey = 'google' | 'github';
 @Injectable()
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
+  // 登录失败限流（内存滑动窗口）：只计失败，成功即清零；水平扩容需换 Redis 计数
+  private readonly loginThrottle = new LoginThrottle();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -371,8 +375,13 @@ export class AuthService {
 
   /** 邮箱 + 密码登录 */
   async login(dto: LoginDto, meta: RequestMeta) {
+    // 失败限流：按 IP+邮箱 5 分钟 5 次；超限直接 429，不触碰数据库
+    const throttleKey = `${meta.ip}|${dto.email.trim().toLowerCase()}`;
+    this.loginThrottle.assertAllowed(throttleKey);
+
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
     if (!user || !user.passwordHash) {
+      this.loginThrottle.recordFailure(throttleKey);
       await this.audit.loginLog({
         username: dto.email,
         ip: meta.ip,
@@ -386,6 +395,7 @@ export class AuthService {
     }
     const ok = await bcrypt.compare(dto.password, user.passwordHash);
     if (!ok) {
+      this.loginThrottle.recordFailure(throttleKey);
       await this.audit.loginLog({
         userId: user.id,
         username: dto.email,
@@ -415,6 +425,7 @@ export class AuthService {
       status: 0,
       msg: 'login',
     });
+    this.loginThrottle.recordSuccess(throttleKey);
     return this.issueToken(user);
   }
 
@@ -494,9 +505,10 @@ export class AuthService {
   oauthRedeem(code:string,binding:string){return this.oauth.redeem(code,binding);}
 
   private issueToken(user: { id: string; email: string; name: string; passwordHash:string|null }) {
-    const payload = { sub: user.id, email: user.email, name: user.name, pwd:credentialVersion(user.passwordHash,this.config.get<string>('JWT_SECRET','change-me')) };
+    const secret = requireJwtSecret(this.config);
+    const payload = { sub: user.id, email: user.email, name: user.name, pwd:credentialVersion(user.passwordHash,secret) };
     const accessToken = this.jwt.sign(payload, {
-      secret: this.config.get('JWT_SECRET'),
+      secret,
       expiresIn: this.config.get('JWT_ACCESS_EXPIRES_IN', '7d'),
     });
     return {
