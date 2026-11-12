@@ -1,5 +1,7 @@
 # 语音与数字形象：功能清单和待完成项
 
+2026-10-29当前进展请以[功能盘点](FEATURE-INVENTORY-2026-10-29.md)及[R3实际证据](../../evidence/collaboration/RTC-VOICE-PERSONA-R3-2026-10-29.md)为准：海外ElevenLabs真实应用已验证，本地基础音素口型/第三方VRM技术预览通过；20款对应原创可动模型仍为0。下方为历史阶段记录，不把旧BLOCKED或新技术样例误当当前全部完成。
+
 界面入口后续整理：按钮化、隐藏未配置云功能与真人占位，保留原音、系统朗读及必要状态；见[入口规范](ACTION-UI.md)和[本轮验收](../../evidence/collaboration/ACTION-UI-2026-10-25.md)。隐藏入口不代表真实Azure/真人服务已验收。
 
 更新：2026-10-25，北京时间。对应P-VP01–08。当前站点：https://collabspace.purelamp.uk ，IM入口`/im`，邮件/助手入口`/assistant`。本清单覆盖本轮语音与形象功能；既有协作文档、白板、权限等底座没有因此获得全量重新验收。

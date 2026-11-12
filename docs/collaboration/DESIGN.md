@@ -1,5 +1,11 @@
 # CollabSpace — 详细设计 v1
 
+2026-10-30 当前发布及 P/BR/D/AT-REV 在线状态修复见[当前状态](CURRENT-STATUS-2026-10-30.md)；API/WS 原生数据库配置链和实际验收见[发布审查](../../evidence/collaboration/REVIEW-RELEASE-2026-10-30.md)，历史记录保留。
+
+2026-10-29新增 D/AT-SNAP：同事务自动快照、不可变状态、游标时间轴和现有ACL下的预览/副本恢复，见 [快照时间轴](SNAPSHOT-TIMELINE.md)。
+
+2026-10-28新增项目会议M1–M3，状态机、授权、媒体凭据、SQL/RLS与验收见[会议专项设计](MEETINGS.md)。当前开发中，媒体撤权/真实双账号验收未完成，不生产发布。
+
 2026-10-28：数字人基础、支付路由和DOCX解析改进已发布；真实范围见[当前交付与剩余项](CURRENT-STATUS-2026-10-28.md)及[发布验收](../../evidence/collaboration/DEPLOYMENT-PERSONA-2026-10-28.md)。完整3D、真人生成、真实语音及官方沙盒付款仍未完成。
 
 2026-10-27第一阶段已本地实现，完整数字人仍未完成且未发布；实际通过/阻塞/未完成见[数字人实施记录](../../evidence/collaboration/DIGITAL-HUMAN-2026-10-27.md)。用户追加后台配置、男10女10预设与捏脸、高相似真人验收，纳入详细设计，不以静态角色或素材草稿替代完整交付。
@@ -181,3 +187,6 @@ Office 引擎为细粒度编辑权威，应用为 ACL/持久版本权威；独�
 ### 2026-10-23 注册邀请与个人通知
 
 新增 INV01–INV06，业务、状态机、数据库权限与邮件交付边界见 [INVITATION-NOTIFICATIONS.md](INVITATION-NOTIFICATIONS.md)。核心协作与资源 ACL 保持既有权威模型；个人通知不依赖先加入目标组织。侧栏一级、次级菜单统一14px。
+
+
+2026-10-29追加首个可操控三维Agent，需求/实现边界见[可动3D首版](PERSONA-MOTION.md)，不替代已有数字人完整验收。

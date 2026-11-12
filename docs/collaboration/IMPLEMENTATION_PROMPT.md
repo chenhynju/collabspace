@@ -1,5 +1,11 @@
 # 可直接交给开发 Agent 的 Prompt
 
+2026-10-30 已归档当前工作树、自测并发布；以[当前状态](CURRENT-STATUS-2026-10-30.md)及[本轮证据](../../evidence/collaboration/REVIEW-RELEASE-2026-10-30.md)作为续做入口，历史接力和未发布记录保留作追溯。
+
+2026-10-29新增快照时间轴：按 [P/BR/D/AT-SNAP](SNAPSHOT-TIMELINE.md) 实现与验证同事务自动采样、游标分页、只读预览及私有副本恢复，不能把按分钟采样称为逐键录制。
+
+2026-10-28会议M1–M3与语音/数字人可用专项：先读[会议设计](MEETINGS.md)、[四轮计划](RTC-VOICE-PERSONA-RELAY.md)、[最新交接](RTC-VOICE-PERSONA-HANDOFF.md)；复用现有20款静态形象，完整可动/真人验收不得由静态稿替代。
+
 2026-10-28：数字人基础、支付路由和DOCX解析改进已发布；真实范围见[当前交付与剩余项](CURRENT-STATUS-2026-10-28.md)及[发布验收](../../evidence/collaboration/DEPLOYMENT-PERSONA-2026-10-28.md)。完整3D、真人生成、真实语音及官方沙盒付款仍未完成。
 
 2026-10-27第一阶段已本地实现，完整数字人仍未完成且未发布；实际通过/阻塞/未完成见[数字人实施记录](../../evidence/collaboration/DIGITAL-HUMAN-2026-10-27.md)。用户追加后台配置、男10女10预设与捏脸、高相似真人验收，纳入详细设计，不以静态角色或素材草稿替代完整交付。

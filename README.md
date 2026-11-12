@@ -1,5 +1,15 @@
 # CollabSpace — 多人实时协作文档
 
+2026-10-30：当前代码已归档、自测并发布；修复项目在线状态及 WS 原生数据库配置漂移，正式快照/权限回归通过。见[当前状态](docs/collaboration/CURRENT-STATUS-2026-10-30.md)与[发布审查记录](evidence/collaboration/REVIEW-RELEASE-2026-10-30.md)。下方旧记录保留作历史追溯。
+
+2026-10-29新增本地[快照时间轴](docs/collaboration/SNAPSHOT-TIMELINE.md)：文档、Markdown与白板在成功编辑时每分钟最多保留一份不可变自动快照，支持时间轴浏览、即时保留、历史预览和恢复为副本。生产尚未发布，见[验收记录](evidence/collaboration/SNAPSHOT-TIMELINE-2026-10-29.md)。
+
+2026-10-29 R3口型：[带声音技术演示](evidence/collaboration/avatar-mouth-r3.webm)、[20款制作清单与配置](docs/collaboration/AVATAR-20-PRODUCTION.md)。已验证本人既有TTS本地基础音素分析、VRM音画/暂停/重播/离开与账号隔离，无新增TTS请求；样例为第三方VRM，20款原创可动模型仍待制作，未生产发布。
+
+2026-10-29 R3：[服务器会中撤权、恢复与真实Socket验收](evidence/collaboration/RTC-VOICE-PERSONA-R3-2026-10-29.md)。成员停用后纯SDK客户端被服务器移除、旧票拒绝；重新鉴权入会与真实提交提示通过。M3核心全流程通过过一次，增强复测仍有媒体发布超时，不能视为稳定性验收完成；未生产发布。
+
+2026-10-29：[功能盘点与真实多账号自测](docs/collaboration/FEATURE-INVENTORY-2026-10-29.md)、[执行证据与未通过项](evidence/collaboration/FEATURE-AUDIT-2026-10-29.md)。本地真实应用 ElevenLabs 听写/朗读、账号结果隔离、聊天持久化及形象配置权限通过；LiveKit 多账号媒体稳定性/共享仍有失败，M3与最终原创可动数字人尚未验收。本轮未生产发布。
+
 2026-10-28：20款静态形象及组织配置、私有素材基础、支付路由与DOCX解析改进已发布；[当前交付与剩余项](docs/collaboration/CURRENT-STATUS-2026-10-28.md)、[发布验收](evidence/collaboration/DEPLOYMENT-PERSONA-2026-10-28.md)。完整3D、真人供应商生成、真实语音和官方沙盒付款仍未完成。
 
 [第三方服务与API Key获取清单](docs/collaboration/THIRD-PARTY-SERVICES.md)：区分现有接口、待开通、候选/海外版，含控制台入口、实际环境变量、回调和配置存放位置。

@@ -1,0 +1,360 @@
+{
+  "version": 1,
+  "target": "20 distinct animated 3D personas matching source art; fine cartoon, adult proportions",
+  "firstReview": [
+    "知夏",
+    "知行",
+    "明悦"
+  ],
+  "requiredExpressions": [
+    "blink",
+    "aa",
+    "ih",
+    "ou",
+    "ee",
+    "oh"
+  ],
+  "faceCustomization": "Optional, only supported nonzero facial deformation controls",
+  "models": [
+    {
+      "presetId": "lan-v1",
+      "name": "小岚",
+      "gender": "female",
+      "priority": 2,
+      "source": {
+        "poster": "/personas/agent-lan-v1.png",
+        "sha256": "fbbf5fedcedc573e1d8dea3adaa4bfc9f80184285528bdb266d52d3a9e5c0f78"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "female-02-v1",
+      "name": "知夏",
+      "gender": "female",
+      "priority": 1,
+      "source": {
+        "poster": "/personas/agent-female-02-v1.png",
+        "sha256": "e14a3b1295d4e96099188c016aa4908d20f8bb5f4e872790a25f81610b088a81"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "female-03-v1",
+      "name": "沐晴",
+      "gender": "female",
+      "priority": 2,
+      "source": {
+        "poster": "/personas/agent-female-03-v1.png",
+        "sha256": "da543273146d52d49e23c5c556069251c23ef82e10b41a4f136aedfa45313cf9"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "female-04-v1",
+      "name": "书宁",
+      "gender": "female",
+      "priority": 2,
+      "source": {
+        "poster": "/personas/agent-female-04-v1.png",
+        "sha256": "ef935ced5e5102d0eec32408bfade2c1adce5310094b49bf6d5a5f841c9e8c2a"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "female-05-v1",
+      "name": "若溪",
+      "gender": "female",
+      "priority": 2,
+      "source": {
+        "poster": "/personas/agent-female-05-v1.png",
+        "sha256": "d55c50f1067cb3fc31f45bf44efbff2ff48c26b9acdb83f7a8977ef779ed658c"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "female-06-v1",
+      "name": "明悦",
+      "gender": "female",
+      "priority": 1,
+      "source": {
+        "poster": "/personas/agent-female-06-v1.png",
+        "sha256": "d9d1d02dc197c1fd6145d221c1ff530402ea0de3d2f2fc3673553b158f76db86"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "female-07-v1",
+      "name": "安雅",
+      "gender": "female",
+      "priority": 2,
+      "source": {
+        "poster": "/personas/agent-female-07-v1.png",
+        "sha256": "bb7317201de16c3d0004d5e1ad44eb6fbe61640fa908bb54188a450edcb81656"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "female-08-v1",
+      "name": "可乔",
+      "gender": "female",
+      "priority": 2,
+      "source": {
+        "poster": "/personas/agent-female-08-v1.png",
+        "sha256": "dabbec89bf2ac941327ea1ab75d4c08438fde0896ca3989510487ded787203f6"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "female-09-v1",
+      "name": "乔伊",
+      "gender": "female",
+      "priority": 2,
+      "source": {
+        "poster": "/personas/agent-female-09-v1.png",
+        "sha256": "59f994b18f327eb82d36c6942ab03e8f7459ae7f5c51da0108bebe71d2e5c089"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "female-10-v1",
+      "name": "思衡",
+      "gender": "female",
+      "priority": 2,
+      "source": {
+        "poster": "/personas/agent-female-10-v1.png",
+        "sha256": "60dbdfe512a31db0357efd6d4f581e8d030bdc9507814ad762b15711a2ce8b59"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "male-01-v1",
+      "name": "知行",
+      "gender": "male",
+      "priority": 1,
+      "source": {
+        "poster": "/personas/agent-male-01-v1.png",
+        "sha256": "8c782c2d51a9a689460ef8d2e49fad51c5fd096afb7ae108e92a846e28e19265"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "male-02-v1",
+      "name": "亦辰",
+      "gender": "male",
+      "priority": 2,
+      "source": {
+        "poster": "/personas/agent-male-02-v1.png",
+        "sha256": "863ed5eae642bb3e68eea7d324b11d9ba130cbf4ac4119b80d2c6f24881f7445"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "male-03-v1",
+      "name": "景川",
+      "gender": "male",
+      "priority": 2,
+      "source": {
+        "poster": "/personas/agent-male-03-v1.png",
+        "sha256": "43366e6d1d6bf2a3b7709a6cbcbe72fac4c163fa6062bf4e94b8a4ca4aa324cd"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "male-04-v1",
+      "name": "予安",
+      "gender": "male",
+      "priority": 2,
+      "source": {
+        "poster": "/personas/agent-male-04-v1.png",
+        "sha256": "bef8bb96f24fa58f99307d580b00cf462508c1bbedac2a6437c63185846b4870"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "male-05-v1",
+      "name": "承远",
+      "gender": "male",
+      "priority": 2,
+      "source": {
+        "poster": "/personas/agent-male-05-v1.png",
+        "sha256": "2d895adaf6a313809bfb1cb4810f7907d89e8f0747a541f0e103d9f37eec4ec8"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "male-06-v1",
+      "name": "泽言",
+      "gender": "male",
+      "priority": 2,
+      "source": {
+        "poster": "/personas/agent-male-06-v1.png",
+        "sha256": "21bfdd5a956bf9183c4620496bcae0a67e107eef559718bb9cd51a049d281c9a"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "male-07-v1",
+      "name": "睿文",
+      "gender": "male",
+      "priority": 2,
+      "source": {
+        "poster": "/personas/agent-male-07-v1.png",
+        "sha256": "bdf63d97c347ea728a82a1cd98f19fed7ab04ffc208081380a75d61ab68d3520"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "male-08-v1",
+      "name": "诺亚",
+      "gender": "male",
+      "priority": 2,
+      "source": {
+        "poster": "/personas/agent-male-08-v1.png",
+        "sha256": "8751a43806923a73a0ca828da17e2e139b6395d0bbbe463fda5e9ad1247d3d91"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "male-09-v1",
+      "name": "艾文",
+      "gender": "male",
+      "priority": 2,
+      "source": {
+        "poster": "/personas/agent-male-09-v1.png",
+        "sha256": "49803da31bdb99de87939ac95006d17f23a44c1e3822aa3c06f8f37326119b1a"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    },
+    {
+      "presetId": "male-10-v1",
+      "name": "时序",
+      "gender": "male",
+      "priority": 2,
+      "source": {
+        "poster": "/personas/agent-male-10-v1.png",
+        "sha256": "53222d6a084a7610043b89103bdc4e7981270983136c5d563100d89fa5546b4e"
+      },
+      "status": "SOURCE_READY",
+      "modelArtifact": null,
+      "bodyRig": "NOT_BUILT",
+      "facialRig": "NOT_BUILT",
+      "mouthPlayback": "BLOCKED_MODEL",
+      "faceCustomization": "NOT_AVAILABLE",
+      "appearanceApproval": "PENDING"
+    }
+  ]
+}
