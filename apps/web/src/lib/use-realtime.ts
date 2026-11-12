@@ -22,16 +22,20 @@ export function useProjectRealtime(
   organizationId: string | null,
   projectId: string,
   onTaskChange?: () => void | Promise<void>,
+  onMeetingChange?: () => void | Promise<void>,
 ) {
-  const [presence, setPresence] = useState<PresenceUserInfo[]>([]);
-  const [connected, setConnected] = useState(false);
+  const scope = JSON.stringify([organizationId, projectId]);
+  const [room, setRoom] = useState<{ scope: string; presence: PresenceUserInfo[]; connected: boolean }>({ scope, presence: [], connected: false });
   const changeRef = useRef(onTaskChange);
   changeRef.current = onTaskChange;
+  const meetingRef=useRef(onMeetingChange);meetingRef.current=onMeetingChange;
 
   useEffect(() => {
+    setRoom({ scope, presence: [], connected: false });
     if (!organizationId || !projectId) return;
     const token = localStorage.getItem('access_token');
     if (!token) return;
+    let active = true;
 
     const socket: Socket = io(socketOrigin(), {
       auth: { token },
@@ -39,26 +43,31 @@ export function useProjectRealtime(
     });
 
     const openRoom = () => {
-      socket.emit('project:open', { organizationId, projectId }, () => {
+      socket.emit('project:open', { organizationId, projectId }, (result?: { ok?: boolean }) => {
+        if (!active || !socket.connected || !result?.ok) return;
+        setRoom({ scope, presence: [], connected: true });
         // join 完成后主动拉一次 presence，避免错过 open 的副作用广播
         socket.emit('presence:request');
+        void Promise.resolve().then(() => changeRef.current?.()).catch(() => undefined);
+        void Promise.resolve().then(() => meetingRef.current?.()).catch(() => undefined);
       });
     };
     const triggerChange = () => changeRef.current?.();
 
     socket.on('connect', () => {
-      setConnected(true);
       openRoom();
     });
-    socket.on('disconnect', () => setConnected(false));
+    socket.on('disconnect', () => setRoom({ scope, presence: [], connected: false }));
     socket.on('presence:update', (p: { users: PresenceUserInfo[] }) =>
-      setPresence(p.users ?? []),
+      setRoom(current => current.scope === scope ? { ...current, presence: p.users ?? [] } : current),
     );
+    socket.on('meeting:changed',(hint:{organizationId?:string;projectId?:string})=>{if(hint?.organizationId===organizationId&&hint?.projectId===projectId)void meetingRef.current?.();});
     socket.on('task:created', triggerChange);
     socket.on('task:updated', triggerChange);
     socket.on('task:deleted', triggerChange);
 
     return () => {
+      active = false;
       socket.emit('project:close');
       socket.removeAllListeners();
       socket.disconnect();
@@ -66,5 +75,5 @@ export function useProjectRealtime(
     // 仅在房间切换时重建连接
   }, [organizationId, projectId]);
 
-  return { presence, connected };
+  return room.scope === scope ? { presence: room.presence, connected: room.connected } : { presence: [], connected: false };
 }

@@ -172,8 +172,9 @@ export class DocumentsController implements OnModuleDestroy, OnModuleInit {
     @CurrentOrg() o: OrgContext,
     @CurrentUser() u: { id: string },
     @Param("id") id: string,
+    @Query("before") before?: string,
   ) {
-    return this.run(o, u, "versions", id);
+    return this.run(o, u, "versions", id, before);
   }
   @Post(":id/versions") version(
     @CurrentOrg() o: OrgContext,

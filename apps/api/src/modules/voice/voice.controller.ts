@@ -20,6 +20,7 @@ export class VoiceController {
  @UseInterceptors(FileInterceptor('file',{limits:{fileSize:10*1024*1024,files:1}}))
  create(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Body() b:any,@UploadedFile() f:Express.Multer.File|undefined,@Req() req:Request){return this.voice.create(o.organizationId,u.id,b,f?.buffer,req.traceId);}
  @Get('jobs/:id') get(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Param('id') id:string){return this.voice.get(o.organizationId,u.id,id);}
+ @Post('jobs/:id/mouth-track') mouth(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Param('id') id:string,@Req() req:Request){return this.voice.deriveMouth(o.organizationId,u.id,id,req.traceId);}
  @Delete('jobs/:id') cancel(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Param('id') id:string){return this.voice.cancel(o.organizationId,u.id,id);}
  @Get('jobs/:id/audio') async audio(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Param('id') id:string,@Res() res:Response){
    const j=await this.voice.load(o.organizationId,u.id,id);

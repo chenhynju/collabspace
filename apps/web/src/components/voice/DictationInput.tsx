@@ -6,6 +6,7 @@ import {toWav} from './audio';
 
 /** Dictation produces an editable draft. It has no message-send authority. */
 export function DictationInput({conversationId,active=true,onTranscript,onBusyChange}:{conversationId:string;active?:boolean;onTranscript:(text:string)=>void;onBusyChange:(busy:boolean)=>void}){
+ const [providerName,setProviderName]=useState('所选语音服务');
  const [stage,setStage]=useState<'idle'|'requesting'|'recording'|'review'|'transcribing'>('idle'),[ready,setReady]=useState<boolean|null>(null),[error,setError]=useState(''),[seconds,setSeconds]=useState(0),[level,setLevel]=useState(0),[saved,setSaved]=useState('');
  const alive=useRef(true),epoch=useRef(0),stream=useRef<MediaStream|null>(null),recorder=useRef<MediaRecorder|null>(null),abort=useRef<AbortController|null>(null),job=useRef<string|null>(null),media=useRef<Blob|null>(null),limit=useRef<ReturnType<typeof setTimeout>>(),clock=useRef<ReturnType<typeof setInterval>>(),frame=useRef(0),context=useRef<AudioContext|null>(null);
  const finishRequested=useRef(false);
@@ -14,7 +15,7 @@ export function DictationInput({conversationId,active=true,onTranscript,onBusyCh
  const release=()=>{clearTimeout(limit.current);clearInterval(clock.current);cancelAnimationFrame(frame.current);if(recorder.current?.state==='recording')recorder.current.stop();stream.current?.getTracks().forEach(t=>t.stop());stream.current=null;void context.current?.close().catch(()=>{});context.current=null;};
  const cancel=()=>{epoch.current++;finishRequested.current=false;abort.current?.abort();release();if(job.current)void api.delete(`/voice/jobs/${job.current}`).catch(()=>{});job.current=null;if(alive.current){setStage('idle');setLevel(0);}};
  useEffect(()=>{onBusyChange(stage!=='idle');},[stage,onBusyChange]);
- useEffect(()=>{alive.current=true;const c=new AbortController();void api.get('/voice/status',{signal:c.signal}).then(r=>{if(alive.current)setReady(r.data.configured===true);}).catch(()=>{if(alive.current)setReady(false);});void api.get('/voice/persona',{signal:c.signal}).then(r=>{if(alive.current&&!localeEdited.current)setLocale(r.data.locale==='en-US'?'en-US':'zh-CN');}).catch(()=>{});return()=>{alive.current=false;c.abort();cancel();};},[]); // eslint-disable-line react-hooks/exhaustive-deps
+ useEffect(()=>{alive.current=true;const c=new AbortController();void api.get('/voice/status',{signal:c.signal}).then(r=>{if(alive.current){setReady(r.data.configured===true);setProviderName(r.data.provider==='volcengine'?'豆包语音（中国）':r.data.provider==='azure'?'Azure（'+r.data.cloud+'）':r.data.provider==='elevenlabs'?'ElevenLabs（海外）':'未识别服务');}}).catch(()=>{if(alive.current)setReady(false);});void api.get('/voice/persona',{signal:c.signal}).then(r=>{if(alive.current&&!localeEdited.current)setLocale(r.data.locale==='en-US'?'en-US':'zh-CN');}).catch(()=>{});return()=>{alive.current=false;c.abort();cancel();};},[]); // eslint-disable-line react-hooks/exhaustive-deps
  useEffect(()=>{if(!active)cancel();},[active]); // eslint-disable-line react-hooks/exhaustive-deps
  useEffect(()=>()=>{if(saved)URL.revokeObjectURL(saved);},[saved]);
  const transcribe=async(blob:Blob,n:number)=>{
@@ -38,7 +39,7 @@ export function DictationInput({conversationId,active=true,onTranscript,onBusyCh
   }catch(e:any){if(alive.current&&n===epoch.current){setError(e.response?.data?.message||e.message||'转写失败，请核查后重试。');setStage('idle');}}
  };
  const start=async()=>{
-  if(!ready){setError('语音输入尚未启用。管理员配置Azure后即可使用；你仍可通过语音选项发送原音。');return;}
+  if(!ready){setError('语音输入尚未启用。管理员配置语音服务后即可使用；你仍可通过语音选项发送原音。');return;}
   if(job.current){setError('上次转写结果待核查，请先在语音选项中检查任务，避免重复计费。');return;}
   cancel();setError('');setSaved('');setSeconds(0);media.current=null;setStage('requesting');const n=epoch.current;
   try{
@@ -62,7 +63,7 @@ export function DictationInput({conversationId,active=true,onTranscript,onBusyCh
     </>:stage==='review'?<><span role="status" className="flex-1 text-xs">录音已结束，确认后转写</span><button type="button" aria-label="确认转写" title="确认转写" onClick={()=>{if(media.current)void transcribe(media.current,epoch.current);}} className="rounded-full bg-slate-900 p-2 text-white"><Check size={16}/></button></>:
      <span role="status" className="flex flex-1 items-center gap-2 text-xs"><Loader2 size={16} className="animate-spin"/>{stage==='requesting'?'等待麦克风权限…':'正在转写…'}</span>}
    </div>}
-  {(stage==='recording'||stage==='review')&&<p className="mt-1 px-3 text-xs text-slate-400">确认后提交Azure转写；文字回填草稿，不自动发送。</p>}
+  {(stage==='recording'||stage==='review')&&<p className="mt-1 px-3 text-xs text-slate-400">确认后提交{providerName}转写；文字回填草稿，不自动发送。</p>}
   {stage==='idle'&&ready&&<label className="px-3 text-xs text-slate-400"><span className="sr-only">听写语言</span><select aria-label="听写语言" value={locale} disabled={!!job.current} onChange={e=>{localeEdited.current=true;setLocale(e.target.value);}} className="bg-transparent"><option value="zh-CN">中文听写</option><option value="en-US">English dictation</option></select></label>}
   {error&&<div role="alert" aria-label="听写提示" className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-900">{error}{saved&&<a href={saved} download="dictation-recording" className="ml-2 underline">保存本地录音</a>}{job.current&&<button type="button" onClick={()=>{cancel();setError('已结束本次请求；供应商可能已计费。再次录音会创建新任务。');}} className="ml-2 underline">结束本次转写</button>}</div>}
  </div>;

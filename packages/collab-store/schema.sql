@@ -57,6 +57,9 @@ CREATE TABLE IF NOT EXISTS collab_restore (
  FOREIGN KEY(organization_id,document_id) REFERENCES collab_document(organization_id,id) ON DELETE CASCADE,
  FOREIGN KEY(organization_id,result_id) REFERENCES collab_document(organization_id,id) ON DELETE CASCADE
 );
+ALTER TABLE collab_version ADD COLUMN IF NOT EXISTS source text NOT NULL DEFAULT 'MANUAL'
+ CHECK (source IN ('MANUAL','AUTO'));
+CREATE INDEX IF NOT EXISTS collab_version_timeline ON collab_version(organization_id,document_id,created_at DESC,id DESC);
 -- db push may have created these tables before this additive migration. Install
 -- constraints explicitly in that case too; never rely only on CREATE IF NOT EXISTS.
 DO $$ BEGIN

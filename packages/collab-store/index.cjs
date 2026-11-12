@@ -594,6 +594,7 @@ class Store {
         "UPDATE collab_document SET state=$1,seq=$2,updated_at=now() WHERE organization_id=$3 AND id=$4",
         [state, seq, ctx.org, id],
       );
+      await this.snapshot(c, ctx, id, state, seq);
       // Authorize the fan-out audience at the same database read/commit boundary.
       // One query replaces one full document rehydrate + transaction per socket.
       const readers = await this.readers(c, ctx, id);
@@ -740,6 +741,7 @@ class Store {
             "UPDATE collab_document SET state=$1,seq=$2,updated_at=now() WHERE organization_id=$3 AND id=$4",
             [encoded, seq.toString(), first.ctx.org, id],
           );
+          await this.snapshot(c, { ...first.ctx, user: inserts[inserts.length - 1].actor }, id, encoded, seq.toString());
           const readers = await this.readers(c, first.ctx, id);
           return results.map((r) =>
             r.ok && !r.duplicate ? { ...r, readers } : r,
@@ -894,13 +896,28 @@ class Store {
       return old;
     });
   }
-  async versions(ctx, id) {
+  // Called only while the authorized document row is locked, in the edit transaction.
+  // Samples are immutable; duplicate receipts never reach this path.
+  async snapshot(c, ctx, id, state, seq) {
+    const key = randomUUID();
+    const result = await c.query(`INSERT INTO collab_version(id,organization_id,document_id,name,seq,state,created_by,source)
+      SELECT $1,$2,$3,'自动快照',$4,$5,$6,'AUTO'
+      WHERE NOT EXISTS(SELECT 1 FROM collab_version WHERE organization_id=$2 AND document_id=$3
+        AND source='AUTO' AND created_at > now()-interval '1 minute') RETURNING id`,
+      [key,ctx.org,id,seq,state,ctx.user]);
+    if(result.rowCount) await this.audit(c,ctx,id,'document:version',null,{versionId:key,seq,source:'AUTO'});
+  }
+  async versions(ctx, id, before) {
+    const cursor = before ? uuid.parse(before) : null;
     return this.tx(ctx, async (c) => {
       await this.access(c, ctx, id);
       return (
         await c.query(
-          "SELECT id,name,seq,created_by,created_at FROM collab_version WHERE organization_id=$1 AND document_id=$2 ORDER BY created_at DESC LIMIT 100",
-          [ctx.org, id],
+          `SELECT id,name,seq,created_by,created_at,source FROM collab_version
+           WHERE organization_id=$1 AND document_id=$2 AND ($3::uuid IS NULL OR (created_at,id) <
+             (SELECT created_at,id FROM collab_version WHERE organization_id=$1 AND document_id=$2 AND id=$3))
+           ORDER BY created_at DESC,id DESC LIMIT 100`,
+          [ctx.org, id, cursor],
         )
       ).rows;
     });
@@ -923,7 +940,7 @@ class Store {
         return old;
       }
       await c.query(
-        "INSERT INTO collab_version VALUES($1,$2,$3,$4,$5,$6,$7,now())",
+        "INSERT INTO collab_version(id,organization_id,document_id,name,seq,state,created_by,created_at) VALUES($1,$2,$3,$4,$5,$6,$7,now())",
         [key, ctx.org, id, name, d.seq, d.state, ctx.user],
       );
       await this.audit(c, ctx, id, "document:version", null, {

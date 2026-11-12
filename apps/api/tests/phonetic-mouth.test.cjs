@@ -1,0 +1,12 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+require('../node_modules/ts-node').register({project:path.join(__dirname,'../tsconfig.json'),transpileOnly:true});
+const {phoneticFrames,analyzeMouth}=require('../src/modules/voice/phonetic-mouth');
+test('phonetic mouth timing validates complete bounded cues and removes local metadata',()=>{
+ const input={metadata:{duration:1,soundFile:'private/input.wav'},mouthCues:[{start:0,end:.3,value:'A'},{start:.3,end:.9,value:'F'},{start:.9,end:1,value:'X'}]},track=phoneticFrames(input,1);
+ assert.deepEqual(track.map(f=>f.id),[21,7,0]);assert.equal(track[1].endMs,900);assert.equal(track[1].source,'rhubarb-phonetic-v1');assert.ok(!JSON.stringify(track).includes('private'));
+ for(const changed of [{...input,metadata:{duration:3}},{...input,mouthCues:[{start:0,end:2,value:'D'}]},{...input,mouthCues:[{start:0,end:1,value:'__proto__'}]},{...input,mouthCues:[{start:.5,end:1,value:'D'}]},{...input,mouthCues:[{start:0,end:0,value:'D'}]}])assert.throws(()=>phoneticFrames(changed,1));
+});
+for(const locale of ['en-US','zh-CN'])test('real offline phonetic analysis of existing synthetic '+locale,{skip:!process.env.RHUBARB_TEST_BIN},async()=>{
+ const old=[process.env.SPEECH_LIP_SYNC_PROVIDER,process.env.RHUBARB_BIN];try{process.env.SPEECH_LIP_SYNC_PROVIDER='rhubarb';process.env.RHUBARB_BIN=process.env.RHUBARB_TEST_BIN;const wav=fs.readFileSync(path.join(__dirname,'../../../.test-runs/speech-live',locale+'.wav')),track=await analyzeMouth(wav,AbortSignal.timeout(20000));assert.ok(track.length>3);assert.ok(track.some(f=>f.id!==0&&f.id!==21));assert.ok(track.every(f=>f.endMs>f.offsetMs));const abort=new AbortController();abort.abort();await assert.rejects(analyzeMouth(wav,abort.signal));const before=new Set(fs.readdirSync(require('os').tmpdir()).filter(n=>n.startsWith('collabspace-mouth-'))),running=new AbortController(),timer=setTimeout(()=>running.abort(),50);await assert.rejects(analyzeMouth(wav,running.signal));clearTimeout(timer);const extra=fs.readdirSync(require('os').tmpdir()).filter(n=>n.startsWith('collabspace-mouth-')&&!before.has(n));assert.deepEqual(extra,[],'Cancelled analysis must remove its temporary audio directory');}
+ finally{for(const [key,value]of [['SPEECH_LIP_SYNC_PROVIDER',old[0]],['RHUBARB_BIN',old[1]]])if(value===undefined)delete process.env[key];else process.env[key]=value;}
+});

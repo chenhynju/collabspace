@@ -8,6 +8,7 @@ const env = {
   ...(existsSync(file) ? JSON.parse(readFileSync(file, "utf8")) : {}),
 };
 const tests = [
+  "packages/collab-store/tests/timeline.test.cjs",
   "packages/collab-store/tests/core.test.cjs",
   "packages/collab-store/tests/board.test.cjs",
   "packages/collab-store/tests/diagram.test.cjs",

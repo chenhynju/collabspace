@@ -9,7 +9,7 @@ export function observeCharacter(key:string,listener:Listener){
 }
 /** Only one scoped character may speak. An old component cannot release a new session. */
 export function publishCharacter(key:string,playback:CharacterPlayback){
- if(active){active.playback.audio.pause();notify(active.key,null);}
+ if(active){if(active.playback.audio!==playback.audio)active.playback.audio.pause();notify(active.key,null);}
  const session={key,playback,token:Symbol()};active=session;notify(key,playback);
- return()=>{playback.audio.pause();if(active?.token===session.token){active=null;notify(key,null);}};
+ return()=>{if(active?.token===session.token){active=null;playback.audio.pause();notify(key,null);}else if(active?.playback.audio!==playback.audio)playback.audio.pause();};
 }

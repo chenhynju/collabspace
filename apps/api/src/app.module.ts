@@ -28,6 +28,7 @@ import { DocumentsController } from './modules/documents/documents.controller';
 import { GroupsModule } from './modules/groups/groups.module';
 import { AssistantModule } from './modules/assistant/assistant.module';
 import { VoiceModule } from './modules/voice/voice.module';
+import { MeetingsModule } from './modules/meetings/meetings.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { VoiceModule } from './modules/voice/voice.module';
     GroupsModule,
     AssistantModule,
     VoiceModule,
+    MeetingsModule,
     RealtimeModule,
     AuthModule,
     UsersModule,

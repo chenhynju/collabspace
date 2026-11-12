@@ -1,17 +1,24 @@
 import { Injectable, ServiceUnavailableException } from '@nestjs/common';
-import { Locale, VOICES, xml } from './voice-domain';
+import { Locale, VOICES, xml, digest } from './voice-domain';
 import {synthesizeWithVisemes,type SpeechViseme} from './azure-viseme';
+import {runEleven,elevenReady,elevenVoices,elevenModels} from './eleven-speech';
+import {runVolc,volcReady,volcVoices} from './volc-speech';
 import { UnconfiguredAvatarProvider } from './avatar-provider';
+import {mouthAnalysisStatus} from './phonetic-mouth';
 
 @Injectable()
 export class SpeechProvider {
   private avatar=new UnconfiguredAvatarProvider();
-  get cloud(){return process.env.AZURE_SPEECH_CLOUD||'global';}
-  get ready(){const region=process.env.AZURE_SPEECH_REGION||'';return !!process.env.AZURE_SPEECH_KEY && /^[a-z0-9-]+$/.test(region)&&['global','china'].includes(this.cloud)&&(this.cloud==='china'?['chinaeast2','chinanorth2','chinanorth3'].includes(region):!region.startsWith('china'));}
-  get visemesEnabled(){return process.env.AZURE_VISEME_ENABLED==='true';}
-  status(){return {provider:'azure',cloud:this.cloud,configured:this.ready,locales:Object.keys(VOICES),voices:VOICES,preciseVisemes:this.ready&&this.visemesEnabled,realistic:{configured:this.avatar.configured,reason:'尚未选定并配置真人服务'},maxSeconds:60,maxText:4000};}
+  get selected(){return process.env.SPEECH_PROVIDER||'azure';}
+  get route(){return digest(JSON.stringify({provider:this.selected,cloud:this.cloud,region:this.selected==='azure'?process.env.AZURE_SPEECH_REGION:null,voices:this.selected==='volcengine'?volcVoices():this.selected==='elevenlabs'?elevenVoices():VOICES,resource:this.selected==='volcengine'?process.env.VOLC_TTS_RESOURCE_ID:this.selected==='elevenlabs'?elevenModels():null}));}
+  get cloud(){if(this.selected==='elevenlabs')return 'global';if(this.selected==='volcengine')return 'china';return process.env.AZURE_SPEECH_CLOUD||'global';}
+  get ready(){if(this.selected==='elevenlabs')return elevenReady();if(this.selected==='volcengine')return volcReady();if(this.selected!=='azure')return false;const region=process.env.AZURE_SPEECH_REGION||'';return !!process.env.AZURE_SPEECH_KEY && /^[a-z0-9-]+$/.test(region)&&['global','china'].includes(this.cloud)&&(this.cloud==='china'?['chinaeast2','chinanorth2','chinanorth3'].includes(region):!region.startsWith('china'));}
+  get visemesEnabled(){return this.selected==='azure'&& process.env.AZURE_VISEME_ENABLED==='true';}
+  status(){return {provider:this.selected,cloud:this.cloud,configured:this.ready,locales:Object.keys(VOICES),voices:this.selected==='volcengine'?volcVoices():this.selected==='elevenlabs'?elevenVoices():VOICES,preciseVisemes:this.ready&&this.visemesEnabled,mouthAnalysis:mouthAnalysisStatus(),realistic:{configured:this.avatar.configured,reason:'尚未选定并配置真人服务'},maxSeconds:60,maxText:4000};}
   async run(kind:'STT'|'TTS',input:Buffer|string,language:Locale,signal:AbortSignal):Promise<{text?:string;audio?:Buffer;visemes?:SpeechViseme[]}> {
-    if(!this.ready)throw new ServiceUnavailableException('Azure语音未配置，未调用供应商');
+    if(!this.ready)throw new ServiceUnavailableException('所选语音服务未配置，未调用供应商');
+    if(this.selected==='elevenlabs')return runEleven(kind,input,language,signal);
+    if(this.selected==='volcengine')return runVolc(kind,input,language,signal);
     const region=process.env.AZURE_SPEECH_REGION!;
     const key=process.env.AZURE_SPEECH_KEY!;
     if(kind==='TTS'&&this.visemesEnabled)return synthesizeWithVisemes(input as string,language,region,this.cloud,key,signal);

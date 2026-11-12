@@ -1,0 +1,18 @@
+const {test,expect}=require('@playwright/test'),fs=require('node:fs'),path=require('node:path'),{randomUUID,createHash}=require('node:crypto');
+test.skip(process.env.RTC_VOICE_REAL_TEST!=='1','Explicit opt-in to isolated real Cloud test');
+test('server revokes a suspended member even when the browser runs no application heartbeat',async({browser,request})=>{
+ test.setTimeout(180000);const root=path.resolve(__dirname,'../..'),c=JSON.parse(fs.readFileSync(process.env.COLLAB_BROWSER_CONFIG));for(const u of [c.WEB_URL,c.NEXT_PUBLIC_API_URL])expect(['localhost','127.0.0.1']).toContain(new URL(u).hostname);expect(new URL(c.NEXT_PUBLIC_API_URL).port).toBe('14431');
+ const login=async email=>{const r=await request.post(c.NEXT_PUBLIC_API_URL+'/auth/login',{data:{email,password:'Passw0rd!'}});expect(r.ok()).toBeTruthy();return(await r.json()).accessToken;};const a=await login('owner@acme.dev'),b=await login('member@acme.dev'),owner={Authorization:'Bearer '+a,'x-organization-id':c.TEST_ORG},member={Authorization:'Bearer '+b,'x-organization-id':c.TEST_ORG};
+ const {Client}=require(path.join(root,'packages/collab-store/node_modules/pg')),db=new Client({connectionString:c.DATABASE_ADMIN_URL});await db.connect();const context=await browser.newContext();let id,suspended=false;
+ try{
+  const created=await request.post(c.NEXT_PUBLIC_API_URL+'/meetings',{headers:owner,data:{requestId:randomUUID(),projectId:c.TEST_PROJECT,title:'R3 monitor '+Date.now()}});expect(created.ok()).toBeTruthy();id=(await created.json()).id;
+  const ticketResponse=await request.post(c.NEXT_PUBLIC_API_URL+'/meetings/'+id+'/join',{headers:member,data:{}});expect(ticketResponse.ok()).toBeTruthy();const ticket=await ticketResponse.json();
+  const p=await context.newPage();await p.addScriptTag({path:path.join(root,'apps/web/node_modules/livekit-client/dist/livekit-client.umd.js')});await p.evaluate(async ticket=>{window.testRoom=new LivekitClient.Room();await testRoom.connect(ticket.url,ticket.token);},ticket);expect(await p.evaluate(()=>testRoom.state)).toBe('connected');
+  const changed=await db.query("UPDATE org_membership SET status='SUSPENDED' WHERE organization_id=$1 AND user_id=$2 AND status='ACTIVE' RETURNING id",[c.TEST_ORG,c.TEST_MEMBER]);expect(changed.rowCount).toBe(1);suspended=true;
+  await expect.poll(()=>p.evaluate(()=>testRoom.state),{timeout:75000}).toBe('disconnected');
+  await expect.poll(async()=>{const revoked=await db.query('SELECT revoked_user_ids FROM rtc_meeting WHERE organization_id=$1 AND id=$2',[c.TEST_ORG,id]);return revoked.rows[0].revoked_user_ids.includes(c.TEST_MEMBER);}).toBe(true);
+  const log=await db.query("SELECT actor_id FROM sys_oper_log WHERE organization_id=$1 AND resource_id=$2 AND action='meeting:access-revoked'",[c.TEST_ORG,id]);expect(log.rowCount).toBe(1);expect(log.rows[0].actor_id).toBe(null);
+  expect((await request.post(c.NEXT_PUBLIC_API_URL+'/meetings/'+id+'/join',{headers:member,data:{}})).status()).toBe(403);
+  const rejoin=await p.evaluate(async ticket=>{const attempt=new LivekitClient.Room();try{await attempt.connect(ticket.url,ticket.token);await attempt.disconnect();return{rejoined:true};}catch(error){return{rejoined:false,status:error.status};}},ticket);expect(rejoin.rejoined).toBe(false);expect([401,403]).toContain(rejoin.status);
+ }finally{try{if(suspended)await db.query("UPDATE org_membership SET status='ACTIVE' WHERE organization_id=$1 AND user_id=$2 AND status='SUSPENDED'",[c.TEST_ORG,c.TEST_MEMBER]);if(id){const end=await request.post(c.NEXT_PUBLIC_API_URL+'/meetings/'+id+'/end',{headers:owner,data:{}});expect(end.ok()).toBeTruthy();expect((await end.json()).status).toBe('ENDED');}}finally{await context.close();await db.end();}}
+});

@@ -1,6 +1,6 @@
 "use client";
-import {displayDate} from "@/lib/display-date";
-import { useCallback, useEffect, useState } from "react";
+import {displayDateTime} from "@/lib/display-date";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import * as Dialog from "@radix-ui/react-dialog";
@@ -64,6 +64,7 @@ export default function DocumentPage({
   const org = useAuthStore((s) => s.currentOrgId),
     user = useAuthStore((s) => s.user);
   const [panelOpen,setPanelOpen]=useState(true);
+  const historyExpanded=useRef(false);
   const [meta, setMeta] = useState<any>(null),
     [provider, setProvider] = useState<DocumentProvider | null>(null),
     [status, setStatus] = useState("正在连接"),
@@ -71,6 +72,7 @@ export default function DocumentPage({
     [tab, setTab] = useState("comments"),
     [threads, setThreads] = useState<any[]>([]),
     [versions, setVersions] = useState<any[]>([]),
+    [hasOlder, setHasOlder] = useState(false),
     [body, setBody] = useState(""),
     [selection, setSelection] = useState<any>(null),
     [error, setError] = useState(""),
@@ -96,6 +98,10 @@ export default function DocumentPage({
     let active = true;
     setMeta(null);
     setProvider(null);
+    setVersions([]);
+    setPreview(null);
+    setHasOlder(false);
+    historyExpanded.current=false;
     setError("");
     api
       .get(base)
@@ -122,7 +128,8 @@ export default function DocumentPage({
         api.get(`${base}/versions`),
       ]);
       setThreads(a.data);
-      setVersions(b.data);
+      setVersions(previous => [...b.data,...previous.filter(v=>!b.data.some((fresh:any)=>fresh.id===v.id))]);
+      if(!historyExpanded.current) setHasOlder(b.data.length===100);
     } catch {
       /* Connection/save status remains visible; action errors are shown below. */
     }
@@ -391,10 +398,20 @@ export default function DocumentPage({
           )}
           {tab === "history" && (
             <>
-              <h2 className="font-medium">保留重要交付节点</h2>
+              <h2 className="font-medium">快照时间轴</h2>
               <p className="my-2 text-xs text-slate-500">
-                版本只包含服务器已确认的正文；恢复会创建独立副本。
+                有编辑时每分钟最多自动保留一个快照；命名版本可随时保留当前节点。快照仅含服务器已确认内容，恢复会创建独立副本。
               </p>
+              {!versions.length && <p className="my-4 text-sm text-slate-500">暂无快照，保存编辑后将自动生成。</p>}
+              {versions.length > 1 && <label className="block text-xs text-slate-500">从早到晚浏览快照
+                <input aria-label="快照时间轴" type="range" min={0} max={versions.length-1} defaultValue={versions.length-1} disabled={busy}
+                  className="my-3 w-full" onChange={e=>{const v=versions[versions.length-1-Number(e.target.value)];void action(async()=>setPreview((await api.get(`${base}/versions/${v.id}`)).data));}} />
+              </label>}
+              {provider?.writable && (
+                <button disabled={busy || !provider.saved} className="my-2 rounded border px-3 py-2 text-sm disabled:opacity-40" onClick={()=>void action(async()=>{
+                  await api.post(`${base}/versions`,{id:crypto.randomUUID(),name:'快照 · '+new Date().toLocaleString()});
+                })}>立即保留快照</button>
+              )}
               {provider?.writable && (
                 <form
                   onSubmit={(e) => {
@@ -426,12 +443,13 @@ export default function DocumentPage({
                 </form>
               )}
               {versions.map((v) => (
-                <div key={v.id} className="my-3 rounded-lg border p-3 text-sm">
-                  <p className="font-medium">{v.name}</p>
+                <div key={v.id} className="my-3 rounded-lg border-l-4 border border-l-indigo-300 p-3 text-sm">
+                  <p className="font-medium">{v.source==='AUTO'?'自动快照':v.name}</p>
                   <p className="my-2 text-xs text-slate-400">
-                    {displayDate(v.created_at)}
+                    <time dateTime={v.created_at}>{displayDateTime(v.created_at)}（上海）</time> · #{v.seq}
                   </p>
                   <button
+                    disabled={busy}
                     className="text-blue-700"
                     onClick={() =>
                       void action(async () => {
@@ -462,6 +480,12 @@ export default function DocumentPage({
                   )}
                 </div>
               ))}
+              {hasOlder && <button disabled={busy} className="my-3 text-sm text-blue-700" onClick={()=>{
+                setBusy(true);api.get(`${base}/versions`,{params:{before:versions[versions.length-1].id}}).then(r=>{
+                  historyExpanded.current=true;
+                  setVersions(v=>[...v,...r.data]);setHasOlder(r.data.length===100);setError('');
+                }).catch(()=>setError('较早快照加载失败，请重试。')).finally(()=>setBusy(false));
+              }}>加载更早快照</button>}
             </>
           )}
           {tab === "share" && meta.role === "OWNER" && (
@@ -549,8 +573,11 @@ export default function DocumentPage({
               aria-describedby={undefined}
             >
               <div className="flex justify-between border-b p-5">
-                <Dialog.Title>{preview.name} · 只读预览</Dialog.Title>
+                <Dialog.Title>{preview.name} · {displayDateTime(preview.created_at)}（上海） · 只读预览</Dialog.Title>
                 <Dialog.Close>关闭预览</Dialog.Close>
+              </div>
+              <div className="flex gap-4 border-b p-3 text-sm">
+                {[-1,1].map(step=>{const i=versions.findIndex(v=>v.id===preview.id),next=versions[i+step];return <button key={step} disabled={busy||i<0||!next} className="rounded border px-3 py-1 disabled:opacity-40" onClick={()=>void action(async()=>setPreview((await api.get(`${base}/versions/${next.id}`)).data))}>{step===1?'更早快照':'更新快照'}</button>;})}
               </div>
               {meta.kind==='BOARD'?<BoardPreview key={preview.id} state={preview.state}/>:meta.kind==='MARKDOWN'?<MarkdownHistory state={preview.state}/>:<Preview state={preview.state} documentId={params.docId} organizationId={org || ""} />}
             </Dialog.Content>

@@ -69,10 +69,12 @@ test("same-user tabs deduplicate presence; disconnect expires and deleted-source
     const online = page.getByLabel("在线成员");
     await expect(online).toContainText(member.name);
     expect(
-      (await online.textContent()).split("、").filter((n) => n === owner.name),
+      (await online.textContent()).split(owner.name).slice(1),
     ).toHaveLength(1);
     await b.setOffline(true);
-    await expect(online).toHaveText(owner.name, { timeout: 30000 });
+    await expect(online).not.toContainText(member.name, { timeout: 30000 });
+    await expect(online).toContainText(owner.name);
+    await expect(online).toContainText("1 人在线");
     const editor = page.getByRole("textbox", { name: "协作文档正文" });
     await editor.fill("Original quoted passage");
     await expect(page.getByText('已保存到服务器',{exact:false})).toBeVisible();

@@ -13,6 +13,7 @@ const { join } = require("node:path");
     await c.query(readFileSync(join(__dirname, "assistant.sql"), "utf8"));
     await c.query(readFileSync(join(__dirname, "voice.sql"), "utf8"));
     await c.query(readFileSync(join(__dirname, "persona.sql"), "utf8"));
+    await c.query(readFileSync(join(__dirname, "meetings.sql"), "utf8"));
     await c.query("COMMIT");
     console.log("CollabSpace additive migration applied");
   } catch (e) {

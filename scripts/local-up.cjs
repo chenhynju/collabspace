@@ -12,6 +12,9 @@ const dbPort=Number(process.env.COLLAB_LOCAL_DB_PORT || 5548);
 const webPort=Number(process.env.COLLAB_LOCAL_WEB_PORT || 43120);
 const apiPort=Number(process.env.COLLAB_LOCAL_API_PORT || 43121);
 const collabPort=Number(process.env.COLLAB_LOCAL_WS_PORT || 43122);
+const localRedisUrl=process.env.COLLAB_LOCAL_REDIS_URL||'redis://127.0.0.1:6399';
+const localRedis=new URL(localRedisUrl);
+if(!['redis:','rediss:'].includes(localRedis.protocol)||!['localhost','127.0.0.1','[::1]'].includes(localRedis.hostname))throw new Error('Disposable Redis must use a loopback endpoint');
 for(const port of [dbPort,webPort,apiPort,collabPort])if(!Number.isInteger(port)||port<1024||port>65535)throw new Error('Invalid local port');
 const dir = join(root, ".test-runs", localName);
 mkdirSync(dir, { recursive: true });
@@ -31,7 +34,7 @@ const env = {
   NEXT_PUBLIC_API_URL: `http://localhost:${apiPort}/api/v1`,
   NEXT_PUBLIC_WS_URL: `http://localhost:${apiPort}`,
   NEXT_DIST_DIR: '.next-'+localName,
-  REDIS_URL: "redis://127.0.0.1:6399",
+  REDIS_URL: localRedisUrl,
   BILLING_MODE: "sandbox",
   EMAIL_PROVIDER: "console",
   UPLOAD_ROOT: join(dir, "uploads"),
@@ -111,6 +114,7 @@ async function main() {
     "scripts/enable-rls.ts",
   ]);
   await run([join(root, "packages/collab-store/migrate.cjs")], root);
+  await require("../deploy/collabspace/apply-invitations.cjs").apply(env.DATABASE_ADMIN_URL,env.DATABASE_URL);
   const pool = new (require("../packages/collab-store/node_modules/pg").Pool)({
     connectionString: env.DATABASE_ADMIN_URL,
   });
