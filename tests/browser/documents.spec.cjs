@@ -112,7 +112,7 @@ test("three users collaborate, reconnect offline edits, comment, version and rec
     await expect(
       a.p.getByText("Client approved v1", { exact: true }),
     ).toBeVisible();
-    await a.p.getByRole("button", { name: "只读预览" }).click();
+    await a.p.getByRole("button", { name: "只读预览" }).first().click();
     await expect(a.p.getByRole("dialog")).toContainText("Release requirements");
     await expect(a.p.getByLabel("历史版本只读预览")).not.toHaveAttribute(
       "contenteditable",
@@ -123,7 +123,7 @@ test("three users collaborate, reconnect offline edits, comment, version and rec
       path: "evidence/collaboration/editor.png",
       fullPage: true,
     });
-    await a.p.getByRole("button", { name: "恢复为副本" }).click();
+    await a.p.getByRole("button", { name: "恢复为副本" }).first().click();
     await expect(a.p).not.toHaveURL(new RegExp(`${doc.id}$`));
     await expect(
       a.p.getByRole("textbox", { name: "协作文档正文" }),

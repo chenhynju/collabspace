@@ -82,6 +82,11 @@ export class MailService {
   }
 
   private async send(to: string, subject: string, html: string, consolePreview: string, idempotencyKey?:string, module = 'notification') {
+    // RFC 2606 保留域名的合成测试邮箱：永不真实外发，始终落容器日志供验收工装读取
+    if (to.endsWith('@example.invalid')) {
+      this.logger.warn(`合成测试邮箱，邮件未真实发出：\n${consolePreview}`);
+      return { provider: 'console' as const };
+    }
     if (!this.resend) {
       this.logger.warn(`未配置 RESEND_API_KEY，邮件未真实发出：\n${consolePreview}`);
       return { provider: 'console' as const };

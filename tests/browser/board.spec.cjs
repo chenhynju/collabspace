@@ -53,16 +53,13 @@ test("whiteboard: discover, draw, concurrent accounts, cursors, undo, offline re
   try {
     const a = await pageFor(owner, "/collaboration");
     await expect(
-      a.getByRole("heading", { name: "让团队始终编辑同一份文档。" }),
+      a.getByRole("heading", { name: "协作空间", exact: true }),
     ).toBeVisible();
     await a
       .locator(`a[href="/projects/${config.TEST_PROJECT}/content"]`)
       .click();
-    const title = "Whiteboard " + randomUUID().slice(0, 8);
     await a.getByRole("button",{name:"新建 白板 / Mermaid",exact:true}).click();
-      await a.getByLabel("新内容标题").fill(title);
-    await a.getByRole("button", { name: "创建并打开", exact: true }).click();
-    await a.getByRole("heading", { name: title, exact: true }).click();
+    await expect(a).toHaveURL(/\/documents\/[a-f0-9-]+/, { timeout: 90000 });
     await a.getByRole("button", { name: "自由画布", exact: true }).click();
     await expect(a.getByTestId("whiteboard-canvas")).toBeVisible();
     await saved(a);
@@ -151,7 +148,8 @@ test("whiteboard: discover, draw, concurrent accounts, cursors, undo, offline re
     await a.getByRole("button", { name: "历史版本", exact: true }).click();
     await a.getByLabel("版本名称").fill("Board checkpoint");
     await a.getByRole("button", { name: "创建版本", exact: true }).click();
-    await a.getByRole("button", { name: "只读预览", exact: true }).click();
+    await expect(a.getByText("Board checkpoint", { exact: true })).toBeVisible();
+    await a.getByRole("button", { name: "只读预览", exact: true }).first().click();
     await expect(a.getByLabel("白板历史只读预览")).toBeVisible();
     await a.getByRole("button", { name: "关闭预览", exact: true }).click();
     await a.screenshot({
@@ -162,7 +160,7 @@ test("whiteboard: discover, draw, concurrent accounts, cursors, undo, offline re
       path: "evidence/collaboration/board-member.png",
       fullPage: true,
     });
-    await a.getByRole("button", { name: "恢复为副本", exact: true }).click();
+    await a.getByRole("button", { name: "恢复为副本", exact: true }).first().click();
     await expect(a).not.toHaveURL(new RegExp(`${id}$`));
     await expect(shapes(a)).toHaveCount(3);
     await saved(a);

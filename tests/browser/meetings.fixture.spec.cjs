@@ -1,5 +1,6 @@
 const {test,expect}=require('@playwright/test');
-const site=process.env.MEETINGS_FIXTURE_URL||'http://127.0.0.1:14420';
+const site=process.env.MEETINGS_FIXTURE_URL||'';
+test.skip(!site,'Local meetings fixture only: set MEETINGS_FIXTURE_URL (e.g. http://127.0.0.1:14420)');
 test('meeting lifecycle and persisted chat UI with explicit API fixture',async({page})=>{
  let meetings=[],messages=[],creates=0;
  await page.addInitScript(()=>{localStorage.setItem('access_token','synthetic-fixture-token');localStorage.setItem('current_org_id','fixture-org');});

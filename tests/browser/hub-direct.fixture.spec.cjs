@@ -1,6 +1,6 @@
 const {test,expect}=require('@playwright/test');
-const site=process.env.HUB_FIXTURE_URL||'http://127.0.0.1:14420';
-test.skip(!['localhost','127.0.0.1'].includes(new URL(site).hostname),'Local UI fixture only');
+const site=process.env.HUB_FIXTURE_URL||'';
+test.skip(!site,'Local UI fixture only: set HUB_FIXTURE_URL (e.g. http://127.0.0.1:14420)');
 test.beforeAll(async({request})=>{await request.get(site+'/projects/project-one/documents/created-document',{timeout:300000});});
 async function setup(page,{failure=false,offline=false}={}){
  const posts=[],docs=[{id:'rich',title:'Existing rich text',kind:'DOCUMENT',updated_at:'2026-10-28',role:'OWNER'},{id:'markdown',title:'Existing Markdown',kind:'MARKDOWN',updated_at:'2026-10-28',role:'OWNER'}];

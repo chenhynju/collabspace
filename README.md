@@ -1,5 +1,7 @@
 # CollabSpace — 多人实时协作文档
 
+📖 新读者入口：[用户使用与运维手册](docs/collaboration/USER-OPERATIONS-MANUAL.md)（功能地图、权限模型、发版/备份/回滚、本地开发）。
+
 2026-10-30：当前代码已归档、自测并发布；修复项目在线状态及 WS 原生数据库配置漂移，正式快照/权限回归通过。见[当前状态](docs/collaboration/CURRENT-STATUS-2026-10-30.md)与[发布审查记录](evidence/collaboration/REVIEW-RELEASE-2026-10-30.md)。下方旧记录保留作历史追溯。
 
 2026-10-29新增本地[快照时间轴](docs/collaboration/SNAPSHOT-TIMELINE.md)：文档、Markdown与白板在成功编辑时每分钟最多保留一份不可变自动快照，支持时间轴浏览、即时保留、历史预览和恢复为副本。生产尚未发布，见[验收记录](evidence/collaboration/SNAPSHOT-TIMELINE-2026-10-29.md)。

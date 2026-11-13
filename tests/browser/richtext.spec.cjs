@@ -51,10 +51,10 @@ test('rich article: formats, upload/paste/drop images, captions, collaboration, 
   await expect.poll(()=>images(a).first().evaluate(el=>el.complete&&el.naturalWidth>0)).toBe(true);
   await expect(body(a).getByText('离线配图',{exact:true})).toHaveCount(3);
   await a.unroute('**/documents/*/images/*');
-  await a.getByRole('button',{name:'历史版本',exact:true}).click();await a.getByLabel('版本名称').fill('Article with images');await a.getByRole('button',{name:'创建版本',exact:true}).click();await a.getByRole('button',{name:'只读预览',exact:true}).click();
+  await a.getByRole('button',{name:'历史版本',exact:true}).click();await a.getByLabel('版本名称').fill('Article with images');await a.getByRole('button',{name:'创建版本',exact:true}).click();await expect(a.getByText('Article with images',{exact:true})).toBeVisible();await a.getByRole('button',{name:'只读预览',exact:true}).first().click();
   await expect(a.getByLabel('历史版本只读预览').locator('figure.document-image img')).toHaveCount(3);await a.getByRole('button',{name:'关闭预览',exact:true}).click();
   await a.screenshot({path:'evidence/collaboration/richtext-workspace.png',fullPage:true});
-  await a.getByRole('button',{name:'恢复为副本',exact:true}).click();await expect(a).not.toHaveURL(new RegExp(d.id+'$'));await expect(images(a)).toHaveCount(3);await expect.poll(()=>images(a).first().evaluate(el=>el.complete && el.naturalWidth>0)).toBe(true);await saved(a);
+  await a.getByRole('button',{name:'恢复为副本',exact:true}).first().click();await expect(a).not.toHaveURL(new RegExp(d.id+'$'));await expect(images(a)).toHaveCount(3);await expect.poll(()=>images(a).first().evaluate(el=>el.complete && el.naturalWidth>0)).toBe(true);await saved(a);
   const copy=a.url().split('/').pop();expect((await request.get(`${api}/documents/${copy}/images/${asset}`,{headers:{Authorization:`Bearer ${member}`,'x-organization-id':config.TEST_ORG}})).status()).toBe(404);
  }finally{for(const c of contexts)await c.close();}
 });

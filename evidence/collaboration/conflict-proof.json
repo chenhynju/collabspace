@@ -1,6 +1,6 @@
 {
   "url": "https://collabspace.purelamp.uk",
-  "documentId": "108bf4b3-4613-47fb-a1c5-f8d1567cfc57",
+  "documentId": "8c6a2d48-f464-4ab5-8920-1f31076a2f83",
   "accounts": 2,
   "phases": [
     {
@@ -18,7 +18,7 @@
       "text": "Alpha Beta Base offline-A offline-B",
       "sha256": "c7f0224ae6ddd46b3f1234483d1c0307aaa48e77183760c1dabba2eb6edc6b64",
       "durableAcknowledged": true,
-      "reconnectMs": 12829
+      "reconnectMs": 14363
     }
   ],
   "status": "PASSED",

@@ -1,5 +1,6 @@
 const {test,expect}=require('@playwright/test');
-const site=process.env.PERSONA_MOTION_FIXTURE_URL||'http://127.0.0.1:14420';
+const site=process.env.PERSONA_MOTION_FIXTURE_URL||'';
+test.skip(!site,'Local persona fixture only: set PERSONA_MOTION_FIXTURE_URL (e.g. http://127.0.0.1:14420)');
 test('real WebGL character renders, moves, changes action and resets',async({page})=>{
  await page.addInitScript(()=>{localStorage.setItem('access_token','synthetic-fixture-token');localStorage.setItem('current_org_id','fixture-org');});
  await page.route('**/api/v1/**',async route=>{const p=new URL(route.request().url()).pathname;let data=[];if(p.endsWith('/users/me'))data={id:'owner',name:'Synthetic owner',organizations:[{id:'fixture-org',name:'Fixture',status:'ACTIVE',membershipStatus:'ACTIVE'}]};if(p.endsWith('/organizations/current'))data={perms:['*'],roleKeys:['OWNER']};return route.fulfill({json:data});});
