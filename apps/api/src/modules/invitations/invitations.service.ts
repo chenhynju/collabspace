@@ -66,7 +66,7 @@ export class InvitationsService {
                 await tx.$executeRaw `INSERT INTO invitation_delivery(invitation_id,organization_id,payload) VALUES(${i.id},${org},${payload})`;
             }
             await this.audit.record(tx, { organizationId: org, actorId: user.id, title: '发送组织邀请', businessType: BusinessType.INSERT, action: 'invite:send', resourceType: 'Invitation', resourceId: i.id, after: { email, role: role.key, channel: target ? 'IN_APP' : 'EMAIL' }, traceId: meta.traceId, ip: meta.ip, requestMethod: 'POST' });
-            return { id: i.id, email, status: i.status, expiresAt: i.expiresAt, delivery: target ? 'IN_APP' : 'QUEUED', ...(!target && !this.mail.isLive ? { inviteUrl: url, simulation: true } : {}), recipients };
+            return { id: i.id, email, status: i.status, expiresAt: i.expiresAt, delivery: target ? 'IN_APP' : 'QUEUED', ...(!target && (!this.mail.isLive || email.endsWith('@example.invalid')) ? { inviteUrl: url, simulation: true } : {}), recipients };
         });
         this.notifications.publish(result.recipients);
         const { recipients, ...visible } = result;
