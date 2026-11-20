@@ -171,11 +171,53 @@
 
 线上首次运行时演示组织已有 3 个非归档项目，触发套餐项目数上限，导致两个写用例失败；清理遗留的测试草稿项目与空工作区后复跑通过。该上限是套餐规则，不是本轮回归。
 
+## 2026-11-20 补充：Office 工作台推倒重来
+
+`/office/:id` 的 Word、Excel、PowerPoint 三种文件共用一套重新设计的工作台外壳；OnlyOffice 编辑器内核保留，不改写其文档渲染与保存逻辑。
+
+### 设计
+
+- 顶栏只保留返回、文件类型标识、标题、所有者/可编辑/只读徽章、连接状态、版本号与在线头像。
+- 左侧改为竖向工具轨：保存、下载、版本、权限、文件、AI 工作助理、导航；移动端折叠为横向工具条。
+- 编辑器占满剩余区域并置于圆角卡片内，状态信息收进底部细状态栏。
+- 版本历史、访问权限、重命名/副本/PDF、图片预处理与帮助全部移入右侧检查器，按“版本 / 权限 / 文件”切换；桌面与编辑器并排，移动端全屏覆盖。
+- 按文件类型着色：Word 蓝、Excel 绿、PowerPoint 橙；保存按钮保持唯一主操作。
+- Office 页不再显示全局悬浮导航/AI 按钮，改由工具轨触发，避免遮挡底部状态栏。
+- OnlyOffice 配置增加 `uiTheme: theme-light`、`compactHeader`、`hideRightMenu`，减少内嵌编辑器自带头部与菜单的视觉噪声。
+
+### 发布
+
+- 前端：Vercel 生产部署，部署地址 `https://collabspace-ilvlv0wrd-purelamp.vercel.app`，已别名到 `https://collabspace.purelamp.uk`。
+- 后端：`collabspace-api:api-r20261120-03`（`sha256:330500e4af20c5cae1a9af7b2f07ec0af672ff95a74086064e2c2bfda1612250`），仅叠加 `packages/collab-store`；WS 保持 `sha256:0264eb32…938f` 不变。
+- 健康检查 `database: up / redis: up`，OOM=false、restarts=0；回滚镜像 r02（`sha256:b2ae4807…ee99`）保留。
+
+### 验证
+
+| 检查 | 结果 |
+| --- | --- |
+| `office-page-polling.spec.cjs` | 通过：轮询期间始终只有一个操作面板与一个图片预处理面板 |
+| `office-file-actions.spec.cjs` | 3/3 通过：docx/xlsx/pptx 重命名、按版本导出 PDF、副本重试幂等、只读用户不可写 |
+| 线上 Word 打开 | `[data-office-ready=true]`，工具栏、页面、版本/权限/文件检查器均可用 |
+| 线上 Excel 打开 | 编辑器就绪，类型标识为 Excel 绿色 |
+| 线上 PowerPoint 打开 | 编辑器就绪，类型标识为 PowerPoint 橙色 |
+| 线上移动端 390×844 | 编辑器可见且 `document.scrollWidth = 390`，无横向溢出；工具条不遮挡状态栏 |
+
+截图：
+
+- [Word 工作台](office-studio-2026-11-20/docx-studio-final.png)
+- [版本历史](office-studio-2026-11-20/docx-versions.png)
+- [文件工具](office-studio-2026-11-20/docx-files.png)
+- [访问权限](office-studio-2026-11-20/docx-access-final.png)
+- [Excel 工作台](office-studio-2026-11-20/xlsx-studio.png)
+- [PowerPoint 工作台](office-studio-2026-11-20/pptx-studio.png)
+- [移动端](office-studio-2026-11-20/mobile-studio-final.png)
+
 ## 未验证边界
 
 - 模型调用已用真实 DeepSeek 密钥完成多轮小样本调用；未做并发、限流和长文本稳定性压测。
 - 线上 `mermaid.spec.cjs` 被用例自身的本地门禁跳过；其源码权威、离线与历史恢复场景本轮以本地结果为准。
-- 线上 Office 状态显示已配置，但本轮未实际打开并编辑 Word/Excel/PPT；Office 编辑能力仍以既有发布证据为边界。
+- 线上 Office 已实际打开 Word、Excel、PowerPoint 并确认编辑器就绪；本轮未在三种格式中写入正文、插入图片或触发多人并发保存。
+- Office 内嵌 AI 段落改写依赖尚未进入本次发布基线的后端 Office Agent 接口，本轮未纳入工作台；现有版本、权限、文件操作与恢复能力完整保留。
 - Figma MCP 未连接，未提供本次设计稿 URL；未做像素级设计还原与 Figma 节点核对。
 - 模型规划已用真实 DeepSeek 密钥完成两次小样本调用；未做并发、限流和长文本稳定性压测。
 - AI 助理当前不执行 Office 文件新建、文件上传、角色分配和系统参数修改；这些仍通过对应页面完成。

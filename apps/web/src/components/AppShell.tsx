@@ -234,7 +234,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
       <main className="min-w-0">{children}</main>
 
-      {immersive ? (
+      {immersive && !pathname.startsWith("/office/") ? (
         <div className="fixed bottom-5 left-5 z-40 flex items-center gap-2">
           <button
             type="button"

@@ -168,6 +168,19 @@ body {
     opacity: 1;
   }
 }
+@keyframes office-panel-in {
+  from {
+    transform: translateX(14px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+.office-panel-in {
+  animation: office-panel-in 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
 
 /* Figma 7IwWhVlznS5r8Q8xkU16VW: compact editor tools, preserved native controls. */
 .mermaid-composer h2 + p {
