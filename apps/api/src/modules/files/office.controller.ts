@@ -30,6 +30,8 @@ export class OfficeController {
  constructor(private readonly store:OfficeService){}
  private async call(method:string,...args:any[]){try{return await this.store[method](...args)}catch(e:any){if(e.status)throw new HttpException({code:e.code,message:e.code},e.status);throw e}}
  private ctx(o:OrgContext,u:{id:string}){return {org:o.organizationId,user:u.id}}
+ @Get('status') @UseGuards(OrgContextGuard)
+ status(){return {configured:this.store.enabled(),storageReady:this.store.storageReady,provider:this.store.enabled()?'onlyoffice':null}}
  @Post('create') @UseGuards(OrgContextGuard,PermissionsGuard) @RequirePermissions('file:manage')
  create(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Body() b:CreateOfficeDto){return this.call('createBlank',this.ctx(o,u),b.projectId,b)}
  @Post('files/:file/open') @UseGuards(OrgContextGuard)

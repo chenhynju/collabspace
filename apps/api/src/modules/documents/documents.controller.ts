@@ -24,11 +24,13 @@ import {
   OrgContext,
 } from "../../common/decorators/current-org.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { AssistantService } from "../assistant/assistant.service";
 
 @Controller("documents")
 @UseGuards(OrgContextGuard)
 export class DocumentsController implements OnModuleDestroy, OnModuleInit {
   private store = new Store();
+  constructor(private readonly ai: AssistantService) {}
   onModuleInit() {
     return this.store.assertRuntime();
   }
@@ -94,6 +96,41 @@ export class DocumentsController implements OnModuleDestroy, OnModuleInit {
     @Param("id") id: string,
   ) {
     return this.run(o, u, "detail", id);
+  }
+  @Post(":id/agent/mermaid")
+  async mermaidPlan(
+    @CurrentOrg() o: OrgContext,
+    @CurrentUser() u: { id: string },
+    @Param("id") id: string,
+    @Body() b: any,
+  ) {
+    const instruction = typeof b?.instruction === "string" ? b.instruction.trim() : "";
+    if (!instruction || instruction.length > 700)
+      throw new HttpException("请填写 1–700 字的图表修改要求", 400);
+    const scope = await this.run(o, u, "mermaidAgentScope", id);
+    const result = await this.ai.generate(
+      JSON.stringify([o.organizationId, u.id, id, scope.seq]),
+      JSON.stringify({ instruction, source: scope.source }),
+      "generate-mermaid",
+      `${o.organizationId}:${u.id}`,
+    );
+    const current = await this.run(o, u, "mermaidAgentScope", id);
+    if (scope.seq !== current.seq) throw new HttpException("图表已变更，请重新生成", 409);
+    if (result.incomplete) throw new HttpException("图表提案不完整", 422);
+    if (result.truncated)
+      throw new HttpException("图表源码超过 12000 字符，请分段修改后再试", 422);
+    const text = result.text
+      .replace(/^```(?:mermaid)?\s*\n?/i, "")
+      .replace(/\n?```\s*$/i, "")
+      .trim();
+    if (
+      !/^(flowchart|graph|mindmap|sequenceDiagram|classDiagram|stateDiagram|erDiagram|journey|gantt|pie|timeline|quadrantChart|C4Context|sankey|xyChart|xychart|block|packet|architecture|gitGraph|requirement)\b/i.test(
+        text,
+      ) ||
+      text.length > 32000
+    )
+      throw new HttpException("模型未返回可用的 Mermaid 图表，请补充要求后重试", 422);
+    return { text, before: scope.source, seq: scope.seq };
   }
   @Patch(":id") rename(
     @CurrentOrg() o: OrgContext,

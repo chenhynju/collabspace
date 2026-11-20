@@ -394,6 +394,18 @@ class Store {
   async detail(ctx, id) {
     return this.tx(ctx, async (c) => this.meta(await this.access(c, ctx, id)));
   }
+  async mermaidAgentScope(ctx, id) {
+    return this.tx(ctx, async (c) => {
+      const d = await this.access(c, ctx, id, "write");
+      if (d.kind !== "BOARD") fail(400, "BOARD_REQUIRED");
+      const doc = materialize(d.state);
+      try {
+        return { seq: d.seq, source: doc.getText("mermaid").toString().slice(0, 32000) };
+      } finally {
+        doc.destroy();
+      }
+    });
+  }
   async rename(ctx, id, input) {
     const name = title.parse(input.title),
       revision = z.number().int().positive().parse(input.revision);

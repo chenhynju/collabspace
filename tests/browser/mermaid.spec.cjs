@@ -1,91 +1,288 @@
-const { test, expect } = require("@playwright/test"), {randomUUID}=require("node:crypto"),config=require("./config.cjs");
-const proxy=process.env.COLLAB_ACCEPTANCE_PROXY?{server:process.env.COLLAB_ACCEPTANCE_PROXY}:undefined;
-test.use(proxy?{proxy}:{});
-const local=[config.WEB_URL,config.NEXT_PUBLIC_API_URL].every(v=>['localhost','127.0.0.1'].includes(new URL(v).hostname));
-const formal=process.env.MERMAID_POSITION_ONLINE==='1'&&new URL(config.WEB_URL).hostname==='collabspace.purelamp.uk'&&!config.DATABASE_ADMIN_URL;
-test.skip(!local&&!formal,'Explicit synthetic local or formal acceptance only');
-test("Mermaid authority: official graph/source views, two editors, viewer, offline, diagnostics and reload",async({browser,request})=>{
-  const api=config.NEXT_PUBLIC_API_URL,contexts=[];
-  const login=async(email)=>{const r=await request.post(api+"/auth/login",{data:{email,password:config.TEST_PASSWORD}});expect(r.ok()).toBeTruthy();return(await r.json()).accessToken;};
-  const owner=await login(config.TEST_OWNER_EMAIL),peer=await login(config.TEST_MEMBER_EMAIL),viewer=await login(config.TEST_ADMIN_EMAIL);
-  const headers={Authorization:`Bearer ${owner}`,"x-organization-id":config.TEST_ORG};
-  const r=await request.post(api+"/documents",{headers,data:{projectId:config.TEST_PROJECT,title:"Mermaid "+randomUUID().slice(0,8),kind:"BOARD"}});expect(r.ok()).toBeTruthy();const d=await r.json();
-  for(const [userId,role]of[[config.TEST_MEMBER,"EDITOR"],[config.TEST_ADMIN,"VIEWER"]])expect((await request.put(`${api}/documents/${d.id}/grants`,{headers,data:{userId,role}})).ok()).toBeTruthy();
-  const client=async(token)=>{const c=await browser.newContext(proxy?{proxy}:{});contexts.push(c);await c.addInitScript(({token,org})=>{localStorage.setItem("access_token",token);localStorage.setItem("current_org_id",org);},{token,org:config.TEST_ORG});const p=await c.newPage();await p.goto(`${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${d.id}`);await expect(p.getByLabel("协作 Mermaid 源码")).toBeVisible({timeout:60000});return p;};
-  const saved=p=>expect(p.getByRole("status").filter({hasText:"已保存到服务器"})).toBeVisible({timeout:60000});
-  const source=p=>p.getByLabel("协作 Mermaid 源码");
-  try{
-    const a=await client(owner),b=await client(peer),v=await client(viewer);
-    await saved(a);await saved(b);await saved(v);await expect(source(v)).toHaveAttribute("readonly", "");
-    await a.getByRole("button",{name:"流程图模板",exact:true}).click();
-    await expect(source(b)).toHaveValue(/flowchart LR/);await saved(a);
-    await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator("svg")).toBeVisible({timeout:60000});
-    await a.getByLabel('新节点名称').fill('拖拽交付');
-    await a.getByRole('button',{name:'图形视图',exact:true}).click();await a.getByRole('button',{name:'处理图元',exact:true}).dragTo(a.getByLabel('Mermaid 图形画布',{exact:true}),{targetPosition:{x:250,y:200}});await a.getByRole('button',{name:'分屏视图',exact:true}).click();
+const { test, expect } = require("@playwright/test"),
+  { randomUUID } = require("node:crypto"),
+  config = require("./config.cjs");
+const proxy = process.env.COLLAB_ACCEPTANCE_PROXY
+  ? { server: process.env.COLLAB_ACCEPTANCE_PROXY }
+  : undefined;
+test.use(proxy ? { proxy } : {});
+const local = [config.WEB_URL, config.NEXT_PUBLIC_API_URL].every((v) =>
+  ["localhost", "127.0.0.1"].includes(new URL(v).hostname),
+);
+const formal =
+  process.env.MERMAID_POSITION_ONLINE === "1" &&
+  new URL(config.WEB_URL).hostname === "collabspace.purelamp.uk" &&
+  !config.DATABASE_ADMIN_URL;
+test.skip(!local && !formal, "Explicit synthetic local or formal acceptance only");
+test("Mermaid authority: official graph/source views, two editors, viewer, offline, diagnostics and reload", async ({
+  browser,
+  request,
+}) => {
+  const api = config.NEXT_PUBLIC_API_URL,
+    contexts = [];
+  const login = async (email) => {
+    const r = await request.post(api + "/auth/login", {
+      data: { email, password: config.TEST_PASSWORD },
+    });
+    expect(r.ok()).toBeTruthy();
+    return (await r.json()).accessToken;
+  };
+  const owner = await login(config.TEST_OWNER_EMAIL),
+    peer = await login(config.TEST_MEMBER_EMAIL),
+    viewer = await login(config.TEST_ADMIN_EMAIL);
+  const headers = { Authorization: `Bearer ${owner}`, "x-organization-id": config.TEST_ORG };
+  const r = await request.post(api + "/documents", {
+    headers,
+    data: {
+      projectId: config.TEST_PROJECT,
+      title: "Mermaid " + randomUUID().slice(0, 8),
+      kind: "BOARD",
+    },
+  });
+  expect(r.ok()).toBeTruthy();
+  const d = await r.json();
+  for (const [userId, role] of [
+    [config.TEST_MEMBER, "EDITOR"],
+    [config.TEST_ADMIN, "VIEWER"],
+  ])
+    expect(
+      (
+        await request.put(`${api}/documents/${d.id}/grants`, { headers, data: { userId, role } })
+      ).ok(),
+    ).toBeTruthy();
+  const client = async (token) => {
+    const c = await browser.newContext(proxy ? { proxy } : {});
+    contexts.push(c);
+    await c.addInitScript(
+      ({ token, org }) => {
+        localStorage.setItem("access_token", token);
+        localStorage.setItem("current_org_id", org);
+      },
+      { token, org: config.TEST_ORG },
+    );
+    const p = await c.newPage();
+    await p.goto(`${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${d.id}`);
+    await expect(p.getByLabel("协作 Mermaid 源码")).toBeVisible({ timeout: 60000 });
+    return p;
+  };
+  const saved = (p) =>
+    expect(p.getByRole("status").filter({ hasText: "已保存到服务器" })).toBeVisible({
+      timeout: 60000,
+    });
+  const source = (p) => p.getByLabel("协作 Mermaid 源码");
+  try {
+    const a = await client(owner),
+      b = await client(peer),
+      v = await client(viewer);
+    await saved(a);
+    await saved(b);
+    await saved(v);
+    await expect(source(v)).toHaveAttribute("readonly", "");
+    await a.getByRole("button", { name: "流程图模板", exact: true }).click();
+    await expect(source(b)).toHaveValue(/flowchart LR/);
+    await saved(a);
+    await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator("svg")).toBeVisible({
+      timeout: 60000,
+    });
+    await a.getByLabel("新节点名称").fill("拖拽交付");
+    await a.getByRole("button", { name: "图形视图", exact: true }).click();
+    await a
+      .getByRole("button", { name: "处理图元", exact: true })
+      .dragTo(a.getByLabel("Mermaid 图形画布", { exact: true }), {
+        targetPosition: { x: 250, y: 200 },
+      });
+    await a.getByRole("button", { name: "分屏视图", exact: true }).click();
     await expect(source(b)).toHaveValue(/拖拽交付/);
-    const newNode=a.getByRole('button',{name:'流程节点 拖拽交付',exact:true});
-    await a.getByRole('button',{name:'依次点选连线',exact:true}).click();await a.getByRole('button',{name:'流程节点 需求',exact:true}).click();await newNode.click();
+    const newNode = a.getByRole("button", { name: "流程节点 拖拽交付", exact: true });
+    await a.getByRole("button", { name: "依次点选连线", exact: true }).click();
+    await a.getByRole("button", { name: "流程节点 需求", exact: true }).click();
+    await newNode.click();
     await expect(source(b)).toHaveValue(/A --> N[a-f0-9]+/);
-    await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator('svg')).toContainText('拖拽交付');
-    await a.screenshot({path:'evidence/collaboration/round2-drag-flow.png',fullPage:true});
-    await expect(v.getByRole('button',{name:'处理图元',exact:true})).toBeDisabled();
-    await source(a).fill('mindmap\n  root((团队))\n    文档\n      评论\n    成员');
-    await a.getByRole('button',{name:'思维主题 文档',exact:true}).dragTo(a.getByRole('button',{name:'思维主题 成员',exact:true}));
+    await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator("svg")).toContainText(
+      "拖拽交付",
+    );
+    await a.screenshot({ path: "evidence/collaboration/round2-drag-flow.png", fullPage: true });
+    await expect(v.getByRole("button", { name: "处理图元", exact: true })).toBeDisabled();
+    await source(a).fill("mindmap\n  root((团队))\n    文档\n      评论\n    成员");
+    await a
+      .getByRole("button", { name: "思维主题 文档", exact: true })
+      .dragTo(a.getByRole("button", { name: "思维主题 成员", exact: true }));
     await expect(source(b)).toHaveValue(/成员\n      文档\n        评论/);
-    await a.getByLabel('新节点名称').fill('版本');await a.getByRole('button',{name:'子主题',exact:true}).click();
+    await a.getByLabel("新节点名称").fill("版本");
+    await a.getByRole("button", { name: "子主题", exact: true }).click();
     await expect(source(b)).toHaveValue(/版本/);
-    await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator('svg')).toContainText('版本');
-    await a.screenshot({path:'evidence/collaboration/round2-drag-mindmap.png',fullPage:true});
-    for(const value of[
+    await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator("svg")).toContainText(
+      "版本",
+    );
+    await a.screenshot({ path: "evidence/collaboration/round2-drag-mindmap.png", fullPage: true });
+    for (const value of [
       "sequenceDiagram\n  Alice->>Bob: Hello",
       "mindmap\n  root((Team))\n    Documents\n    People",
       "classDiagram\n  Member --> Document : edits",
       "stateDiagram-v2\n  [*] --> Draft\n  Draft --> Published",
       "erDiagram\n  DOCUMENT ||--o{ COMMENT : contains",
       "flowchart LR\n  subgraph Team\n    A[Plan] --> B[Ship]\n  end",
-    ]){await source(a).fill(value);await expect(source(b)).toHaveValue(value);await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator("svg")).toBeVisible();}
-    const current=await source(a).inputValue();
-    await Promise.all([source(a).press("Control+Home").then(()=>source(a).pressSequentially("%% owner concurrent\n")),source(b).press("Control+End").then(()=>source(b).pressSequentially("\n%% peer concurrent"))]);
-    await expect.poll(()=>source(a).inputValue()).toContain("owner concurrent");await expect.poll(()=>source(a).inputValue()).toContain("peer concurrent");
-    await expect.poll(()=>source(b).inputValue()).toBe(await source(a).inputValue());await saved(a);await saved(b);
-    await contexts[1].setOffline(true);await source(b).press("Control+End");await source(b).pressSequentially("\n%% offline addition");await contexts[1].setOffline(false);
-    await expect(source(a)).toHaveValue(/offline addition/);await saved(b);
-    await source(a).fill("flowchart LR\n A[broken");await expect(a.getByLabel("Mermaid 图形预览").getByRole("alert")).toBeVisible();await saved(a);
-    await a.reload();await expect(source(a)).toHaveValue("flowchart LR\n A[broken");
-    await source(a).fill('%%{init: {securityLevel: "loose"}}%%\nflowchart LR\n A --> B');await expect(a.getByLabel("Mermaid 图形预览").getByRole("alert")).toContainText("禁用");
-    await source(a).fill('flowchart LR\n A@{ img: "//example.invalid/image.png", label: "external" }');await expect(a.getByLabel("Mermaid 图形预览").getByRole("alert")).toContainText("禁用");
-    await source(a).fill(current);await saved(a);
-    const [download]=await Promise.all([a.waitForEvent("download"),a.getByRole("button",{name:"下载 .mmd",exact:true}).click()]);
+    ]) {
+      await source(a).fill(value);
+      await expect(source(b)).toHaveValue(value);
+      await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator("svg")).toBeVisible();
+    }
+    const current = await source(a).inputValue();
+    await Promise.all([
+      source(a)
+        .press("Control+Home")
+        .then(() => source(a).pressSequentially("%% owner concurrent\n")),
+      source(b)
+        .press("Control+End")
+        .then(() => source(b).pressSequentially("\n%% peer concurrent")),
+    ]);
+    await expect.poll(() => source(a).inputValue()).toContain("owner concurrent");
+    await expect.poll(() => source(a).inputValue()).toContain("peer concurrent");
+    await expect.poll(() => source(b).inputValue()).toBe(await source(a).inputValue());
+    await saved(a);
+    await saved(b);
+    await contexts[1].setOffline(true);
+    await source(b).press("Control+End");
+    await source(b).pressSequentially("\n%% offline addition");
+    await contexts[1].setOffline(false);
+    await expect(source(a)).toHaveValue(/offline addition/);
+    await saved(b);
+    await source(a).fill("flowchart LR\n A[broken");
+    await expect(a.getByLabel("Mermaid 图形预览").getByRole("alert")).toBeVisible();
+    await saved(a);
+    await a.reload();
+    await expect(source(a)).toHaveValue("flowchart LR\n A[broken");
+    await source(a).fill('%%{init: {securityLevel: "loose"}}%%\nflowchart LR\n A --> B');
+    await expect(a.getByLabel("Mermaid 图形预览").getByRole("alert")).toContainText("禁用");
+    await source(a).fill(
+      'flowchart LR\n A@{ img: "//example.invalid/image.png", label: "external" }',
+    );
+    await expect(a.getByLabel("Mermaid 图形预览").getByRole("alert")).toContainText("禁用");
+    await source(a).fill(current);
+    await saved(a);
+    const [download] = await Promise.all([
+      a.waitForEvent("download"),
+      a.getByRole("button", { name: "下载 .mmd", exact: true }).click(),
+    ]);
     expect(download.suggestedFilename()).toBe("collabspace-diagram.mmd");
-    expect(require("node:fs").readFileSync(await download.path(),"utf8")).toBe(current);
-    await a.getByRole("button",{name:"图形视图",exact:true}).click();await expect(source(a)).toHaveCount(0);await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator("svg")).toBeVisible();
-    await a.getByRole("button",{name:"源码视图",exact:true}).click();await expect(source(a)).toHaveValue(current);
-    await a.getByRole("button",{name:"分屏视图",exact:true}).click();
+    expect(require("node:fs").readFileSync(await download.path(), "utf8")).toBe(current);
+    await a.getByRole("button", { name: "图形视图", exact: true }).click();
+    await expect(source(a)).toHaveCount(0);
     await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator("svg")).toBeVisible();
-    await a.screenshot({path:"evidence/collaboration/mermaid-workspace.png",fullPage:true});
-    await a.reload();await expect(source(a)).toHaveValue(current);await expect(source(v)).toHaveValue(current);
-    await source(a).evaluate(el=>{
-      el.dispatchEvent(new CompositionEvent("compositionstart",{bubbles:true}));
-      const set=Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value").set;
-      set.call(el,el.value+"\n%% 本地输入法草稿");
-      el.dispatchEvent(new InputEvent("input",{bubbles:true,inputType:"insertCompositionText",data:"草稿",isComposing:true}));
+    await a.getByRole("button", { name: "源码视图", exact: true }).click();
+    await expect(source(a)).toHaveValue(current);
+    await a.getByRole("button", { name: "分屏视图", exact: true }).click();
+    await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator("svg")).toBeVisible();
+    await a.screenshot({ path: "evidence/collaboration/mermaid-workspace.png", fullPage: true });
+    await a.reload();
+    await expect(source(a)).toHaveValue(current);
+    await expect(source(v)).toHaveValue(current);
+    await source(a).evaluate((el) => {
+      el.dispatchEvent(new CompositionEvent("compositionstart", { bubbles: true }));
+      const set = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value").set;
+      set.call(el, el.value + "\n%% 本地输入法草稿");
+      el.dispatchEvent(
+        new InputEvent("input", {
+          bubbles: true,
+          inputType: "insertCompositionText",
+          data: "草稿",
+          isComposing: true,
+        }),
+      );
     });
-    await source(b).press("Control+Home");await source(b).pressSequentially("%% Remote during IME\n");await saved(b);
+    await source(b).press("Control+Home");
+    await source(b).pressSequentially("%% Remote during IME\n");
+    await saved(b);
     await expect(source(v)).toHaveValue(/Remote during IME/);
-    await source(a).evaluate(el=>{
-      const stale=el.value;
-      el.dispatchEvent(new CompositionEvent("compositionend",{bubbles:true,data:"草稿"}));
-      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value").set.call(el,stale);
-      el.dispatchEvent(new InputEvent("input",{bubbles:true,inputType:"insertCompositionText",data:"草稿"}));
+    await source(a).evaluate((el) => {
+      const stale = el.value;
+      el.dispatchEvent(new CompositionEvent("compositionend", { bubbles: true, data: "草稿" }));
+      Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, "value").set.call(el, stale);
+      el.dispatchEvent(
+        new InputEvent("input", {
+          bubbles: true,
+          inputType: "insertCompositionText",
+          data: "草稿",
+        }),
+      );
     });
     await expect(a.getByLabel("输入法待合并草稿")).toHaveValue(/本地输入法草稿/);
-    await expect(source(a)).toHaveValue(/Remote during IME/);await expect(source(a)).not.toHaveValue(/本地输入法草稿/);
-    await source(a).fill(current);await saved(a);
-  }finally{for(const c of contexts)await c.close();}
+    await expect(source(a)).toHaveValue(/Remote during IME/);
+    await expect(source(a)).not.toHaveValue(/本地输入法草稿/);
+    await source(a).fill(current);
+    await saved(a);
+  } finally {
+    for (const c of contexts) await c.close();
+  }
 });
 
-test('Mermaid positioned history preview and restore retain source in a new private copy',async({browser,request})=>{
- const login=async email=>{const r=await request.post(config.NEXT_PUBLIC_API_URL+'/auth/login',{data:{email,password:config.TEST_PASSWORD}});expect(r.ok()).toBeTruthy();return(await r.json()).accessToken;};const token=await login(config.TEST_OWNER_EMAIL),peer=await login(config.TEST_MEMBER_EMAIL),headers={Authorization:'Bearer '+token,'x-organization-id':config.TEST_ORG};const made=await request.post(config.NEXT_PUBLIC_API_URL+'/documents',{headers,data:{projectId:config.TEST_PROJECT,title:'Position history '+randomUUID().slice(0,8),kind:'BOARD'}});expect(made.ok()).toBeTruthy();const d=await made.json();expect((await request.put(config.NEXT_PUBLIC_API_URL+'/documents/'+d.id+'/grants',{headers,data:{userId:config.TEST_MEMBER,role:'EDITOR'}})).ok()).toBeTruthy();
- const c=await browser.newContext(proxy?{proxy}:{});try{await c.addInitScript(({token,org})=>{localStorage.setItem('access_token',token);localStorage.setItem('current_org_id',org);},{token,org:config.TEST_ORG});const p=await c.newPage();await p.goto(`${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${d.id}`);const source=p.getByLabel('协作 Mermaid 源码'),current='flowchart LR\n A[Plan] --> B[Ship]\n%% collab-position A 200 200';await expect(source).toBeVisible({timeout:60000});await source.fill(current);await expect(p.getByRole('status').filter({hasText:'已保存到服务器'})).toBeVisible({timeout:60000});await p.getByRole('button',{name:'历史版本',exact:true}).click();await p.getByLabel('版本名称').fill('Position checkpoint');await p.getByRole('button',{name:'创建版本',exact:true}).click();await p.getByRole('button',{name:'只读预览',exact:true}).click();await expect(p.locator('iframe[title="Mermaid 图表"]')).toHaveCount(2);await p.getByRole('button',{name:'关闭预览',exact:true}).click();await p.getByRole('button',{name:'恢复为副本',exact:true}).click();await expect(p).not.toHaveURL(new RegExp(d.id+'$'));await p.getByRole('button',{name:'Mermaid 图表工作区',exact:true}).click();await expect(source).toHaveValue(current);expect((await request.get(config.NEXT_PUBLIC_API_URL+'/documents/'+p.url().split('/').pop(),{headers:{Authorization:'Bearer '+peer,'x-organization-id':config.TEST_ORG}})).status()).toBe(404);
- }finally{await c.close();}
+test("Mermaid positioned history preview and restore retain source in a new private copy", async ({
+  browser,
+  request,
+}) => {
+  const login = async (email) => {
+    const r = await request.post(config.NEXT_PUBLIC_API_URL + "/auth/login", {
+      data: { email, password: config.TEST_PASSWORD },
+    });
+    expect(r.ok()).toBeTruthy();
+    return (await r.json()).accessToken;
+  };
+  const token = await login(config.TEST_OWNER_EMAIL),
+    peer = await login(config.TEST_MEMBER_EMAIL),
+    headers = { Authorization: "Bearer " + token, "x-organization-id": config.TEST_ORG };
+  const made = await request.post(config.NEXT_PUBLIC_API_URL + "/documents", {
+    headers,
+    data: {
+      projectId: config.TEST_PROJECT,
+      title: "Position history " + randomUUID().slice(0, 8),
+      kind: "BOARD",
+    },
+  });
+  expect(made.ok()).toBeTruthy();
+  const d = await made.json();
+  expect(
+    (
+      await request.put(config.NEXT_PUBLIC_API_URL + "/documents/" + d.id + "/grants", {
+        headers,
+        data: { userId: config.TEST_MEMBER, role: "EDITOR" },
+      })
+    ).ok(),
+  ).toBeTruthy();
+  const c = await browser.newContext(proxy ? { proxy } : {});
+  try {
+    await c.addInitScript(
+      ({ token, org }) => {
+        localStorage.setItem("access_token", token);
+        localStorage.setItem("current_org_id", org);
+      },
+      { token, org: config.TEST_ORG },
+    );
+    const p = await c.newPage();
+    await p.goto(`${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${d.id}`);
+    const source = p.getByLabel("协作 Mermaid 源码"),
+      current = "flowchart LR\n A[Plan] --> B[Ship]\n%% collab-position A 200 200";
+    await expect(source).toBeVisible({ timeout: 60000 });
+    await source.fill(current);
+    await expect(p.getByRole("status").filter({ hasText: "已保存到服务器" })).toBeVisible({
+      timeout: 60000,
+    });
+    await p.getByRole("button", { name: "历史版本", exact: true }).click();
+    await p.getByLabel("版本名称").fill("Position checkpoint");
+    await p.getByRole("button", { name: "创建版本", exact: true }).click();
+    await p.getByRole("button", { name: "只读预览", exact: true }).click();
+    await expect(p.locator('iframe[title="Mermaid 图表"]')).toHaveCount(2);
+    await p.getByRole("button", { name: "关闭预览", exact: true }).click();
+    await p.getByRole("button", { name: "恢复为副本", exact: true }).first().click();
+    await expect(p).not.toHaveURL(new RegExp(d.id + "$"));
+    await p.getByRole("button", { name: "Mermaid 图表工作区", exact: true }).click();
+    await expect(source).toHaveValue(current);
+    expect(
+      (
+        await request.get(config.NEXT_PUBLIC_API_URL + "/documents/" + p.url().split("/").pop(), {
+          headers: { Authorization: "Bearer " + peer, "x-organization-id": config.TEST_ORG },
+        })
+      ).status(),
+    ).toBe(404);
+  } finally {
+    await c.close();
+  }
 });
