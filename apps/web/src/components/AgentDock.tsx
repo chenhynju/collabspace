@@ -40,6 +40,7 @@ const SUGGESTIONS = [
   { label: "新建工作区", prompt: "新建工作区「」" },
   { label: "新建项目", prompt: "新建项目「」到工作区「」" },
   { label: "给项目加任务", prompt: "给项目「」添加任务「」" },
+  { label: "画一个流程图", prompt: "给项目「」画一个三步审批流程图" },
 ];
 
 const RISK_LABEL: Record<Risk, string> = { low: "低风险", medium: "需确认", high: "高风险" };
@@ -260,6 +261,31 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
       router.push(action.path);
       return;
     }
+    if (action.tool === "draw_diagram") {
+      try {
+        const { data } = await api.post("/documents/agent/draw", action.body);
+        onClose();
+        router.push(`/projects/${data.projectId}/documents/${data.id}`);
+        return;
+      } catch (e: any) {
+        const detail =
+          e.response?.data?.message ??
+          e.response?.data?.code ??
+          "图表生成失败，请检查模型配置后重试。";
+        setMessages((list) =>
+          list.map((item) =>
+            item.id === messageId
+              ? {
+                  ...item,
+                  actionState: { ...item.actionState, [action.id]: "error" },
+                  actionError: { ...item.actionError, [action.id]: String(detail) },
+                }
+              : item,
+          ),
+        );
+        return;
+      }
+    }
     setMessages((list) =>
       list.map((item) =>
         item.id === messageId
@@ -350,8 +376,8 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
               <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
                 <p className="text-sm font-medium text-indigo-950">可以直接用自然语言安排工作</p>
                 <p className="mt-1 text-xs leading-5 text-indigo-900/70">
-                  例如「列出项目」「在工作区『顾问』下新建项目『官网改版』」「把任务『首页设计』标记完成」。
-                  删除、邀请等操作会先显示范围和影响，再由你确认。
+                  例如「列出项目」「在工作区『顾问』下新建项目『官网改版』」「给项目『官网改版』画一个三步审批流程图」。
+                  写操作和画图都会先生成计划，再由你确认执行。
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-2">

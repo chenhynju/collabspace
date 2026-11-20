@@ -444,6 +444,45 @@ export class AgentService {
       };
     }
 
+    /* ---------- 图表 / 画图 ---------- */
+    const drawKind = /(思维导图|架构图|时序图|甘特图|流程图|图表)/.exec(text)?.[1];
+    const wantsDraw =
+      !!drawKind &&
+      /(画|绘制|生成|做|来|设计)/.test(text) &&
+      !/(查看|列出|打开|删除|改名|重命名|移动)/.test(text);
+    if (wantsDraw) {
+      if (!allow("project:list")) return this.denied("生成图表", "project:list");
+      const projectTarget = projectName
+        ? this.resolve(snapshot.projects, projectName)
+        : {
+            one: snapshot.projects.length === 1 ? snapshot.projects[0] : null,
+            matches: snapshot.projects,
+          };
+      if (!projectTarget.one)
+        return this.clarify(
+          `请指定图表所属项目，例如：给项目「官网改版」画${drawKind}。当前可访问项目：${
+            snapshot.projects.map((row) => `「${row.name}」`).join("、") || "（暂无）"
+          }。`,
+        );
+      const title = `${drawKind} · ${text.replace(/\s+/g, " ").slice(0, 20)}`.slice(0, 40);
+      return {
+        reply: `准备在项目「${projectTarget.one.name}」中生成${drawKind}「${title}」，确认后会调用模型生成 Mermaid 并直接打开白板。`,
+        source: "rules",
+        actions: [
+          this.action(
+            "draw_diagram",
+            `生成${drawKind}「${title}」`,
+            `所属项目：${projectTarget.one.name}；生成后可继续在画布中拖拽、改字或连线。`,
+            "POST",
+            "/documents/agent/draw",
+            { projectId: projectTarget.one.id, title, instruction: text },
+            "project:list",
+            "medium",
+          ),
+        ],
+      };
+    }
+
     /* ---------- 任务 ---------- */
     if (/(新建|创建|添加|加个|加一个)/.test(text) && /任务/.test(text)) {
       if (!allow("task:manage")) return this.denied("创建任务", "task:manage");
@@ -844,6 +883,7 @@ export class AgentService {
 • 给项目「官网改版」添加任务「首页设计」指派给 张三
 • 把任务「首页设计」标记完成
 • 新建文档「项目周报」到项目「官网改版」
+• 给项目「官网改版」画一个三步审批流程图
 • 邀请 alice@example.com 为成员
 • 停用或恢复成员「李四」
 

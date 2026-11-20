@@ -223,3 +223,51 @@
 - AI 助理当前不执行 Office 文件新建、文件上传、角色分配和系统参数修改；这些仍通过对应页面完成。
 - 8 个 API 集成测试需要额外 PostgreSQL/Redis/Office/OAuth 环境，本轮按测试自身条件跳过。
 - Redis 未启动，实时在线状态与跨节点广播未在本轮重新验收；既有文档、邀请和协作测试在单机降级模式下通过。
+
+## 2026-11-20 补充：图表工作室、AI 画图与数字人形象
+
+### 图表工作室合并
+
+- 自由画布与 Mermaid 保留两种引擎，但合并到同一入口和同一工作台样式：顶部模式切换、左侧工具轨、紧凑工具栏、右侧属性检查器。
+- 工具轨只保留选择/平移/连线与 7 种基础图元；文档、数据库、云服务等更多图元收进“更多图元”浮层，避免工具轨滚动。
+- 连线：选中图元后四边出现蓝色连接点，可拖到目标图元直接建立连接；保留连接工具依次点选。
+- 修复图形工具激活时点击已有图元会误选中并改字的问题；现在绘图工具在已有图元上也会创建新图元。
+- Mermaid 工作区去掉重复标题和底部状态，视图切换改为分段控件；模板、源码、导入导出入口保持不变。
+
+### AI 画图
+
+- 新增 `POST /documents/agent/draw`：按自然语言调用 DeepSeek 生成 Mermaid，并原子创建带初始源码的 BOARD 文档。
+- AI 助理识别“画/生成流程图、思维导图、架构图”等指令，返回 `draw_diagram` 计划；确认后创建并跳转，直接显示图表。
+- 线上实测生成 `flowchart TD A[提交] --> B[审批] --> C[发布]`，创建和打开均成功。
+
+### 线上发布
+
+- API：`collabspace-api:api-r20261120-04`（`sha256:5634fc884e5b1e249dd21c785be31ea4cbcbce3ccde678086d3c57653d950e27`），基于 r03 只叠加 `apps/api/dist`；健康检查正常，OOM=false，WS 未变。
+- 前端：Vercel 生产部署 `collabspace-neryt9glh-purelamp.vercel.app`，已别名到 `https://collabspace.purelamp.uk`。
+- 数字人形象复用已上线的 Agent 身份卡：打开 `/assistant` 后“查看Agent形象”可用，展示小岚静态形象与“静态角色外观稿 · 可动3D模型尚未交付”。未再引入重复入口。
+
+### 验证
+
+| 检查 | 结果 |
+| --- | --- |
+| `board.spec.cjs` | 通过：双账号创建、拖动、撤销、离线重连、历史/恢复、只读 |
+| `diagrams.spec.cjs` | 通过：绑定连线、导图、Mermaid 导入、SVG 导出 |
+| `mermaid-ux.spec.cjs` | 通过 |
+| 线上拖拽连线 | 4 个连接点，拖到目标后生成 1 条绑定连线 |
+| 线上 AI 画图 | 创建成功并跳转，源码为 `flowchart TD` |
+| 线上数字人形象 | “查看Agent形象”按钮启用，静态形象可见 |
+| 线上 IM 双人 / 三人 | `im.spec` 1/1；`im-group.spec` 1/1，三账号实时互发并保留历史 |
+
+截图：
+
+- [画布工作室](board-ai-2026-11-20/board-studio-online-final.png)
+- [AI 画图](board-ai-2026-11-20/agent-draw-online.png)
+- [数字人形象](board-ai-2026-11-20/digital-human-online-avatar.png)
+- [IM 数字分身](board-ai-2026-11-20/digital-human-online-im.png)
+- [三人群聊](board-ai-2026-11-20/im-group-owner.png)
+
+### 边界
+
+- 两种视图仍使用独立数据模型（`shapes` 与 `mermaid` 文本）；本次完成入口与工作台合并，未做图形双向转换。
+- Mermaid 编辑器内核与图元属性面板保留，仅统一外观；复杂图表的自动布局仍以 Mermaid 预览为准。
+- 数字人目前是静态形象与私有素材草稿；真实生成供应商未接入，界面不会伪造创建成功。

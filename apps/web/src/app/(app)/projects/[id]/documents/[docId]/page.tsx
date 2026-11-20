@@ -121,6 +121,9 @@ export default function DocumentPage({
       active = false;
     };
   }, [base, org, params.id]);
+  useEffect(() => {
+    if (meta?.kind === "BOARD") setPanelOpen(false);
+  }, [meta?.kind, params.docId]);
   const refresh = useCallback(async () => {
     try {
       const [a, b] = await Promise.all([

@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useRef, useState, useId } from "react";
+import { Hand, MousePointer2, Shapes, Spline } from "lucide-react";
 import * as Y from "yjs";
 import {
   type BoardShape,
@@ -13,7 +14,8 @@ import {
 } from "@collabspace/protocol";
 import { DocumentProvider, from64 } from "@/lib/document-provider";
 import ShapeGlyph from "./ShapeGlyph";
-import {Button} from "@/components/ui";
+import { useParams } from "next/navigation";
+import { BoardAgent } from "./BoardAgent";
 import MermaidWorkspace, { MermaidPreview } from "./MermaidWorkspace";
 
 type Item = BoardShape & { id: string };
@@ -29,22 +31,14 @@ const tools = [
   ["mind", "思维主题"],
   ["connect", "连接节点"],
 ] as const;
-const colors: BoardShape["fill"][] = [
-  "#fef3c7",
-  "#dbeafe",
-  "#dcfce7",
-  "#fce7f3",
-  "#ffffff",
-];
+const colors: BoardShape["fill"][] = ["#fef3c7", "#dbeafe", "#dcfce7", "#fce7f3", "#ffffff"];
 const origin = "collabspace:whiteboard:local";
 const colorFor = (id: string) =>
   `hsl(${[...id].reduce((n, c) => n + c.charCodeAt(0), 0) % 360} 65% 42%)`;
 function read(doc: Y.Doc): Item[] {
   return [...doc.getMap<Y.Map<unknown>>("shapes")]
     .flatMap(([id, m]) => {
-      const parsed = boardShape.safeParse(
-        m instanceof Y.Map ? m.toJSON() : null,
-      );
+      const parsed = boardShape.safeParse(m instanceof Y.Map ? m.toJSON() : null);
       return parsed.success ? [{ ...parsed.data, id } as Item] : [];
     })
     .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
@@ -74,23 +68,14 @@ export function BoardDrawing({
   return (
     <>
       <defs>
-        <marker
-          id={marker}
-          markerWidth="10"
-          markerHeight="10"
-          refX="8"
-          refY="3"
-          orient="auto"
-        >
+        <marker id={marker} markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
           <path d="M0,0 L0,6 L9,3 z" fill="#334155" />
         </marker>
       </defs>
       {items
         .filter((s) => s.type === "mind" && s.parent)
         .map((s) => {
-          const parent = items.find(
-            (p) => p.id === s.parent && p.type === "mind",
-          );
+          const parent = items.find((p) => p.id === s.parent && p.type === "mind");
           return parent ? (
             <path
               key={`mind-${s.id}`}
@@ -135,21 +120,8 @@ export function BoardDrawing({
                 pointerEvents="none"
               />
               <text
-                x={
-                  (a.geometry.x +
-                    a.geometry.w / 2 +
-                    b.geometry.x +
-                    b.geometry.w / 2) /
-                  2
-                }
-                y={
-                  (a.geometry.y +
-                    a.geometry.h / 2 +
-                    b.geometry.y +
-                    b.geometry.h / 2) /
-                    2 -
-                  8
-                }
+                x={(a.geometry.x + a.geometry.w / 2 + b.geometry.x + b.geometry.w / 2) / 2}
+                y={(a.geometry.y + a.geometry.h / 2 + b.geometry.y + b.geometry.h / 2) / 2 - 8}
                 textAnchor="middle"
                 fontSize="13"
                 fill="#334155"
@@ -217,12 +189,7 @@ export function BoardDrawing({
               />
             )}
             <foreignObject
-              x={
-                x +
-                (["diamond", "triangle", "parallelogram"].includes(item.type)
-                  ? w * 0.23
-                  : 10)
-              }
+              x={x + (["diamond", "triangle", "parallelogram"].includes(item.type) ? w * 0.23 : 10)}
               y={
                 y +
                 (item.type === "actor"
@@ -239,9 +206,7 @@ export function BoardDrawing({
               }
               width={Math.max(
                 10,
-                ["diamond", "triangle", "parallelogram"].includes(item.type)
-                  ? w * 0.54
-                  : w - 20,
+                ["diamond", "triangle", "parallelogram"].includes(item.type) ? w * 0.54 : w - 20,
               )}
               height={Math.max(
                 10,
@@ -267,17 +232,10 @@ export function BoardDrawing({
                   color: "#0f172a",
                   display: "flex",
                   alignItems:
-                    item.type === "note" || item.type === "text"
-                      ? "flex-start"
-                      : "center",
+                    item.type === "note" || item.type === "text" ? "flex-start" : "center",
                   justifyContent:
-                    item.type === "note" || item.type === "text"
-                      ? "flex-start"
-                      : "center",
-                  textAlign:
-                    item.type === "note" || item.type === "text"
-                      ? "left"
-                      : "center",
+                    item.type === "note" || item.type === "text" ? "flex-start" : "center",
+                  textAlign: item.type === "note" || item.type === "text" ? "left" : "center",
                 }}
               >
                 {item.text}
@@ -305,8 +263,12 @@ export function BoardDrawing({
 export function BoardPreview({ state }: { state: string }) {
   const [mermaidSource] = useState(() => {
     const doc = new Y.Doc();
-    try { Y.applyUpdate(doc, from64(state)); return doc.getText("mermaid").toString(); }
-    finally { doc.destroy(); }
+    try {
+      Y.applyUpdate(doc, from64(state));
+      return doc.getText("mermaid").toString();
+    } finally {
+      doc.destroy();
+    }
   });
   const [items] = useState(() => {
     const d = new Y.Doc();
@@ -320,15 +282,11 @@ export function BoardPreview({ state }: { state: string }) {
   const marker = useId().replace(/:/g, "");
   const minX = Math.min(0, ...items.map((s) => s.geometry.x)) - 30,
     minY = Math.min(0, ...items.map((s) => s.geometry.y)) - 30;
-  const w =
-      Math.max(900, ...items.map((s) => s.geometry.x + s.geometry.w)) -
-      minX +
-      30,
-    h =
-      Math.max(600, ...items.map((s) => s.geometry.y + s.geometry.h)) -
-      minY +
-      30;
-  return mermaidSource ? <MermaidPreview source={mermaidSource} /> : (
+  const w = Math.max(900, ...items.map((s) => s.geometry.x + s.geometry.w)) - minX + 30,
+    h = Math.max(600, ...items.map((s) => s.geometry.y + s.geometry.h)) - minY + 30;
+  return mermaidSource ? (
+    <MermaidPreview source={mermaidSource} />
+  ) : (
     <svg
       aria-label="白板历史只读预览"
       viewBox={`${minX} ${minY} ${w} ${h}`}
@@ -339,6 +297,7 @@ export function BoardPreview({ state }: { state: string }) {
   );
 }
 function Canvas({ provider }: { provider: DocumentProvider }) {
+  const { id: projectId } = useParams<{ id: string }>();
   const [items, setItems] = useState<Item[]>([]),
     [selected, setSelected] = useState(""),
     [tool, setTool] = useState<string>("select"),
@@ -346,7 +305,10 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     [members, setMembers] = useState<Member[]>([]),
     [error, setError] = useState("");
   const [connectFrom, setConnectFrom] = useState("");
+  const [connecting, setConnecting] = useState<{ from: string; x: number; y: number } | null>(null);
+  const connectingRef = useRef<{ from: string; x: number; y: number } | null>(null);
   const [snap, setSnap] = useState(false);
+  const [shapePanel, setShapePanel] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false),
     [source, setSource] = useState(
       "flowchart LR\n  A[开始] --> B{验收通过？}\n  B -->|是| C[交付]",
@@ -408,14 +370,8 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     p.y = e.clientY;
     const result = p.matrixTransform(svg.current!.getScreenCTM()!.inverse());
     return {
-      x: Math.max(
-        -10000,
-        Math.min(10000, snap ? Math.round(result.x / 20) * 20 : result.x),
-      ),
-      y: Math.max(
-        -10000,
-        Math.min(10000, snap ? Math.round(result.y / 20) * 20 : result.y),
-      ),
+      x: Math.max(-10000, Math.min(10000, snap ? Math.round(result.x / 20) * 20 : result.x)),
+      y: Math.max(-10000, Math.min(10000, snap ? Math.round(result.y / 20) * 20 : result.y)),
     };
   };
   const change = (id: string, patch: Partial<BoardShape>) => {
@@ -424,9 +380,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     if (!shape) return;
     const parsed = boardShape.safeParse({ ...shape.toJSON(), ...patch });
     if (!parsed.success) {
-      setError(
-        "图形超出范围：画布坐标 ±10000，宽高 20–2000，文字最多 2000 字。",
-      );
+      setError("图形超出范围：画布坐标 ±10000，宽高 20–2000，文字最多 2000 字。");
       return;
     }
     provider.doc.transact(() => {
@@ -452,11 +406,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       geometry: { x: p.x, y: p.y, w: 180, h: type === "mind" ? 60 : 120 },
       text:
         shapeCatalog.find((s) => s.type === type)?.label ||
-        (type === "mind"
-          ? "中心主题"
-          : type === "note"
-            ? "双击选中后，在属性中编辑便签"
-            : ""),
+        (type === "mind" ? "中心主题" : type === "note" ? "双击选中后，在属性中编辑便签" : ""),
       fill: type === "note" ? "#fef3c7" : "#dbeafe",
       order: Date.now(),
       ...extra,
@@ -505,9 +455,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     }
     const offsetY = items.length
       ? Math.max(
-          ...items
-            .filter((s) => s.type !== "connector")
-            .map((s) => s.geometry.y + s.geometry.h),
+          ...items.filter((s) => s.type !== "connector").map((s) => s.geometry.y + s.geometry.h),
           0,
         ) + 120
       : 0;
@@ -535,11 +483,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       if (mind) {
         const root = place("mind", { x: 80, y: 240 }, { text: "项目计划" })!;
         ["需求分析", "开发实施", "验证交付"].forEach((text, i) =>
-          place(
-            "mind",
-            { x: 380, y: 100 + i * 140 },
-            { parent: root, text, fill: colors[i] },
-          ),
+          place("mind", { x: 380, y: 100 + i * 140 }, { parent: root, text, fill: colors[i] }),
         );
       } else {
         const a = place(
@@ -559,11 +503,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           [b, c, ""],
           [c, d, "是"],
         ].forEach(([from, to, text]) =>
-          place(
-            "connector",
-            { x: 0, y: 0 },
-            { text, binding: { from, to, style: "elbow" } },
-          ),
+          place("connector", { x: 0, y: 0 }, { text, binding: { from, to, style: "elbow" } }),
         );
       }
     }, origin);
@@ -600,6 +540,10 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
   const select = (e: React.PointerEvent<SVGGElement>, item: Item) => {
     if (tool === "pan") return;
     e.stopPropagation();
+    if (!["select", "pan", "connect"].includes(tool)) {
+      create(tool as BoardShape["type"], point(e));
+      return;
+    }
     svg.current?.focus({ preventScroll: true });
     if (tool === "connect") {
       if (!provider.writable || item.type === "connector") return;
@@ -632,6 +576,11 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
   const move = (e: React.PointerEvent<SVGSVGElement>) => {
     const p = point(e),
       d = drag.current;
+    if (connectingRef.current) {
+      connectingRef.current = { ...connectingRef.current, x: p.x, y: p.y };
+      setConnecting(connectingRef.current);
+      return;
+    }
     if (Date.now() - sentAt.current >= 100) {
       provider.cursor(p);
       sentAt.current = Date.now();
@@ -656,17 +605,49 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     }
     // Local drag preview is smooth; one atomic geometry update commits on release.
     d.latest = g;
-    setItems((current) =>
-      current.map((s) => (s.id === d.id ? { ...s, geometry: g } : s)),
-    );
+    setItems((current) => current.map((s) => (s.id === d.id ? { ...s, geometry: g } : s)));
   };
   const finish = () => {
+    const link = connectingRef.current;
+    if (link) {
+      connectingRef.current = null;
+      setConnecting(null);
+      const target = items.find(
+        (item) =>
+          item.id !== link.from &&
+          item.type !== "connector" &&
+          link.x >= item.geometry.x &&
+          link.x <= item.geometry.x + item.geometry.w &&
+          link.y >= item.geometry.y &&
+          link.y <= item.geometry.y + item.geometry.h,
+      );
+      if (target) {
+        const id = create(
+          "connector",
+          { x: 0, y: 0 },
+          { binding: { from: link.from, to: target.id, style: "elbow" } },
+        );
+        if (id) setSelected(id);
+      }
+      return;
+    }
     const d = drag.current;
     drag.current = undefined;
     if (d?.id && d.latest) {
       change(d.id, { geometry: d.latest });
       undo.current?.stopCapturing();
     }
+  };
+  const startConnect = (e: React.PointerEvent<SVGCircleElement>, item: Item) => {
+    if (!provider.writable) return;
+    e.stopPropagation();
+    e.preventDefault();
+    const p = point(e);
+    connectingRef.current = { from: item.id, x: p.x, y: p.y };
+    setConnecting(connectingRef.current);
+    setSelected(item.id);
+    setTool("select");
+    svg.current?.setPointerCapture(e.pointerId);
   };
   const remove = () => {
     if (provider.writable && selected) {
@@ -675,8 +656,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
         shapes.delete(selected);
         for (const [id, s] of shapes) {
           const b = s.get("binding") as BoardShape["binding"];
-          if (b && (b.from === selected || b.to === selected))
-            shapes.delete(id);
+          if (b && (b.from === selected || b.to === selected)) shapes.delete(id);
         }
       }, origin);
       undo.current?.stopCapturing();
@@ -685,33 +665,24 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
   };
   return (
     <section aria-label="实时白板" className="flex flex-col">
+      {projectId && (
+        <BoardAgent
+          provider={provider}
+          projectId={projectId}
+          selected={selected}
+          origin={origin}
+          stopUndo={() => undo.current?.stopCapturing()}
+        />
+      )}
       <div
-        className="flex flex-wrap items-center gap-2 border-b p-3"
+        className="flex flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200 bg-white px-2 py-1.5 shadow-sm"
         role="toolbar"
         aria-label="白板工具"
       >
-        <label className="text-xs">
-          <input
-            type="checkbox"
-            checked={snap}
-            onChange={(e) => setSnap(e.target.checked)}
-          />{" "}
+        <label className="mr-1 inline-flex items-center gap-1.5 px-1 text-xs text-slate-600">
+          <input type="checkbox" checked={snap} onChange={(e) => setSnap(e.target.checked)} />{" "}
           网格吸附
         </label>
-        {tools.map(([key, label]) => (
-          <button
-            key={key}
-            aria-pressed={tool === key}
-            disabled={!provider.writable && !["select", "pan"].includes(key)}
-            onClick={() => {
-              setTool(key);
-              setConnectFrom("");
-            }}
-            className={`rounded border px-2 py-1 text-sm disabled:opacity-40 ${tool === key ? "bg-blue-600 text-white" : ""}`}
-          >
-            {label}
-          </button>
-        ))}
         <button
           disabled={!provider.writable}
           onClick={() => template(false)}
@@ -755,31 +726,16 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
         </button>
         <button
           onClick={() => {
-            const copy = svg.current?.cloneNode(true) as
-              SVGSVGElement | undefined;
+            const copy = svg.current?.cloneNode(true) as SVGSVGElement | undefined;
             if (!copy) return;
             copy
-              .querySelectorAll(
-                '[data-testid="board-resize"], [aria-label$="的白板光标"]',
-              )
+              .querySelectorAll('[data-testid="board-resize"], [aria-label$="的白板光标"]')
               .forEach((n) => n.remove());
             const nodes = items.filter((s) => s.type !== "connector");
             const x = Math.min(0, ...nodes.map((s) => s.geometry.x)) - 30,
               y = Math.min(0, ...nodes.map((s) => s.geometry.y)) - 30;
-            const w =
-                Math.max(
-                  900,
-                  ...nodes.map((s) => s.geometry.x + s.geometry.w),
-                ) -
-                x +
-                30,
-              h =
-                Math.max(
-                  600,
-                  ...nodes.map((s) => s.geometry.y + s.geometry.h),
-                ) -
-                y +
-                30;
+            const w = Math.max(900, ...nodes.map((s) => s.geometry.x + s.geometry.w)) - x + 30,
+              h = Math.max(600, ...nodes.map((s) => s.geometry.y + s.geometry.h)) - y + 30;
             copy.setAttribute("viewBox", `${x} ${y} ${w} ${h}`);
             copy.setAttribute("width", String(w));
             copy.setAttribute("height", String(h));
@@ -800,17 +756,13 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           导出 SVG
         </button>
         <button
-          onClick={() =>
-            setView((v) => ({ ...v, zoom: Math.min(3, v.zoom + 0.25) }))
-          }
+          onClick={() => setView((v) => ({ ...v, zoom: Math.min(3, v.zoom + 0.25) }))}
           aria-label="放大白板"
         >
           ＋
         </button>
         <button
-          onClick={() =>
-            setView((v) => ({ ...v, zoom: Math.max(0.03, v.zoom - 0.25) }))
-          }
+          onClick={() => setView((v) => ({ ...v, zoom: Math.max(0.03, v.zoom - 0.25) }))}
           aria-label="缩小白板"
         >
           −
@@ -836,49 +788,12 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           导出本地白板草稿
         </button>
       </div>
-      <details open className="border-b bg-white px-3 py-2">
-        <summary className="cursor-pointer text-sm font-medium">
-          图元库 · 拖到画布，或点击后放置
-        </summary>
-        <div
-          className="mt-2 grid grid-cols-4 gap-2 lg:grid-cols-8"
-          aria-label="图元库"
-        >
-          {shapeCatalog.map((s) => (
-            <button
-              key={s.type}
-              draggable={provider.writable}
-              disabled={!provider.writable}
-              aria-label={`图元 ${s.label}`}
-              aria-pressed={tool === s.type}
-              onDragStart={(e) => {
-                if (!provider.writable) {
-                  e.preventDefault();
-                  return;
-                }
-                e.dataTransfer.setData(
-                  "application/x-collabspace-shape",
-                  s.type,
-                );
-                e.dataTransfer.effectAllowed = "copy";
-              }}
-              onClick={() => setTool(s.type)}
-              className={`rounded border p-2 text-xs disabled:opacity-40 ${tool === s.type ? "border-blue-600 bg-blue-50" : "hover:bg-slate-50"}`}
-            >
-              <span className="mx-auto mb-1 block h-9 w-14 pointer-events-none">
-                <ShapeGlyph type={s.type} />
-              </span>
-              {s.label}
-            </button>
-          ))}
-        </div>
-      </details>
-      <p className="px-3 py-2 text-xs text-slate-500">
+      <p className="px-1 py-0.5 text-[11px] leading-5 text-slate-500">
         {tool === "connect"
           ? connectFrom
             ? "请选择终点节点；连接线会跟随节点移动。"
-            : "依次点击两个节点建立连接。"
-          : "放置并拖动节点；用连接工具建立流程图。选中思维主题后添加子主题（Tab）或同级主题（Enter），再自动布局。每人撤销仅作用于自己的操作。"}
+            : "依次点击两个节点，或从图形边缘的蓝点拖到目标图形。"
+          : "从左侧拖入图元或先点工具再点画布；选中图形后可拖动边缘蓝点连线。"}
       </p>
       {error && (
         <p role="alert" className="px-3 text-sm text-red-700">
@@ -1010,6 +925,102 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           </div>
         </section>
       )}
+      <div className="mt-2 flex min-h-0 items-stretch gap-2">
+        <nav
+          aria-label="画布工具"
+          className="flex w-14 shrink-0 flex-col items-center gap-1 overflow-y-auto rounded-2xl border border-slate-200 bg-white p-1.5 shadow-sm"
+        >
+          {tools.map(([key, label]) => {
+            const Icon = key === "select" ? MousePointer2 : key === "pan" ? Hand : key === "connect" ? Spline : null;
+            return (
+              <button
+                key={key}
+                aria-label={label}
+                title={label}
+                aria-pressed={tool === key}
+                disabled={!provider.writable && !["select", "pan"].includes(key)}
+                onClick={() => {
+                  setTool(key);
+                  setConnectFrom("");
+                }}
+                className={`grid size-10 shrink-0 place-items-center rounded-xl transition disabled:opacity-40 ${
+                  tool === key
+                    ? "bg-slate-900 text-white shadow-sm"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                }`}
+              >
+                {Icon ? (
+                  <Icon className="size-[18px]" aria-hidden="true" />
+                ) : (
+                  <span className="pointer-events-none block size-6">
+                    <ShapeGlyph type={key as BoardShape["type"]} />
+                  </span>
+                )}
+              </button>
+            );
+          })}
+          <span className="my-0.5 h-px w-6 bg-slate-200" />
+          <button
+            type="button"
+            aria-label="更多图元"
+            title="更多图元"
+            aria-expanded={shapePanel}
+            onClick={() => setShapePanel((value) => !value)}
+            className={`grid size-10 shrink-0 place-items-center rounded-xl transition ${
+              shapePanel
+                ? "bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-200"
+                : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            }`}
+          >
+            <Shapes className="size-[18px]" aria-hidden="true" />
+          </button>
+        </nav>
+        <div className="relative min-w-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          {shapePanel && (
+            <div className="absolute left-3 top-3 z-20 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+              <div className="flex items-center justify-between px-1 pb-1.5">
+                <p className="text-xs font-semibold text-slate-700">更多图元</p>
+                <button
+                  type="button"
+                  aria-label="关闭更多图元"
+                  onClick={() => setShapePanel(false)}
+                  className="rounded-md px-1 text-sm text-slate-400 hover:bg-slate-100"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="grid grid-cols-4 gap-1">
+                {shapeCatalog.map((s) => (
+                  <button
+                    key={s.type}
+                    draggable={provider.writable}
+                    disabled={!provider.writable}
+                    aria-label={`图元 ${s.label}`}
+                    title={s.label}
+                    aria-pressed={tool === s.type}
+                    onDragStart={(e) => {
+                      if (!provider.writable) {
+                        e.preventDefault();
+                        return;
+                      }
+                      e.dataTransfer.setData("application/x-collabspace-shape", s.type);
+                      e.dataTransfer.effectAllowed = "copy";
+                    }}
+                    onClick={() => {
+                      setTool(s.type);
+                      setShapePanel(false);
+                    }}
+                    className="flex flex-col items-center gap-1 rounded-lg p-1.5 text-[10px] text-slate-500 transition hover:bg-slate-50 disabled:opacity-40"
+                  >
+                    <span className="pointer-events-none block size-6">
+                      <ShapeGlyph type={s.type} />
+                    </span>
+                    <span className="max-w-full truncate">{s.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
       <svg
         ref={svg}
         data-testid="whiteboard-canvas"
@@ -1023,10 +1034,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
             else undo.current?.undo();
             return;
           }
-          if (
-            active?.type === "mind" &&
-            (e.key === "Tab" || e.key === "Enter")
-          ) {
+          if (active?.type === "mind" && (e.key === "Tab" || e.key === "Enter")) {
             e.preventDefault();
             branch(e.key === "Enter");
           }
@@ -1041,7 +1049,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           }
         }}
         viewBox={`${view.x} ${view.y} ${1200 / view.zoom} ${800 / view.zoom}`}
-        className="min-h-[480px] w-full touch-none bg-slate-50"
+        className="h-[max(520px,calc(100dvh-17rem))] w-full touch-none bg-slate-50"
         onPointerDown={down}
         onDragOver={(e) => {
           if (
@@ -1055,9 +1063,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
         onDrop={(e) => {
           e.preventDefault();
           if (!provider.writable) return;
-          const type = e.dataTransfer.getData(
-            "application/x-collabspace-shape",
-          );
+          const type = e.dataTransfer.getData("application/x-collabspace-shape");
           const entry = shapeCatalog.find((s) => s.type === type);
           if (entry) create(entry.type, point(e));
         }}
@@ -1065,6 +1071,8 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
         onPointerUp={finish}
         onPointerCancel={() => {
           drag.current = undefined;
+          connectingRef.current = null;
+          setConnecting(null);
           setItems(read(provider.doc));
         }}
         onPointerLeave={() => {
@@ -1072,12 +1080,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
         }}
       >
         <defs>
-          <pattern
-            id={`${marker}-grid`}
-            width="20"
-            height="20"
-            patternUnits="userSpaceOnUse"
-          >
+          <pattern id={`${marker}-grid`} width="20" height="20" patternUnits="userSpaceOnUse">
             <circle cx="1" cy="1" r="1" fill="#cbd5e1" />
           </pattern>
         </defs>
@@ -1104,25 +1107,61 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           }
         />
         {active && active.type !== "connector" && provider.writable && (
-          <circle
-            data-testid="board-resize"
-            cx={active.geometry.x + active.geometry.w}
-            cy={active.geometry.y + active.geometry.h}
-            r={7 / view.zoom}
-            fill="#2563eb"
-            onPointerDown={(e) => {
-              e.stopPropagation();
-              undo.current?.stopCapturing();
-              drag.current = {
-                id: active.id,
-                mode: "resize",
-                start: point(e),
-                geometry: active.geometry,
-                view,
-              };
-              svg.current?.setPointerCapture(e.pointerId);
-            }}
-          />
+          <>
+            {[
+              ["top", active.geometry.x + active.geometry.w / 2, active.geometry.y],
+              ["right", active.geometry.x + active.geometry.w, active.geometry.y + active.geometry.h / 2],
+              ["bottom", active.geometry.x + active.geometry.w / 2, active.geometry.y + active.geometry.h],
+              ["left", active.geometry.x, active.geometry.y + active.geometry.h / 2],
+            ].map(([side, cx, cy]) => (
+              <circle
+                key={String(side)}
+                data-testid="board-connect-handle"
+                aria-label={`拖动连接：${active.text || "图形"}`}
+                cx={Number(cx)}
+                cy={Number(cy)}
+                r={6 / view.zoom}
+                fill="#ffffff"
+                stroke="#4f46e5"
+                strokeWidth={1.6 / view.zoom}
+                style={{ cursor: "crosshair" }}
+                onPointerDown={(e) => startConnect(e, active)}
+              />
+            ))}
+            <circle
+              data-testid="board-resize"
+              cx={active.geometry.x + active.geometry.w}
+              cy={active.geometry.y + active.geometry.h}
+              r={7 / view.zoom}
+              fill="#2563eb"
+              onPointerDown={(e) => {
+                e.stopPropagation();
+                undo.current?.stopCapturing();
+                drag.current = {
+                  id: active.id,
+                  mode: "resize",
+                  start: point(e),
+                  geometry: active.geometry,
+                  view,
+                };
+                svg.current?.setPointerCapture(e.pointerId);
+              }}
+            />
+          </>
+        )}
+        {connecting && active && (
+          <g pointerEvents="none" aria-label="连线拖动预览">
+            <line
+              x1={active.geometry.x + active.geometry.w / 2}
+              y1={active.geometry.y + active.geometry.h / 2}
+              x2={connecting.x}
+              y2={connecting.y}
+              stroke="#6366f1"
+              strokeWidth={2 / view.zoom}
+              strokeDasharray={`${6 / view.zoom} ${4 / view.zoom}`}
+            />
+            <circle cx={connecting.x} cy={connecting.y} r={4 / view.zoom} fill="#6366f1" />
+          </g>
         )}
         {members
           .filter((m) => m.cursor)
@@ -1133,10 +1172,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
               pointerEvents="none"
               aria-label={`${m.name} 的白板光标`}
             >
-              <path
-                d="M0 0 L0 18 L5 13 L10 22 L14 20 L9 12 L17 12 Z"
-                fill={colorFor(m.userId)}
-              />
+              <path d="M0 0 L0 18 L5 13 L10 22 L14 20 L9 12 L17 12 Z" fill={colorFor(m.userId)} />
               <text x="18" y="14" fill={colorFor(m.userId)} fontSize="14">
                 {m.name}
               </text>
@@ -1144,9 +1180,9 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           ))}
       </svg>
       {active && (
-        <div
-          className="flex flex-wrap gap-3 border-t p-3"
+        <aside
           aria-label="图形属性"
+          className="absolute inset-y-3 right-3 z-20 w-72 overflow-y-auto rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur"
         >
           {!active.binding && (
             <>
@@ -1235,10 +1271,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
               <button disabled={!provider.writable} onClick={() => branch()}>
                 添加子主题
               </button>
-              <button
-                disabled={!provider.writable}
-                onClick={() => branch(true)}
-              >
+              <button disabled={!provider.writable} onClick={() => branch(true)}>
                 添加同级主题
               </button>
             </div>
@@ -1305,21 +1338,63 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           >
             删除图形
           </button>
-        </div>
+        </aside>
       )}
+        </div>
+      </div>
     </section>
   );
 }
 function BoardWorkspace({ provider }: { provider: DocumentProvider }) {
-  const [mode, setMode] = useState(() => provider.doc.getText("mermaid").length || !provider.doc.getMap("shapes").size ? "mermaid" : "canvas");
-  return <div>
-    <div className="mb-5 flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
-      <Button variant={mode === "mermaid" ? "primary" : "ghost"} aria-pressed={mode === "mermaid"} onClick={() => setMode("mermaid")}>Mermaid 图表工作区</Button>
-      <Button variant={mode === "canvas" ? "primary" : "ghost"} aria-pressed={mode === "canvas"} onClick={() => setMode("canvas")}>自由画布</Button>
-      <span className="text-xs text-slate-500">图表默认使用 Mermaid；自由画布内容独立保留。</span>
+  const [mode, setMode] = useState(() =>
+    provider.doc.getText("mermaid").length || !provider.doc.getMap("shapes").size
+      ? "mermaid"
+      : "canvas",
+  );
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-2 py-1.5 shadow-sm">
+        <div className="flex rounded-xl bg-slate-100 p-1">
+          <button
+            type="button"
+            aria-pressed={mode === "canvas"}
+            onClick={() => setMode("canvas")}
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+              mode === "canvas" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+            }`}
+          >
+            自由画布
+          </button>
+          <button
+            type="button"
+            aria-pressed={mode === "mermaid"}
+            onClick={() => setMode("mermaid")}
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+              mode === "mermaid" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+            }`}
+          >
+            Mermaid 图表工作区
+          </button>
+        </div>
+        <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-500">
+          <span
+            className={`size-1.5 rounded-full ${
+              provider.saved ? "bg-emerald-500" : "bg-amber-500"
+            }`}
+          />
+          {provider.saved ? "已同步" : "保存中"}
+        </span>
+        <span className="text-[11px] text-slate-400">
+          {provider.writable ? "可编辑" : "只读"} · 同一文档保留两种视图
+        </span>
+      </div>
+      {mode === "mermaid" ? (
+        <MermaidWorkspace provider={provider} />
+      ) : (
+        <Canvas provider={provider} />
+      )}
     </div>
-    {mode === "mermaid" ? <MermaidWorkspace provider={provider} /> : <Canvas provider={provider} />}
-  </div>;
+  );
 }
 export default function Whiteboard({
   docId,

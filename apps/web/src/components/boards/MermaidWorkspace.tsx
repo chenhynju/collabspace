@@ -133,40 +133,43 @@ export default function MermaidWorkspace({
           : "mermaid-workspace overflow-hidden rounded-xl border border-slate-200 bg-white"
       }
     >
-      <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 bg-white p-3">
-        <strong className="mr-2">{markdown ? "Markdown 文档" : "Mermaid 图表"}</strong>
-        {(
-          [
-            ["graph", "图形视图"],
-            ["source", "源码视图"],
-            ["split", "分屏视图"],
-          ] as const
-        ).map(([key, label]) => (
-          <button
-            key={key}
-            aria-pressed={view === key}
-            onClick={() => setView(key)}
-            className={`rounded border px-3 py-1 text-sm ${view === key ? "bg-indigo-600 text-white" : "bg-white"}`}
-          >
-            {label}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200 bg-white px-2 py-1.5">
+        <div className="flex rounded-xl bg-slate-100 p-1">
+          {(
+            [
+              ["graph", "图形视图"],
+              ["source", "源码视图"],
+              ["split", "分屏视图"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              aria-pressed={view === key}
+              onClick={() => setView(key)}
+              className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
+                view === key ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
         <button
           disabled={!provider.writable || !undo.current?.canUndo()}
           onClick={() => undo.current?.undo()}
-          className="rounded border px-2 py-1 disabled:opacity-40"
+          className="rounded-lg px-2 py-1.5 text-xs text-slate-500 transition hover:bg-slate-100 disabled:opacity-40"
         >
           撤销源码
         </button>
         <button
           disabled={!provider.writable || !undo.current?.canRedo()}
           onClick={() => undo.current?.redo()}
-          className="rounded border px-2 py-1 disabled:opacity-40"
+          className="rounded-lg px-2 py-1.5 text-xs text-slate-500 transition hover:bg-slate-100 disabled:opacity-40"
         >
           重做源码
         </button>
         <button
-          className="rounded border px-2 py-1"
+          className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50/50"
           onClick={() => {
             const url = URL.createObjectURL(
               new Blob([source], { type: "text/plain;charset=utf-8" }),
@@ -183,6 +186,9 @@ export default function MermaidWorkspace({
         >
           {markdown ? "下载 .md" : "下载 .mmd"}
         </button>
+        <span className="ml-auto text-[11px] text-slate-400">
+          {source.length} / {limit} · {provider.writable ? "可编辑" : "只读"}
+        </span>
       </div>
       {!markdown && (
         <MermaidAgent
@@ -465,8 +471,8 @@ export default function MermaidWorkspace({
           </button>
         </div>
       )}
-      <p className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
-        {source.length} / {limit} · {provider.writable ? "可编辑" : "只读"}
+      <p className="border-t border-slate-100 px-3 py-1.5 text-[11px] text-slate-400">
+        源码是图表标准；拖动画布图元或点击节点可改字、连线。
       </p>
     </section>
   );

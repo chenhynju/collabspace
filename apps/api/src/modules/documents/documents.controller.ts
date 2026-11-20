@@ -9,6 +9,7 @@ import {
   Query,
   UseGuards,
   HttpException,
+  BadRequestException,
   OnModuleDestroy,
   OnModuleInit,
   UseInterceptors,
@@ -75,6 +76,60 @@ export class DocumentsController implements OnModuleDestroy, OnModuleInit {
     @Body() b: any,
   ) {
     return this.run(o, u, "create", b.projectId, b);
+  }
+  @Post("agent/draw")
+  async drawDiagram(
+    @CurrentOrg() o: OrgContext,
+    @CurrentUser() u: { id: string },
+    @Body() b: any,
+  ) {
+    const instruction = typeof b?.instruction === "string" ? b.instruction.trim() : "";
+    const projectId = typeof b?.projectId === "string" ? b.projectId : "";
+    if (!projectId)
+      throw new BadRequestException({ code: "PROJECT_REQUIRED", message: "请指定图表所属项目。" });
+    if (instruction.length < 2 || instruction.length > 500)
+      throw new BadRequestException({
+        code: "DRAW_INSTRUCTION_INVALID",
+        message: "请用 2–500 字描述要画的图表。",
+      });
+    const result = await this.ai.generate(
+      JSON.stringify([o.organizationId, u.id, projectId, Date.now()]),
+      JSON.stringify({ instruction, source: "" }),
+      "generate-mermaid",
+      `${o.organizationId}:${u.id}`,
+    );
+    if (result.incomplete)
+      throw new HttpException(
+        { code: "MERMAID_INCOMPLETE", message: "图表生成不完整，请缩短要求后重试。" },
+        422,
+      );
+    const text = String(result.text || "")
+      .replace(/^```(?:mermaid)?\s*\n?/i, "")
+      .replace(/```\s*$/, "")
+      .trim();
+    if (
+      !/^(flowchart|graph|mindmap|sequenceDiagram|classDiagram|stateDiagram|gantt|journey|timeline)\b/i.test(
+        text,
+      )
+    )
+      throw new HttpException(
+        { code: "MERMAID_INVALID", message: "模型未返回有效图表源码，请调整描述后重试。" },
+        422,
+      );
+    if (text.length > 32000 || text.includes("\0"))
+      throw new HttpException({ code: "MERMAID_TOO_LARGE", message: "图表源码超出限制。" }, 422);
+    const title = String(b?.title || "").trim().slice(0, 40) || "AI 图表";
+    const doc: any = await this.run(o, u, "create", projectId, {
+      title,
+      kind: "BOARD",
+      source: text,
+    });
+    return {
+      id: doc.id,
+      projectId: doc.project_id || projectId,
+      title: doc.title || title,
+      text,
+    };
   }
   @Post(":id/images")
   @UseInterceptors(FileInterceptor("file", {limits:{fileSize:5*1024*1024,files:1}}))
