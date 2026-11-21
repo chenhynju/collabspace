@@ -11,7 +11,7 @@
 CollabSpace 是一个可运行的 B2B 协作 SaaS 作品集项目。它把项目团队常用的几件事放进同一个组织/工作区/项目结构：
 
 - 多人实时编辑富文本、Markdown、白板与 Office 文件；
-- 白板基础图元、箭头拖线、连接点、AI 生成流程图；
+- 白板基础图元、箭头拖线、多选/框选、对齐分布、AI 生成流程图；
 - 评论、版本、自动快照、断线重连与离线续写；
 - 单聊/群聊、已读、输入中、附件与语音听写；
 - 协作助手与 AI 工作助理，写操作必须“计划 → 确认 → 应用”；
@@ -34,7 +34,7 @@ CollabSpace 是一个可运行的 B2B 协作 SaaS 作品集项目。它把项目
 ## 功能概览
 
 - **项目空间**：组织、工作区、项目、成员、部门、岗位、角色、邀请。
-- **协作内容**：富文本、Markdown、白板/Mermaid、Word/Excel/PowerPoint。
+- **协作内容**：富文本、Markdown、白板/Mermaid、Word/Excel/PowerPoint；白板支持多选、框选、对齐分布和组拖。
 - **协作能力**：实时编辑、在线成员、评论、命名版本、自动快照、恢复为副本。
 - **消息**：单聊/群聊、已读、输入中、图片/文件、语音听写。
 - **AI**：摘要、行动项、翻译、写邮件、项目问答、受控改文档/白板；白板支持新增图元、改字、移动、连线和自动布局。
@@ -105,7 +105,7 @@ node node_modules/@playwright/test/cli.js test
 ## 当前状态
 
 - 生产站点：https://collabspace.purelamp.uk
-- 前端部署：`collabspace-iel3xqdex-purelamp.vercel.app`（已别名）
+- 前端部署：`collabspace-16fuk141e-purelamp.vercel.app`（已别名）
 - API 镜像：`collabspace-api:api-r20261121-11`
 - 提交：`f4f3924`；标签：`collabspace-20261122-arrow`、`collabspace-20261122-docs`、`collabspace-20261121-board-ai`
 
@@ -121,6 +121,7 @@ node node_modules/@playwright/test/cli.js test
 - 实时正文为单 collab 实例，跨实例/跨地域未验证。
 - 单文档 5MiB、WS 单帧 256KiB、白板 500 图元。
 - 白板支持图元间绑定连接线和空白处自由箭头；自由箭头不绑定图元，AI 连线只支持绑定。AI 单次最多 20 个操作，不支持删除/改色/改线型。
+- 多选对齐/复制只作用于图元；连接线和自由箭头不参与对齐，组拖时自由箭头不跟随。
 - 语音为录音结束后 REST 识别/合成，不是流式字幕；无自动回退和自动重试。
 - 备份还原演练尚未完成。
 
@@ -132,6 +133,7 @@ node node_modules/@playwright/test/cli.js test
 - ElevenLabs 生产验收：[voice-elevenlabs-online.json](evidence/collaboration/ui-editorial-2026-11-21/voice-elevenlabs-online.json)
 - 白板交互与 AI 改图：[BOARD-AI-INTERACTION-2026-11-21.md](evidence/collaboration/BOARD-AI-INTERACTION-2026-11-21.md)
 - 自由箭头与绑定箭头：[BOARD-ARROW-FREE-2026-11-22.md](evidence/collaboration/BOARD-ARROW-FREE-2026-11-22.md)
+- 多选、框选、对齐与组拖：[BOARD-MULTI-SELECT-2026-11-22.md](evidence/collaboration/BOARD-MULTI-SELECT-2026-11-22.md)
 
 验收口径：PASSED / BLOCKED / NOT_RUN 必须可复核；不以 HTTP 200、模型流返回或广播 hash 代替业务完成。
 

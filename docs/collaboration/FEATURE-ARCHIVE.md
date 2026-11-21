@@ -1,7 +1,7 @@
 # CollabSpace 功能归档
 
 > 更新日期：2026-11-22 ｜ 生产站点：https://collabspace.purelamp.uk
-> 当前发布：前端 `collabspace-iel3xqdex-purelamp.vercel.app`（已别名）；API 镜像 `collabspace-api:api-r20261121-11`（`sha256:527038532857a3a221902719833c0d17fcc7cc15a9c977ed0b2d900d59b1a126`）；提交 `f4f3924`；标签 `collabspace-20261122-arrow`、`collabspace-20261122-docs`、`collabspace-20261121-board-ai`。
+> 当前发布：前端 `collabspace-16fuk141e-purelamp.vercel.app`（已别名）；API 镜像 `collabspace-api:api-r20261121-11`（`sha256:527038532857a3a221902719833c0d17fcc7cc15a9c977ed0b2d900d59b1a126`）；提交 `f4f3924`；标签 `collabspace-20261122-arrow`、`collabspace-20261122-docs`、`collabspace-20261121-board-ai`。
 > 本文是“已完成功能”的唯一归档入口。功能完成并通过验收后，必须同时更新本文、对应 evidence 和 README 状态；未验证的内容不得写成已上线。
 
 ## 状态口径
@@ -61,6 +61,7 @@
 | 自由画布：矩形、椭圆、便签、箭头、思维主题 | 已上线 | `WHITEBOARD.md`、`BOARD-AI-INTERACTION-2026-11-21.md` | 单白板最多 500 个图元；基础工具图标已补齐 |
 | 箭头 / 连线：图元间绑定连接线 + 空白处自由箭头 | 已上线 | `BOARD-AI-INTERACTION-2026-11-21.md`、`BOARD-ARROW-FREE-2026-11-22.md` | 自由箭头不绑定图元；AI 连线仍只支持绑定两个图元 |
 | 图元拖拽、改字、连接点拖线、目标高亮、连接线样式 | 已上线 | `MERMAID-CONNECT-2026-10-26.md`、`BOARD-AI-INTERACTION-2026-11-21.md` | 任意 Mermaid 语法/坐标回写仍有限制 |
+| 多选、框选、组拖、六向对齐、水平/垂直分布、批量复制/删除 | 已上线 | `BOARD-MULTI-SELECT-2026-11-22.md` | 连接线/自由箭头不参与对齐；组拖只移动图元 |
 | 流程图 / 思维导图模板、自动布局 | 已上线 | `DIAGRAMS-2026-10-21.md` | 模板放置空间不足时有提示 |
 | 业务图表模板库与图元目录 | 已上线 | `BUSINESS-DIAGRAMS-2026-10-22.md` | 覆盖高频场景，不宣称全行业 |
 | 导入/导出 Mermaid、SVG、PNG | 已上线 | `WHITEBOARD.md` | 导入为追加；导出可能简化样式 |
@@ -122,6 +123,7 @@
 - 支付为沙盒；会议生产关闭；真人数字人视频未接供应商。
 - 语音为**录音结束后 REST 识别/合成**，不是流式字幕；无自动回退和自动重试。
 - 白板支持图元间绑定连接线和空白处自由箭头；自由箭头不绑定图元，AI 连线仍只支持绑定。AI 单次最多 20 个操作，不支持删除、改颜色/线型。
+- 多选只对齐/复制图元；连接线和自由箭头不参与对齐，组拖时自由箭头不跟随。
 - 生产演示数据为合成账号，不代表真实客户或真实业务指标。
 
 ## 10. 归档规则

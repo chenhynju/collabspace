@@ -91,12 +91,14 @@ function fitItems(items: Item[]) {
 export function BoardDrawing({
   items,
   selected,
+  selectedIds,
   marker,
   onSelect,
   onEdit,
 }: {
   items: Item[];
   selected?: string;
+  selectedIds?: Set<string>;
   marker: string;
   onSelect?: (e: React.PointerEvent<SVGGElement>, item: Item) => void;
   onEdit?: (item: Item) => void;
@@ -126,6 +128,7 @@ export function BoardDrawing({
         })}
       {items.map((item) => {
         const { x, y, w, h } = item.geometry;
+        const isSelected = selected === item.id || selectedIds?.has(item.id);
         if (item.type === "connector") {
           const a = items.find((s) => s.id === item.binding?.from),
             b = items.find((s) => s.id === item.binding?.to),
@@ -153,7 +156,7 @@ export function BoardDrawing({
                 data-testid="bound-connector"
                 d={d}
                 fill="none"
-                stroke={selected === item.id ? "#2563eb" : "#334155"}
+                stroke={isSelected ? "#2563eb" : "#334155"}
                 strokeWidth="2"
                 markerEnd={`url(#${marker})`}
                 pointerEvents="none"
@@ -288,7 +291,7 @@ export function BoardDrawing({
                 {item.text}
               </div>
             </foreignObject>
-            {selected === item.id && (
+            {isSelected && (
               <rect
                 x={x - 3}
                 y={y - 3}
@@ -347,6 +350,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
   const { id: projectId } = useParams<{ id: string }>();
   const [items, setItems] = useState<Item[]>([]),
     [selected, setSelected] = useState(""),
+    [selectedIds, setSelectedIds] = useState<Set<string>>(new Set()),
     [tool, setTool] = useState<string>("select"),
     [view, setView] = useState({ x: 0, y: 0, zoom: 1 }),
     [members, setMembers] = useState<Member[]>([]),
@@ -373,6 +377,18 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     y2: number;
   } | null>(null);
   const arrowStart = useRef<{ x: number; y: number } | null>(null);
+  const [marquee, setMarquee] = useState<{
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+  } | null>(null);
+  const marqueeStart = useRef<{ x: number; y: number } | null>(null);
+  const groupDrag = useRef<{
+    start: { x: number; y: number };
+    geometries: Record<string, Item["geometry"]>;
+    latest?: Record<string, Item["geometry"]>;
+  } | null>(null);
   const [snap, setSnap] = useState(false);
   const [shapePanel, setShapePanel] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false),
@@ -486,6 +502,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     provider.doc.transact(() => shapes.set(id, shape), origin);
     undo.current?.stopCapturing();
     setError("");
+    setSelectedIds(new Set([id]));
     setSelected(id);
     setTool("select");
     return id;
@@ -498,6 +515,88 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       text: "",
       fill: "#ffffff",
     });
+  };
+  const selectedNodes = () => items.filter((s) => selectedIds.has(s.id) && s.type !== "connector");
+  const writeGeometries = (next: Record<string, Item["geometry"]>) => {
+    if (!provider.writable || !Object.keys(next).length) return;
+    undo.current?.stopCapturing();
+    provider.doc.transact(() => {
+      for (const [id, geometry] of Object.entries(next)) shapes.get(id)?.set("geometry", geometry);
+    }, origin);
+    undo.current?.stopCapturing();
+    setItems(read(provider.doc));
+  };
+  const alignSelection = (mode: "left" | "centerX" | "right" | "top" | "centerY" | "bottom") => {
+    const nodes = selectedNodes();
+    if (nodes.length < 2) return;
+    const left = Math.min(...nodes.map((s) => s.geometry.x)),
+      right = Math.max(...nodes.map((s) => s.geometry.x + s.geometry.w)),
+      top = Math.min(...nodes.map((s) => s.geometry.y)),
+      bottom = Math.max(...nodes.map((s) => s.geometry.y + s.geometry.h));
+    const next: Record<string, Item["geometry"]> = {};
+    for (const shape of nodes) {
+      const g = { ...shape.geometry };
+      if (mode === "left") g.x = left;
+      if (mode === "centerX") g.x = (left + right) / 2 - g.w / 2;
+      if (mode === "right") g.x = right - g.w;
+      if (mode === "top") g.y = top;
+      if (mode === "centerY") g.y = (top + bottom) / 2 - g.h / 2;
+      if (mode === "bottom") g.y = bottom - g.h;
+      next[shape.id] = g;
+    }
+    writeGeometries(next);
+  };
+  const distributeSelection = (axis: "x" | "y") => {
+    const nodes = selectedNodes();
+    if (nodes.length < 3) return;
+    const sorted = [...nodes].sort((a, b) =>
+      axis === "x" ? a.geometry.x - b.geometry.x : a.geometry.y - b.geometry.y,
+    );
+    const first = sorted[0],
+      last = sorted[sorted.length - 1];
+    const start = axis === "x" ? first.geometry.x : first.geometry.y;
+    const end =
+      axis === "x"
+        ? last.geometry.x + last.geometry.w
+        : last.geometry.y + last.geometry.h;
+    const total = sorted.reduce((sum, s) => sum + (axis === "x" ? s.geometry.w : s.geometry.h), 0);
+    const gap = (end - start - total) / (sorted.length - 1);
+    const next: Record<string, Item["geometry"]> = {};
+    let cursor = start;
+    for (const shape of sorted) {
+      const g = { ...shape.geometry };
+      if (axis === "x") g.x = cursor;
+      else g.y = cursor;
+      next[shape.id] = g;
+      cursor += (axis === "x" ? g.w : g.h) + gap;
+    }
+    writeGeometries(next);
+  };
+  const duplicateSelection = () => {
+    const nodes = selectedNodes();
+    if (!provider.writable || !nodes.length || shapes.size + nodes.length > 500) return;
+    undo.current?.stopCapturing();
+    const ids: string[] = [];
+    provider.doc.transact(() => {
+      for (const shape of nodes) {
+        const source = shapes.get(shape.id);
+        if (!source) continue;
+        const id = crypto.randomUUID();
+        const copy = new Y.Map(Object.entries(source.toJSON()));
+        copy.set("geometry", {
+          ...shape.geometry,
+          x: Math.min(9800, shape.geometry.x + 40),
+          y: Math.min(9800, shape.geometry.y + 40),
+        });
+        copy.set("order", Date.now() + ids.length);
+        shapes.set(id, copy);
+        ids.push(id);
+      }
+    }, origin);
+    undo.current?.stopCapturing();
+    setItems(read(provider.doc));
+    setSelectedIds(new Set(ids));
+    setSelected(ids[0] || "");
   };
   const branch = (sibling = false) => {
     if (!active || active.type !== "mind") return;
@@ -623,7 +722,13 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       create(tool as BoardShape["type"], p);
       return;
     }
-    setSelected("");
+    marqueeStart.current = p;
+    setMarquee({ x1: p.x, y1: p.y, x2: p.x, y2: p.y });
+    if (!e.shiftKey) {
+      setSelectedIds(new Set());
+      setSelected("");
+    }
+    e.currentTarget.setPointerCapture(e.pointerId);
   };
   const select = (e: React.PointerEvent<SVGGElement>, item: Item) => {
     if (tool === "pan") return;
@@ -652,9 +757,30 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       }
       return;
     }
-    setSelected(item.id);
+    if (e.shiftKey) {
+      const next = new Set(selectedIds);
+      if (next.has(item.id)) next.delete(item.id);
+      else next.add(item.id);
+      setSelectedIds(next);
+      setSelected(next.has(item.id) ? item.id : [...next][0] || "");
+      return;
+    }
+    if (!selectedIds.has(item.id)) {
+      setSelectedIds(new Set([item.id]));
+      setSelected(item.id);
+    }
     if (!provider.writable) return;
     if (item.type === "connector") return;
+    if (selectedIds.has(item.id) && selectedIds.size > 1) {
+      const geometries = Object.fromEntries(
+        items
+          .filter((s) => selectedIds.has(s.id) && s.type !== "connector")
+          .map((s) => [s.id, s.geometry]),
+      );
+      groupDrag.current = { start: point(e), geometries };
+      svg.current?.setPointerCapture(e.pointerId);
+      return;
+    }
     undo.current?.stopCapturing();
     drag.current = {
       id: item.id,
@@ -675,6 +801,33 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
         x2: p.x,
         y2: p.y,
       });
+      return;
+    }
+    if (marqueeStart.current) {
+      setMarquee({
+        x1: marqueeStart.current.x,
+        y1: marqueeStart.current.y,
+        x2: p.x,
+        y2: p.y,
+      });
+      return;
+    }
+    if (groupDrag.current) {
+      const g = groupDrag.current,
+        dx = p.x - g.start.x,
+        dy = p.y - g.start.y;
+      const latest: Record<string, Item["geometry"]> = {};
+      for (const [id, geometry] of Object.entries(g.geometries)) {
+        latest[id] = {
+          ...geometry,
+          x: Math.max(-10000, Math.min(10000, geometry.x + dx)),
+          y: Math.max(-10000, Math.min(10000, geometry.y + dy)),
+        };
+      }
+      g.latest = latest;
+      setItems((current) =>
+        current.map((s) => (latest[s.id] ? { ...s, geometry: latest[s.id] } : s)),
+      );
       return;
     }
     if (connectingRef.current) {
@@ -709,6 +862,40 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     setItems((current) => current.map((s) => (s.id === d.id ? { ...s, geometry: g } : s)));
   };
   const finish = (e?: React.PointerEvent<SVGSVGElement>) => {
+    const marqueeOrigin = marqueeStart.current;
+    if (marqueeOrigin) {
+      marqueeStart.current = null;
+      const end = e ? point(e) : { x: marqueeOrigin.x, y: marqueeOrigin.y };
+      const moved = Math.hypot(end.x - marqueeOrigin.x, end.y - marqueeOrigin.y) > 4;
+      const x1 = Math.min(marqueeOrigin.x, end.x),
+        y1 = Math.min(marqueeOrigin.y, end.y),
+        x2 = Math.max(marqueeOrigin.x, end.x),
+        y2 = Math.max(marqueeOrigin.y, end.y);
+      const picked = moved
+        ? items
+            .filter(
+              (s) =>
+                s.type !== "connector" &&
+                s.geometry.x < x2 &&
+                s.geometry.x + s.geometry.w > x1 &&
+                s.geometry.y < y2 &&
+                s.geometry.y + s.geometry.h > y1,
+            )
+            .map((s) => s.id)
+        : [];
+      setSelectedIds((current) =>
+        e?.shiftKey ? new Set([...current, ...picked]) : new Set(picked),
+      );
+      setSelected(picked[0] || (e?.shiftKey ? selected : ""));
+      setMarquee(null);
+      return;
+    }
+    const gd = groupDrag.current;
+    if (gd) {
+      groupDrag.current = null;
+      if (gd.latest) writeGeometries(gd.latest);
+      return;
+    }
     const start = arrowStart.current;
     if (start) {
       arrowStart.current = null;
@@ -757,18 +944,20 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
   };
   const startConnect = (e: React.PointerEvent<SVGCircleElement>, item: Item) => beginLink(e, item);
   const remove = () => {
-    if (provider.writable && selected) {
-      undo.current?.stopCapturing();
-      provider.doc.transact(() => {
-        shapes.delete(selected);
-        for (const [id, s] of shapes) {
-          const b = s.get("binding") as BoardShape["binding"];
-          if (b && (b.from === selected || b.to === selected)) shapes.delete(id);
-        }
-      }, origin);
-      undo.current?.stopCapturing();
-      setSelected("");
-    }
+    const ids = selectedIds.size ? [...selectedIds] : selected ? [selected] : [];
+    if (!provider.writable || !ids.length) return;
+    const targets = new Set(ids);
+    undo.current?.stopCapturing();
+    provider.doc.transact(() => {
+      for (const id of ids) shapes.delete(id);
+      for (const [id, s] of shapes) {
+        const b = s.get("binding") as BoardShape["binding"];
+        if (b && (targets.has(b.from) || targets.has(b.to))) shapes.delete(id);
+      }
+    }, origin);
+    undo.current?.stopCapturing();
+    setSelectedIds(new Set());
+    setSelected("");
   };
   return (
     <section aria-label="实时白板" className="flex flex-col">
@@ -1054,6 +1243,49 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           </div>
         </section>
       )}
+      {selectedIds.size > 1 && (
+        <div
+          role="toolbar"
+          aria-label="多选对齐"
+          className="mt-2 flex flex-wrap items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50/70 p-2"
+        >
+          <span className="px-1 text-xs font-medium text-indigo-800">
+            已选 {selectedIds.size} 个
+          </span>
+          <span className="h-5 w-px bg-indigo-200" />
+          <Button size="sm" variant="secondary" disabled={!provider.writable} onClick={() => alignSelection("left")}>
+            左对齐
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!provider.writable} onClick={() => alignSelection("centerX")}>
+            水平居中
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!provider.writable} onClick={() => alignSelection("right")}>
+            右对齐
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!provider.writable} onClick={() => alignSelection("top")}>
+            顶对齐
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!provider.writable} onClick={() => alignSelection("centerY")}>
+            垂直居中
+          </Button>
+          <Button size="sm" variant="secondary" disabled={!provider.writable} onClick={() => alignSelection("bottom")}>
+            底对齐
+          </Button>
+          <span className="h-5 w-px bg-indigo-200" />
+          <Button size="sm" variant="ghost" disabled={!provider.writable || selectedIds.size < 3} onClick={() => distributeSelection("x")}>
+            水平分布
+          </Button>
+          <Button size="sm" variant="ghost" disabled={!provider.writable || selectedIds.size < 3} onClick={() => distributeSelection("y")}>
+            垂直分布
+          </Button>
+          <Button size="sm" variant="ghost" disabled={!provider.writable} onClick={duplicateSelection}>
+            复制所选
+          </Button>
+          <Button size="sm" variant="danger" disabled={!provider.writable} onClick={remove}>
+            删除所选
+          </Button>
+        </div>
+      )}
       <div className="mt-2 flex min-h-0 items-stretch gap-2">
         <nav
           aria-label="画布工具"
@@ -1184,6 +1416,13 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
             else undo.current?.undo();
             return;
           }
+          if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
+            e.preventDefault();
+            const ids = items.filter((s) => s.type !== "connector").map((s) => s.id);
+            setSelectedIds(new Set(ids));
+            setSelected(ids[0] || "");
+            return;
+          }
           if (active?.type === "mind" && (e.key === "Tab" || e.key === "Enter")) {
             e.preventDefault();
             branch(e.key === "Enter");
@@ -1196,8 +1435,12 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
             setTool("select");
             setConnectFrom("");
             setSelected("");
+            setSelectedIds(new Set());
             arrowStart.current = null;
             setArrowDraft(null);
+            marqueeStart.current = null;
+            setMarquee(null);
+            groupDrag.current = null;
           }
         }}
         viewBox={`${view.x} ${view.y} ${1200 / view.zoom} ${800 / view.zoom}`}
@@ -1227,6 +1470,9 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           setConnecting(null);
           arrowStart.current = null;
           setArrowDraft(null);
+          marqueeStart.current = null;
+          setMarquee(null);
+          groupDrag.current = null;
           setItems(read(provider.doc));
         }}
         onLostPointerCapture={() => {
@@ -1236,6 +1482,9 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           }
           arrowStart.current = null;
           setArrowDraft(null);
+          marqueeStart.current = null;
+          setMarquee(null);
+          groupDrag.current = null;
           drag.current = undefined;
         }}
         onPointerLeave={() => {
@@ -1258,6 +1507,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
         <BoardDrawing
           items={items}
           selected={selected}
+          selectedIds={selectedIds}
           marker={marker}
           onSelect={select}
           onEdit={
@@ -1269,7 +1519,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
               : undefined
           }
         />
-        {active && active.type !== "connector" && provider.writable && (
+        {active && selectedIds.size === 1 && active.type !== "connector" && provider.writable && (
           <>
             {[
               ["top", active.geometry.x + active.geometry.w / 2, active.geometry.y],
@@ -1320,6 +1570,20 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
               }}
             />
           </>
+        )}
+        {marquee && (
+          <rect
+            x={Math.min(marquee.x1, marquee.x2)}
+            y={Math.min(marquee.y1, marquee.y2)}
+            width={Math.abs(marquee.x2 - marquee.x1)}
+            height={Math.abs(marquee.y2 - marquee.y1)}
+            fill="rgba(79,70,229,0.08)"
+            stroke="#4f46e5"
+            strokeWidth={1.5 / view.zoom}
+            strokeDasharray={`${5 / view.zoom} ${4 / view.zoom}`}
+            pointerEvents="none"
+            aria-label="框选区域"
+          />
         )}
         {arrowDraft && (
           <g pointerEvents="none" aria-label="自由箭头预览">
@@ -1385,7 +1649,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
             </g>
           ))}
       </svg>
-      {active && (
+      {active && selectedIds.size === 1 && (
         <aside
           aria-label="图形属性"
           className="absolute inset-y-3 right-3 z-20 w-72 overflow-y-auto rounded-xl border border-slate-200 bg-[var(--paper-raised)] p-3 shadow-xl backdrop-blur"
