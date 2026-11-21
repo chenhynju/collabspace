@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="dark">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>画布之上 · 绘图工具七层能力与选型指南</title>
+    <meta
+      name="description"
+      content="绘图工具的功能高度同质，真正的差别在画布之上：协作、权限、数据联动、AI 与集成。用七层能力矩阵和选型助手，找到适合你团队的工具。"
+    />
+    <meta name="theme-color" content="#0c1013" />
+    <link rel="canonical" href="https://diagram-guide.vercel.app/" />
+    <meta name="robots" content="index,follow" />
+    <meta property="og:title" content="画布之上 · 绘图工具七层能力与选型指南" />
+    <meta
+      property="og:description"
+      content="差别不在能不能画，而在画的那一层之上还给你什么。七层能力矩阵 + 六步选型助手。"
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="画布之上" />
+    <meta property="og:url" content="https://diagram-guide.vercel.app/" />
+    <meta property="og:image" content="https://diagram-guide.vercel.app/og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="画布之上 · 绘图工具七层能力与选型指南" />
+    <meta
+      name="twitter:description"
+      content="七层能力矩阵 · 六步选型助手 · 七个代表工具。"
+    />
+    <meta name="twitter:image" content="https://diagram-guide.vercel.app/og.png" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./assets/styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "画布之上",
+        "alternateName": "Above the Canvas",
+        "url": "https://diagram-guide.vercel.app/",
+        "description": "绘图工具七层能力矩阵与选型指南：基础绘图、图形库、协作、数据联动、治理、导出集成与 AI。",
+        "inLanguage": "zh-CN"
+      }
+    </script>
+    <script>
+      (function () {
+        try {
+          var saved = localStorage.getItem("atc-theme");
+          var theme = saved || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+          document.documentElement.setAttribute("data-theme", theme);
+          document.documentElement.classList.add("js");
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main">跳到主要内容</a>
+
+    <header class="site-header" id="top">
+      <a class="brand" href="#top" aria-label="画布之上首页">
+        <span class="brand-mark" aria-hidden="true">7</span>
+        <span class="brand-text">
+          <strong>画布之上</strong>
+          <small>ABOVE THE CANVAS</small>
+        </span>
+      </a>
+
+      <nav class="site-nav" id="site-nav" aria-label="主导航">
+        <a href="#layers">七层能力</a>
+        <a href="#matrix">对比矩阵</a>
+        <a href="#advisor">选型助手</a>
+        <a href="#tools">工具卡片</a>
+      </nav>
+
+      <div class="header-actions">
+        <button class="icon-button" id="theme-toggle" type="button" aria-label="切换深色模式" aria-pressed="true">
+          <svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5"></circle>
+            <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"></path>
+          </svg>
+          <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 15.2A8.2 8.2 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z"></path>
+          </svg>
+        </button>
+        <a class="btn btn-small btn-primary header-cta" href="#advisor">开始选型</a>
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-label="打开导航" aria-expanded="false" aria-controls="site-nav">
+          <span></span><span></span>
+        </button>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="kicker reveal">DRAWING TOOL FIELD GUIDE · 2026</p>
+          <h1 id="hero-title" class="reveal">
+            画布之上，<br /><em>才是价格。</em>
+          </h1>
+          <p class="lede reveal">
+            拖拽、连线、导出，人人都有。真正拉开差距的，是协作、权限、数据联动、AI
+            与生态集成。用七层能力矩阵，看清钱到底花在哪一层。
+          </p>
+          <div class="hero-actions reveal">
+            <a class="btn btn-primary" href="#advisor">
+              六步找到你的工具
+              <span aria-hidden="true">↗</span>
+            </a>
+            <a class="btn btn-ghost" href="#matrix">先看对比矩阵</a>
+          </div>
+          <dl class="hero-stats reveal">
+            <div><dt>7</dt><dd>能力层</dd></div>
+            <div><dt>7</dt><dd>代表工具</dd></div>
+            <div><dt>3</dt><dd>类决策者</dd></div>
+          </dl>
+        </div>
+
+        <figure class="stack-figure reveal" aria-labelledby="stack-caption">
+          <figcaption id="stack-caption" class="figure-label">
+            <span>FIG. 01</span>
+            <span>七层能力阶梯 · 点击定位矩阵</span>
+          </figcaption>
+          <div class="stack" id="layer-stack" role="group" aria-label="七层能力阶梯"></div>
+          <p class="stack-note">最高层不是“最好”，而是最容易被单独计价的层。</p>
+        </figure>
+      </section>
+
+      <section class="section" id="layers" aria-labelledby="layers-title">
+        <header class="section-head">
+          <span class="section-index">01</span>
+          <div>
+            <p class="section-eyebrow">THE SEVEN LAYERS</p>
+            <h2 id="layers-title">从地板功能，到溢价能力</h2>
+            <p class="section-desc">
+              七层不是成熟度模型，而是采购时的价值分层：越往下越像地板，越往上越接近预算审批。
+            </p>
+          </div>
+          <button class="text-button" id="toggle-all-layers" type="button" aria-expanded="false">
+            展开全部
+          </button>
+        </header>
+        <div class="layer-list" id="layer-list"></div>
+      </section>
+
+      <section class="section" id="matrix" aria-labelledby="matrix-title">
+        <header class="section-head">
+          <span class="section-index">02</span>
+          <div>
+            <p class="section-eyebrow">CAPABILITY MATRIX</p>
+            <h2 id="matrix-title">七层 × 七工具，一眼看清差异</h2>
+            <p class="section-desc">
+              深色格不是“差”，而是“这一层不是它的主战场”。点击任意单元格查看编辑说明。
+            </p>
+          </div>
+        </header>
+
+        <div class="matrix-toolbar">
+          <div class="segmented" id="mode-switch" role="group" aria-label="按场景筛选工具"></div>
+          <label class="select-label">
+            <span>能力层</span>
+            <select id="layer-filter">
+              <option value="all">全部七层</option>
+            </select>
+          </label>
+          <button class="text-button" id="matrix-reset" type="button">重置筛选</button>
+        </div>
+
+        <div class="matrix-wrap" id="matrix-wrap">
+          <table class="matrix" id="matrix-table">
+            <caption class="sr-only">绘图工具七层能力对比矩阵，覆盖等级为编辑评分</caption>
+          </table>
+        </div>
+
+        <div class="matrix-footer">
+          <div class="matrix-detail" id="matrix-detail" role="status" aria-live="polite">
+            选择任一格查看工具、层级与编辑说明。
+          </div>
+          <ul class="legend" aria-label="覆盖等级图例">
+            <li><i class="dot dot-3"></i>完整</li>
+            <li><i class="dot dot-2"></i>可用</li>
+            <li><i class="dot dot-1"></i>有限</li>
+            <li><i class="dot dot-0"></i>无</li>
+          </ul>
+        </div>
+
+        <div class="money-map" id="money">
+          <div class="money-col">
+            <p class="money-tier">免费档就够</p>
+            <p>基础绘图 · 有限图形库 · 基础导出</p>
+            <span>draw.io · Mermaid · Excalidraw</span>
+          </div>
+          <div class="money-col">
+            <p class="money-tier">团队档开始有价值</p>
+            <p>实时协作 · 评论 · 数据联动 · AI 额度</p>
+            <span>Lucidchart · Miro · Whimsical</span>
+          </div>
+          <div class="money-col">
+            <p class="money-tier">企业档主要买</p>
+            <p>SSO / 审计 / 权限治理 · 深度集成 · 工作坊</p>
+            <span>Lucidchart Team · Miro Business · Visio Plan 2</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section advisor-section" id="advisor" aria-labelledby="advisor-title">
+        <header class="section-head">
+          <span class="section-index">03</span>
+          <div>
+            <p class="section-eyebrow">DECISION ASSISTANT</p>
+            <h2 id="advisor-title">六个问题，得到一张采购建议</h2>
+            <p class="section-desc">
+              不按“最强”推荐，只按你的场景、人数、治理与预算给出取舍。
+            </p>
+          </div>
+        </header>
+
+        <div class="advisor" id="advisor-panel">
+          <div class="advisor-progress">
+            <span id="step-label">01 / 06</span>
+            <div class="progress-track" aria-hidden="true"><i id="progress-bar"></i></div>
+            <span id="step-name">场景</span>
+          </div>
+          <div id="advisor-stage" class="advisor-stage" aria-live="polite"></div>
+          <div class="advisor-actions">
+            <button class="btn btn-ghost" id="advisor-back" type="button" disabled>上一步</button>
+            <button class="btn btn-primary" id="advisor-next" type="button">下一步</button>
+            <button class="text-button" id="advisor-reset" type="button" hidden>重新开始</button>
+          </div>
+          <p class="advisor-note">建议基于编辑评分与公开资料，不构成采购承诺；价格以各产品官网为准。</p>
+        </div>
+      </section>
+
+      <section class="section" id="tools" aria-labelledby="tools-title">
+        <header class="section-head">
+          <span class="section-index">04</span>
+          <div>
+            <p class="section-eyebrow">TOOL CARDS</p>
+            <h2 id="tools-title">七个工具，各自的舒适区</h2>
+            <p class="section-desc">
+              不是排行榜。每张卡都写明“最适合”和“别用它做什么”。
+            </p>
+          </div>
+        </header>
+        <div class="tool-filter" id="tool-filter" role="group" aria-label="筛选工具类型"></div>
+        <div class="tool-grid" id="tool-grid"></div>
+      </section>
+
+      <section class="section method" id="method" aria-labelledby="method-title">
+        <header class="section-head">
+          <span class="section-index">05</span>
+          <div>
+            <p class="section-eyebrow">METHOD &amp; CAVEATS</p>
+            <h2 id="method-title">怎么读这份指南</h2>
+          </div>
+        </header>
+        <div class="method-grid">
+          <div>
+            <h3>评分是编辑判断</h3>
+            <p>0–3 级覆盖代表“在典型使用场景里是否够用”，不是厂商官方认证，也不是功能清单的绝对数量。</p>
+          </div>
+          <div>
+            <h3>价格是量级参考</h3>
+            <p>免费、约 $8–20 / 人 / 月、企业采购是量级，不包含年付折扣、席位阶梯与地区差异。</p>
+          </div>
+          <div>
+            <h3>先定边界，再选工具</h3>
+            <p>如果 SSO / 审计是硬门槛，免费工具再顺手也不应进入候选；如果只是个人画图，企业套件就是过度采购。</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-brand">
+        <span class="brand-mark small" aria-hidden="true">7</span>
+        <div>
+          <strong>画布之上</strong>
+          <p>差别不在能不能画，而在画的那一层之上还给你什么。</p>
+        </div>
+      </div>
+      <div class="footer-meta">
+        <p>内容基于 2026-11 的绘图工具分层分析整理 · 编辑评分，非官方认证</p>
+        <p>无账号 · 无追踪脚本 · 单页静态站点</p>
+      </div>
+      <a class="text-button" href="#top">回到顶部 ↑</a>
+    </footer>
+
+    <noscript>
+      <div class="noscript">这份指南需要 JavaScript 来渲染七层矩阵与选型助手。内容不会用于追踪。</div>
+    </noscript>
+
+    <script type="module" src="./assets/app.js"></script>
+  </body>
+</html>

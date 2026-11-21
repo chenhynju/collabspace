@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://diagram-guide.vercel.app/sitemap.xml
