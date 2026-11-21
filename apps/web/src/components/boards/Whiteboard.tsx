@@ -1351,6 +1351,53 @@ function BoardWorkspace({ provider }: { provider: DocumentProvider }) {
       ? "mermaid"
       : "canvas",
   );
+  const [convertMessage, setConvertMessage] = useState("");
+  const convertToCanvas = () => {
+    if (!provider.writable) {
+      setConvertMessage("当前为只读，不能转换。");
+      return;
+    }
+    const source = provider.doc.getText("mermaid").toString().trim();
+    if (!source) {
+      setConvertMessage("Mermaid 源码为空，没有可转换的图元。");
+      return;
+    }
+    let parsed: ReturnType<typeof parseMermaid>;
+    try {
+      parsed = parseMermaid(source);
+    } catch (e) {
+      setConvertMessage(e instanceof Error ? e.message : "图表源码无法解析。");
+      return;
+    }
+    const shapes = provider.doc.getMap<Y.Map<unknown>>("shapes");
+    if (shapes.size + parsed.length > 500) {
+      setConvertMessage("转换后超过 500 个图元上限，请精简图表。");
+      return;
+    }
+    if (parsed.some((shape) => shapes.has(shape.id))) {
+      setConvertMessage("这些图元已经在画布中，请勿重复转换；可直接在画布中编辑。");
+      return;
+    }
+    const current = [...shapes.values()].map((shape) => shape.toJSON() as BoardShape);
+    const nodes = current.filter((shape) => shape.type !== "connector");
+    const offsetY = nodes.length
+      ? Math.max(...nodes.map((shape) => shape.geometry.y + shape.geometry.h)) + 120
+      : 0;
+    provider.doc.transact(() => {
+      for (const { id, ...data } of parsed)
+        shapes.set(
+          id,
+          new Y.Map(
+            Object.entries({
+              ...data,
+              geometry: { ...data.geometry, y: data.geometry.y + offsetY },
+            }),
+          ),
+        );
+    }, "collabspace:mermaid:convert");
+    setConvertMessage("已追加到自由画布，可拖拽、改字或继续连线。");
+    setMode("canvas");
+  };
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-2 py-1.5 shadow-sm">
@@ -1387,7 +1434,22 @@ function BoardWorkspace({ provider }: { provider: DocumentProvider }) {
         <span className="text-[11px] text-slate-400">
           {provider.writable ? "可编辑" : "只读"} · 同一文档保留两种视图
         </span>
+        {mode === "mermaid" && (
+          <button
+            type="button"
+            disabled={!provider.writable}
+            onClick={convertToCanvas}
+            className="ml-auto rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50/50 disabled:opacity-40"
+          >
+            转到自由画布
+          </button>
+        )}
       </div>
+      {convertMessage && (
+        <p role="status" className="px-1 text-[11px] text-slate-500">
+          {convertMessage}
+        </p>
+      )}
       {mode === "mermaid" ? (
         <MermaidWorkspace provider={provider} />
       ) : (
