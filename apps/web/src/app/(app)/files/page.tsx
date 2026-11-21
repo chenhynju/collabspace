@@ -61,17 +61,21 @@ export default function FilesGlobalPage() {
   };
 
   return (
-    <div className="p-6">
+    <div className="page-enter mx-auto max-w-[1440px] px-4 py-8 md:px-10 md:py-10">
       <PageHeader
+        eyebrow="Files"
         title="附件管理"
         description="附件下载与共享。文档、图表和 Office 已统一在协作空间中创建和编辑。"
       />
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-100 bg-indigo-50 p-4 text-sm text-indigo-900">
-        <span>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-l-2 border-slate-900 bg-white/60 px-4 py-4 text-sm text-slate-700">
+        <span className="max-w-3xl leading-6">
           新建 Word、Excel、PowerPoint，或继续编辑
           Markdown、白板，请进入统一协作空间。已有文件链接和下载仍可使用。
         </span>
-        <Link className="rounded-lg bg-indigo-600 px-4 py-2 text-white" href="/collaboration">
+        <Link
+          className="rounded-md bg-slate-900 px-4 py-2 text-xs font-medium text-white transition hover:bg-indigo-600"
+          href="/collaboration"
+        >
           打开协作空间 →
         </Link>
       </div>
@@ -79,28 +83,32 @@ export default function FilesGlobalPage() {
       {list.length === 0 ? (
         <Empty text="暂无文件" />
       ) : (
-        <Card>
+        <Card className="overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-xs text-slate-500 border-b border-slate-100">
-                  <th className="px-4 py-3 font-medium">文件名</th>
-                  <th className="px-4 py-3 font-medium">所属项目</th>
-                  <th className="px-4 py-3 font-medium">版本</th>
-                  <th className="px-4 py-3 font-medium">大小</th>
-                  <th className="px-4 py-3 font-medium">上传人</th>
-                  <th className="px-4 py-3 font-medium">最近编辑人</th>
-                  <th className="px-4 py-3 font-medium">编辑时间</th>
-                  <th className="px-4 py-3 font-medium text-right">操作</th>
+              <thead className="border-b border-slate-300 bg-slate-50">
+                <tr className="text-left text-[10px] uppercase tracking-[0.14em] text-slate-500">
+                  {["文件名", "所属项目", "版本", "大小", "上传人", "最近编辑人", "编辑时间", "操作"].map(
+                    (label) => (
+                      <th
+                        key={label}
+                        className={`px-4 py-3 font-semibold ${label === "操作" ? "text-right" : ""}`}
+                      >
+                        {label}
+                      </th>
+                    ),
+                  )}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-200">
                 {list.map((f) => (
                   <Fragment key={f.id}>
-                    <tr className="border-b border-slate-50 last:border-0 hover:bg-slate-50">
-                      <td className="px-4 py-3 text-slate-700">{f.name}</td>
+                    <tr className="transition hover:bg-white/70">
+                      <td className="px-4 py-3 font-medium text-slate-800">{f.name}</td>
                       <td className="px-4 py-3 text-slate-500">{f.project?.name ?? "-"}</td>
-                      <td className="px-4 py-3 text-slate-500">v{f.officeRevision ?? f.version}</td>
+                      <td className="px-4 py-3 font-mono text-[11px] text-slate-500">
+                        v{f.officeRevision ?? f.version}
+                      </td>
                       <td className="px-4 py-3 text-slate-500">{fmtSize(f.size)}</td>
                       <td className="px-4 py-3 text-slate-500">{f.uploadedBy?.name ?? "-"}</td>
                       <td className="px-4 py-3 text-slate-500">
@@ -110,7 +118,7 @@ export default function FilesGlobalPage() {
                           : f.uploadedBy?.name || "—"}
                       </td>
                       <td
-                        className="px-4 py-3 whitespace-nowrap text-slate-500"
+                        className="whitespace-nowrap px-4 py-3 text-slate-500"
                         title="北京时间；Office 显示已确认保存时间，其余文件显示上传时间"
                       >
                         {displayDate(f.lastEditedAt || f.createdAt)}

@@ -1,5 +1,5 @@
 "use client";
-import {displayDateTime} from "@/lib/display-date";
+import { displayDateTime } from "@/lib/display-date";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -14,18 +14,27 @@ import { yXmlFragmentToProsemirrorJSON } from "y-prosemirror";
 import { DocumentProvider, from64 } from "@/lib/document-provider";
 import { useAuthStore } from "@/store/auth";
 import { api } from "@/lib/api";
-import { BoardPreview } from '@/components/boards/Whiteboard';
+import { BoardPreview } from "@/components/boards/Whiteboard";
 import { DocumentFormula } from "@/components/documents/DocumentFormula";
-import { DocumentImage } from '@/components/documents/DocumentImage';
-import OfflineStorage from '@/components/documents/OfflineStorage';
-import {MarkdownHistory} from '@/components/documents/MarkdownEditor';
-const MarkdownEditor=dynamic(()=>import('@/components/documents/MarkdownEditor'),{ssr:false});
-const Whiteboard = dynamic(()=>import('@/components/boards/Whiteboard'),{ssr:false});
-const DocumentEditor = dynamic(
-  () => import("@/components/documents/DocumentEditor"),
-  { ssr: false },
-);
-function Preview({ state, documentId, organizationId }: { state: string; documentId:string; organizationId:string }) {
+import { DocumentImage } from "@/components/documents/DocumentImage";
+import OfflineStorage from "@/components/documents/OfflineStorage";
+import { MarkdownHistory } from "@/components/documents/MarkdownEditor";
+const MarkdownEditor = dynamic(() => import("@/components/documents/MarkdownEditor"), {
+  ssr: false,
+});
+const Whiteboard = dynamic(() => import("@/components/boards/Whiteboard"), { ssr: false });
+const DocumentEditor = dynamic(() => import("@/components/documents/DocumentEditor"), {
+  ssr: false,
+});
+function Preview({
+  state,
+  documentId,
+  organizationId,
+}: {
+  state: string;
+  documentId: string;
+  organizationId: string;
+}) {
   const editor = useEditor(
     {
       immediatelyRender: false,
@@ -36,7 +45,7 @@ function Preview({ state, documentId, organizationId }: { state: string; documen
         TaskList,
         TaskItem,
         LinkExtension.configure({ openOnClick: false }),
-        DocumentImage.configure({documentId,organizationId}),
+        DocumentImage.configure({ documentId, organizationId }),
       ],
       content: (() => {
         const d = new Y.Doc();
@@ -56,15 +65,11 @@ function Preview({ state, documentId, organizationId }: { state: string; documen
   );
   return <EditorContent editor={editor} />;
 }
-export default function DocumentPage({
-  params,
-}: {
-  params: { id: string; docId: string };
-}) {
+export default function DocumentPage({ params }: { params: { id: string; docId: string } }) {
   const org = useAuthStore((s) => s.currentOrgId),
     user = useAuthStore((s) => s.user);
-  const [panelOpen,setPanelOpen]=useState(true);
-  const historyExpanded=useRef(false);
+  const [panelOpen, setPanelOpen] = useState(true);
+  const historyExpanded = useRef(false);
   const [meta, setMeta] = useState<any>(null),
     [provider, setProvider] = useState<DocumentProvider | null>(null),
     [status, setStatus] = useState("正在连接"),
@@ -101,7 +106,7 @@ export default function DocumentPage({
     setVersions([]);
     setPreview(null);
     setHasOlder(false);
-    historyExpanded.current=false;
+    historyExpanded.current = false;
     setError("");
     api
       .get(base)
@@ -126,13 +131,13 @@ export default function DocumentPage({
   }, [meta?.kind, params.docId]);
   const refresh = useCallback(async () => {
     try {
-      const [a, b] = await Promise.all([
-        api.get(`${base}/threads`),
-        api.get(`${base}/versions`),
-      ]);
+      const [a, b] = await Promise.all([api.get(`${base}/threads`), api.get(`${base}/versions`)]);
       setThreads(a.data);
-      setVersions(previous => [...b.data,...previous.filter(v=>!b.data.some((fresh:any)=>fresh.id===v.id))]);
-      if(!historyExpanded.current) setHasOlder(b.data.length===100);
+      setVersions((previous) => [
+        ...b.data,
+        ...previous.filter((v) => !b.data.some((fresh: any) => fresh.id === v.id)),
+      ]);
+      if (!historyExpanded.current) setHasOlder(b.data.length === 100);
     } catch {
       /* Connection/save status remains visible; action errors are shown below. */
     }
@@ -140,11 +145,19 @@ export default function DocumentPage({
   useEffect(() => {
     void refresh();
     // WS invalidations fetch authoritative persisted rows; timer only repairs missed hints.
-    let revision=provider?.metadataRevision;
-    const unsubscribe=provider?.subscribe(()=>{if(provider.metadataRevision!==revision){revision=provider.metadataRevision;void refresh();}});
+    let revision = provider?.metadataRevision;
+    const unsubscribe = provider?.subscribe(() => {
+      if (provider.metadataRevision !== revision) {
+        revision = provider.metadataRevision;
+        void refresh();
+      }
+    });
     const timer = setInterval(refresh, 30000);
-    return () => {clearInterval(timer);unsubscribe?.();};
-  }, [refresh, org,provider]);
+    return () => {
+      clearInterval(timer);
+      unsubscribe?.();
+    };
+  }, [refresh, org, provider]);
   const action = async (fn: () => Promise<void>) => {
     setBusy(true);
     try {
@@ -158,19 +171,14 @@ export default function DocumentPage({
     }
   };
   async function share() {
-    (setPanelOpen(true),setTab("share"));
+    (setPanelOpen(true), setTab("share"));
     await action(async () => {
-      const [a, b] = await Promise.all([
-        api.get(`${base}/grants`),
-        api.get("/members"),
-      ]);
+      const [a, b] = await Promise.all([api.get(`${base}/grants`), api.get("/members")]);
       setGrants(a.data);
       setMembers(b.data);
     });
   }
-  const canComment = ["OWNER", "EDITOR", "COMMENTER"].includes(
-    provider?.role || meta?.role,
-  );
+  const canComment = ["OWNER", "EDITOR", "COMMENTER"].includes(provider?.role || meta?.role);
   const anchorState = (t: any) => {
     if (!t.anchor) return "文档评论";
     if (!provider) return "选区评论";
@@ -183,9 +191,7 @@ export default function DocumentPage({
           Y.decodeRelativePosition(from64(t.anchor.end)),
           provider.doc,
         );
-      return !a || !b || (a.type === b.type && a.index === b.index)
-        ? "原文已删除"
-        : "选区评论";
+      return !a || !b || (a.type === b.type && a.index === b.index) ? "原文已删除" : "选区评论";
     } catch {
       return "原文已删除";
     }
@@ -197,49 +203,45 @@ export default function DocumentPage({
       </div>
     );
   const uniquePeople = [...new Map(people.map((p) => [p.userId, p])).values()];
-  if(meta.kind==='OFFICE')return <Link href={'/office/'+params.docId}>打开 Office 文件编辑器 →</Link>;
-  const Surface = meta.kind === 'BOARD' ? Whiteboard : meta.kind==='MARKDOWN'?MarkdownEditor:DocumentEditor;
+  if (meta.kind === "OFFICE")
+    return <Link href={"/office/" + params.docId}>打开 Office 文件编辑器 →</Link>;
+  const Surface =
+    meta.kind === "BOARD" ? Whiteboard : meta.kind === "MARKDOWN" ? MarkdownEditor : DocumentEditor;
   return (
-    <div className="flex min-h-[100dvh] min-w-0 flex-col bg-[#f5f6fa]">
-      <header className="border-b border-slate-200 bg-white px-5 py-3">
-        <Link
-          className="text-sm text-slate-500"
-          href={`/projects/${params.id}/content`}
-        >
+    <div className="flex min-h-[100dvh] min-w-0 flex-col bg-[#f4efe5]">
+      <header className="border-b border-slate-300 bg-[#fffdf7] px-5 py-3.5">
+        <Link className="text-xs font-medium text-slate-500 hover:text-indigo-700" href={`/projects/${params.id}/content`}>
           ← 协作空间
         </Link>
         <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-semibold">{meta.title}</h1>
-            <p
-              className="mt-1 text-xs text-slate-500"
-              role="status"
-              aria-live="polite"
-            >
+            <p className="eyebrow">
+              {meta.kind === "BOARD" ? "Whiteboard" : meta.kind === "MARKDOWN" ? "Markdown" : "Document"}
+            </p>
+            <h1 className="display-title mt-1 text-2xl leading-tight text-slate-900">{meta.title}</h1>
+            <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.08em] text-slate-400" role="status" aria-live="polite">
               {status} · {provider?.role || meta.role}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-sm text-slate-500" aria-label="在线成员">
-              {uniquePeople.map((p) => p.name).join("、") || "连接中"}{uniquePeople.length>0&&` · ${uniquePeople.length} 人在线`}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-slate-500" aria-label="在线成员">
+              {uniquePeople.map((p) => p.name).join("、") || "连接中"}
+              {uniquePeople.length > 0 && ` · ${uniquePeople.length} 人在线`}
             </span>
             {meta.role === "OWNER" && (
-              <button
-                className="rounded-lg border px-3 py-2 text-sm"
-                onClick={share}
-              >
+              <button className="rounded-sm border border-slate-300 bg-white/60 px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-900" onClick={share}>
                 共享权限
               </button>
             )}
             <button
-              className="rounded-lg border px-3 py-2 text-sm"
-              onClick={() => (setPanelOpen(true),setTab("history"))}
+              className="rounded-sm border border-slate-300 bg-white/60 px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-900"
+              onClick={() => (setPanelOpen(true), setTab("history"))}
             >
               历史版本
             </button>
             {provider?.writable && (
               <button
-                className="text-sm text-slate-500"
+                className="text-xs font-medium text-slate-500 hover:text-indigo-700"
                 onClick={() => {
                   const title = window.prompt("文档标题", meta.title);
                   if (title)
@@ -257,15 +259,29 @@ export default function DocumentPage({
             )}
           </div>
         </div>
-      {meta.kind==='BOARD'&&<button aria-expanded={panelOpen} className="mt-2 text-xs font-medium text-indigo-600" onClick={()=>setPanelOpen(v=>!v)}>{panelOpen?'收起讨论侧栏':'展开讨论侧栏'}</button>}
+        {meta.kind === "BOARD" && (
+          <button
+            aria-expanded={panelOpen}
+            className="mt-2 text-xs font-medium text-indigo-700"
+            onClick={() => setPanelOpen((v) => !v)}
+          >
+            {panelOpen ? "收起讨论侧栏" : "展开讨论侧栏"}
+          </button>
+        )}
       </header>
       {error && (
-        <p className="bg-red-50 px-6 py-3 text-sm text-red-800" role="alert">
+        <p className="border-b border-indigo-200 bg-indigo-50 px-6 py-3 text-sm text-indigo-800" role="alert">
           {error}
         </p>
       )}
       <div className="flex flex-1 flex-col lg:flex-row">
-        <main className={meta.kind==='BOARD'?"my-3 w-full min-w-0 flex-1 bg-white p-3":"mx-auto my-6 w-full min-w-0 max-w-4xl flex-1 rounded-xl border bg-white shadow-sm"}>
+        <main
+          className={
+            meta.kind === "BOARD"
+              ? "my-3 w-full min-w-0 flex-1 bg-white p-3"
+              : "mx-auto my-6 w-full min-w-0 max-w-4xl flex-1 rounded-sm border border-slate-300 bg-white"
+          }
+        >
           <OfflineStorage />
           {org && user && (
             <Surface
@@ -278,17 +294,17 @@ export default function DocumentPage({
             />
           )}
         </main>
-        <aside hidden={meta.kind==='BOARD'&&!panelOpen} className="w-full shrink-0 border-l border-slate-200 bg-white p-5 lg:w-[280px]">
+        <aside
+          hidden={meta.kind === "BOARD" && !panelOpen}
+          className="w-full shrink-0 border-l border-slate-300 bg-[#fffdf7] p-5 lg:w-[280px]"
+        >
           <nav className="mb-5 flex gap-4 border-b pb-3" aria-label="文档侧栏">
-            <button
-              aria-pressed={tab === "comments"}
-              onClick={() => setTab("comments")}
-            >
+            <button aria-pressed={tab === "comments"} onClick={() => setTab("comments")}>
               评论
             </button>
             <button
               aria-pressed={tab === "history"}
-              onClick={() => (setPanelOpen(true),setTab("history"))}
+              onClick={() => (setPanelOpen(true), setTab("history"))}
             >
               历史
             </button>
@@ -345,10 +361,7 @@ export default function DocumentPage({
                 </p>
               )}
               {threads.map((t) => (
-                <article
-                  className="my-4 rounded-lg border p-3 text-sm"
-                  key={t.id}
-                >
+                <article className="my-4 rounded-lg border p-3 text-sm" key={t.id}>
                   <p className="mb-2 text-xs text-slate-400">
                     {anchorState(t)} · {t.resolved ? "已解决" : "待处理"}
                   </p>
@@ -384,10 +397,10 @@ export default function DocumentPage({
                           const body = window.prompt("回复内容");
                           if (body)
                             void action(async () => {
-                              await api.post(
-                                `${base}/threads/${t.id}/replies`,
-                                { id: crypto.randomUUID(), body },
-                              );
+                              await api.post(`${base}/threads/${t.id}/replies`, {
+                                id: crypto.randomUUID(),
+                                body,
+                              });
                             });
                         }}
                       >
@@ -405,15 +418,44 @@ export default function DocumentPage({
               <p className="my-2 text-xs text-slate-500">
                 有编辑时每分钟最多自动保留一个快照；命名版本可随时保留当前节点。快照仅含服务器已确认内容，恢复会创建独立副本。
               </p>
-              {!versions.length && <p className="my-4 text-sm text-slate-500">暂无快照，保存编辑后将自动生成。</p>}
-              {versions.length > 1 && <label className="block text-xs text-slate-500">从早到晚浏览快照
-                <input aria-label="快照时间轴" type="range" min={0} max={versions.length-1} defaultValue={versions.length-1} disabled={busy}
-                  className="my-3 w-full" onChange={e=>{const v=versions[versions.length-1-Number(e.target.value)];void action(async()=>setPreview((await api.get(`${base}/versions/${v.id}`)).data));}} />
-              </label>}
+              {!versions.length && (
+                <p className="my-4 text-sm text-slate-500">暂无快照，保存编辑后将自动生成。</p>
+              )}
+              {versions.length > 1 && (
+                <label className="block text-xs text-slate-500">
+                  从早到晚浏览快照
+                  <input
+                    aria-label="快照时间轴"
+                    type="range"
+                    min={0}
+                    max={versions.length - 1}
+                    defaultValue={versions.length - 1}
+                    disabled={busy}
+                    className="my-3 w-full"
+                    onChange={(e) => {
+                      const v = versions[versions.length - 1 - Number(e.target.value)];
+                      void action(async () =>
+                        setPreview((await api.get(`${base}/versions/${v.id}`)).data),
+                      );
+                    }}
+                  />
+                </label>
+              )}
               {provider?.writable && (
-                <button disabled={busy || !provider.saved} className="my-2 rounded border px-3 py-2 text-sm disabled:opacity-40" onClick={()=>void action(async()=>{
-                  await api.post(`${base}/versions`,{id:crypto.randomUUID(),name:'快照 · '+new Date().toLocaleString()});
-                })}>立即保留快照</button>
+                <button
+                  disabled={busy || !provider.saved}
+                  className="my-2 rounded border px-3 py-2 text-sm disabled:opacity-40"
+                  onClick={() =>
+                    void action(async () => {
+                      await api.post(`${base}/versions`, {
+                        id: crypto.randomUUID(),
+                        name: "快照 · " + new Date().toLocaleString(),
+                      });
+                    })
+                  }
+                >
+                  立即保留快照
+                </button>
               )}
               {provider?.writable && (
                 <form
@@ -446,19 +488,21 @@ export default function DocumentPage({
                 </form>
               )}
               {versions.map((v) => (
-                <div key={v.id} className="my-3 rounded-lg border-l-4 border border-l-indigo-300 p-3 text-sm">
-                  <p className="font-medium">{v.source==='AUTO'?'自动快照':v.name}</p>
+                <div
+                  key={v.id}
+                  className="my-3 rounded-lg border-l-4 border border-l-indigo-300 p-3 text-sm"
+                >
+                  <p className="font-medium">{v.source === "AUTO" ? "自动快照" : v.name}</p>
                   <p className="my-2 text-xs text-slate-400">
-                    <time dateTime={v.created_at}>{displayDateTime(v.created_at)}（上海）</time> · #{v.seq}
+                    <time dateTime={v.created_at}>{displayDateTime(v.created_at)}（上海）</time> · #
+                    {v.seq}
                   </p>
                   <button
                     disabled={busy}
                     className="text-blue-700"
                     onClick={() =>
                       void action(async () => {
-                        setPreview(
-                          (await api.get(`${base}/versions/${v.id}`)).data,
-                        );
+                        setPreview((await api.get(`${base}/versions/${v.id}`)).data);
                       })
                     }
                   >
@@ -470,10 +514,9 @@ export default function DocumentPage({
                       className="ml-4 text-blue-700"
                       onClick={() =>
                         void action(async () => {
-                          const r = await api.post(
-                            `${base}/versions/${v.id}/restore-copy`,
-                            { id: crypto.randomUUID() },
-                          );
+                          const r = await api.post(`${base}/versions/${v.id}/restore-copy`, {
+                            id: crypto.randomUUID(),
+                          });
                           window.location.href = `/projects/${params.id}/documents/${r.data.id}`;
                         })
                       }
@@ -483,12 +526,29 @@ export default function DocumentPage({
                   )}
                 </div>
               ))}
-              {hasOlder && <button disabled={busy} className="my-3 text-sm text-blue-700" onClick={()=>{
-                setBusy(true);api.get(`${base}/versions`,{params:{before:versions[versions.length-1].id}}).then(r=>{
-                  historyExpanded.current=true;
-                  setVersions(v=>[...v,...r.data]);setHasOlder(r.data.length===100);setError('');
-                }).catch(()=>setError('较早快照加载失败，请重试。')).finally(()=>setBusy(false));
-              }}>加载更早快照</button>}
+              {hasOlder && (
+                <button
+                  disabled={busy}
+                  className="my-3 text-sm text-blue-700"
+                  onClick={() => {
+                    setBusy(true);
+                    api
+                      .get(`${base}/versions`, {
+                        params: { before: versions[versions.length - 1].id },
+                      })
+                      .then((r) => {
+                        historyExpanded.current = true;
+                        setVersions((v) => [...v, ...r.data]);
+                        setHasOlder(r.data.length === 100);
+                        setError("");
+                      })
+                      .catch(() => setError("较早快照加载失败，请重试。"))
+                      .finally(() => setBusy(false));
+                  }}
+                >
+                  加载更早快照
+                </button>
+              )}
             </>
           )}
           {tab === "share" && meta.role === "OWNER" && (
@@ -527,11 +587,9 @@ export default function DocumentPage({
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
                 >
-                  {["OWNER", "EDITOR", "COMMENTER", "VIEWER", "REMOVE"].map(
-                    (r) => (
-                      <option key={r}>{r}</option>
-                    ),
-                  )}
+                  {["OWNER", "EDITOR", "COMMENTER", "VIEWER", "REMOVE"].map((r) => (
+                    <option key={r}>{r}</option>
+                  ))}
                 </select>
                 <button
                   disabled={busy}
@@ -576,13 +634,42 @@ export default function DocumentPage({
               aria-describedby={undefined}
             >
               <div className="flex justify-between border-b p-5">
-                <Dialog.Title>{preview.name} · {displayDateTime(preview.created_at)}（上海） · 只读预览</Dialog.Title>
+                <Dialog.Title>
+                  {preview.name} · {displayDateTime(preview.created_at)}（上海） · 只读预览
+                </Dialog.Title>
                 <Dialog.Close>关闭预览</Dialog.Close>
               </div>
               <div className="flex gap-4 border-b p-3 text-sm">
-                {[-1,1].map(step=>{const i=versions.findIndex(v=>v.id===preview.id),next=versions[i+step];return <button key={step} disabled={busy||i<0||!next} className="rounded border px-3 py-1 disabled:opacity-40" onClick={()=>void action(async()=>setPreview((await api.get(`${base}/versions/${next.id}`)).data))}>{step===1?'更早快照':'更新快照'}</button>;})}
+                {[-1, 1].map((step) => {
+                  const i = versions.findIndex((v) => v.id === preview.id),
+                    next = versions[i + step];
+                  return (
+                    <button
+                      key={step}
+                      disabled={busy || i < 0 || !next}
+                      className="rounded border px-3 py-1 disabled:opacity-40"
+                      onClick={() =>
+                        void action(async () =>
+                          setPreview((await api.get(`${base}/versions/${next.id}`)).data),
+                        )
+                      }
+                    >
+                      {step === 1 ? "更早快照" : "更新快照"}
+                    </button>
+                  );
+                })}
               </div>
-              {meta.kind==='BOARD'?<BoardPreview key={preview.id} state={preview.state}/>:meta.kind==='MARKDOWN'?<MarkdownHistory state={preview.state}/>:<Preview state={preview.state} documentId={params.docId} organizationId={org || ""} />}
+              {meta.kind === "BOARD" ? (
+                <BoardPreview key={preview.id} state={preview.state} />
+              ) : meta.kind === "MARKDOWN" ? (
+                <MarkdownHistory state={preview.state} />
+              ) : (
+                <Preview
+                  state={preview.state}
+                  documentId={params.docId}
+                  organizationId={org || ""}
+                />
+              )}
             </Dialog.Content>
           </Dialog.Portal>
         </Dialog.Root>

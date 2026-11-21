@@ -1,66 +1,80 @@
-'use client';
-import { useImStore } from '@/store/im';
-import { useAuthStore } from '@/store/auth';
+"use client";
+import { useImStore } from "@/store/im";
+import { useAuthStore } from "@/store/auth";
 
 interface Props {
-  conversation: ReturnType<typeof useImStore.getState>['conversations'][0];
+  conversation: ReturnType<typeof useImStore.getState>["conversations"][0];
 }
 
 export default function ConversationItem({ conversation }: Props) {
   const currentConversationId = useImStore((s) => s.currentConversationId);
   const setCurrentConversationId = useImStore((s) => s.setCurrentConversationId);
   const resetUnread = useImStore((s) => s.resetUnread);
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api/v1";
 
   const isActive = currentConversationId === conversation.id;
 
   const handleClick = () => {
     setCurrentConversationId(conversation.id);
     resetUnread(conversation.id);
-    window.history.replaceState(null, '', `?c=${conversation.id}`);
+    window.history.replaceState(null, "", `?c=${conversation.id}`);
   };
 
   const preview = conversation.lastMessage
-    ? conversation.lastMessage.type === 'TEXT'
+    ? conversation.lastMessage.type === "TEXT"
       ? conversation.lastMessage.content.slice(0, 60)
-      : conversation.lastMessage.type === 'IMAGE'
-        ? '[图片]'
-        : '[文件]'
-    : '开始聊天';
+      : conversation.lastMessage.type === "IMAGE"
+        ? "[图片]"
+        : "[文件]"
+    : "开始聊天";
   const senderName =
-    conversation.lastMessage?.senderName || conversation.lastMessage?.sender?.name || '';
+    conversation.lastMessage?.senderName || conversation.lastMessage?.sender?.name || "";
   const shownPreview =
-    conversation.type === 'GROUP' && senderName ? `${senderName}：${preview}` : preview;
+    conversation.type === "GROUP" && senderName ? `${senderName}：${preview}` : preview;
 
   return (
     <button
       onClick={handleClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors ${
-        isActive ? 'bg-slate-100' : ''
+      className={`relative flex w-full items-center gap-3 border-b border-slate-200/70 px-4 py-3.5 text-left transition-colors ${
+        isActive ? "bg-white" : "hover:bg-white/60"
       }`}
     >
+      {isActive ? <span className="absolute inset-y-2 left-0 w-[2px] bg-indigo-600" /> : null}
       <div className="relative">
-        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-sm font-semibold text-blue-700">
-          {(conversation.title || '群').slice(0, 1)}
+        <div
+          className={`grid h-10 w-10 place-items-center rounded-sm text-sm font-semibold ${
+            isActive
+              ? "bg-slate-900 text-white"
+              : "bg-slate-200 text-slate-700"
+          }`}
+        >
+          {(conversation.title || "群").slice(0, 1)}
         </div>
         {conversation.unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-            {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
+          <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-indigo-600 px-1 text-[10px] font-semibold text-white">
+            {conversation.unreadCount > 99 ? "99+" : conversation.unreadCount}
           </span>
         )}
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex justify-between items-center">
-          <span className="font-medium text-sm text-slate-800 truncate">
-            {conversation.title || '未命名会话'}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <span
+            className={`truncate text-sm ${
+              isActive ? "font-semibold text-slate-900" : "font-medium text-slate-800"
+            }`}
+          >
+            {conversation.title || "未命名会话"}
           </span>
           {conversation.lastMessage && (
-            <span className="text-xs text-slate-400">
-              {new Date(conversation.lastMessage.createdAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+            <span className="shrink-0 font-mono text-[10px] text-slate-400">
+              {new Date(conversation.lastMessage.createdAt).toLocaleTimeString("zh-CN", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </span>
           )}
         </div>
-        <div className="text-xs text-slate-500 truncate">{shownPreview}</div>
+        <div className="mt-0.5 truncate text-xs text-slate-500">{shownPreview}</div>
       </div>
     </button>
   );

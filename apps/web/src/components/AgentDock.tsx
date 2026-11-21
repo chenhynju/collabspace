@@ -339,16 +339,19 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
         role="dialog"
         aria-modal="true"
         aria-label="AI 工作助理"
-        className="absolute inset-y-0 right-0 flex w-[440px] max-w-[96vw] flex-col border-l border-slate-200/80 bg-[#fbfbfd] shadow-[0_24px_80px_-24px_rgba(15,23,42,0.45)] animate-[agent-dock-in_200ms_cubic-bezier(.2,.8,.2,1)]"
+        className="absolute inset-y-0 right-0 flex w-[460px] max-w-[96vw] flex-col border-l border-black/40 bg-[#191914] text-[#f4efe5] shadow-[0_24px_80px_-24px_rgba(15,23,42,0.6)] animate-[agent-dock-in_200ms_cubic-bezier(.2,.8,.2,1)]"
       >
-        <header className="flex items-start justify-between gap-3 border-b border-slate-200/70 bg-white px-5 py-4">
+        <header className="flex items-start justify-between gap-3 border-b border-white/10 px-5 py-5">
           <div className="flex items-start gap-3">
-            <span className="mt-0.5 grid h-9 w-9 place-items-center rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white shadow-sm shadow-indigo-500/30">
+            <span className="mt-0.5 grid h-9 w-9 place-items-center rounded-sm bg-indigo-600 text-white">
               <Sparkles size={17} />
             </span>
             <div>
-              <h2 className="text-sm font-semibold tracking-tight text-slate-900">AI 工作助理</h2>
-              <p className="mt-0.5 text-xs leading-5 text-slate-500">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/35">
+                AI Studio
+              </p>
+              <h2 className="display-title mt-1 text-xl leading-none text-[#fffdf7]">AI 工作助理</h2>
+              <p className="mt-2 text-xs leading-5 text-white/45">
                 读取当前组织数据；写操作先出计划，确认后执行。
               </p>
             </div>
@@ -357,7 +360,7 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
             type="button"
             aria-label="关闭 AI 助理"
             onClick={onClose}
-            className="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            className="rounded-sm p-2 text-white/40 transition hover:bg-white/10 hover:text-white"
           >
             <X size={18} />
           </button>
@@ -366,9 +369,9 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
         <div ref={scroller} className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
           {messages.length === 0 ? (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-indigo-100 bg-indigo-50/60 p-4">
-                <p className="text-sm font-medium text-indigo-950">可以直接用自然语言安排工作</p>
-                <p className="mt-1 text-xs leading-5 text-indigo-900/70">
+              <div className="border border-white/15 bg-white/5 p-4">
+                <p className="display-title text-lg text-[#fffdf7]">直接用自然语言安排工作</p>
+                <p className="mt-2 text-xs leading-5 text-white/50">
                   例如「列出项目」「在工作区『顾问』下新建项目『官网改版』」「给项目『官网改版』画一个三步审批流程图」。
                   写操作和画图都会先生成计划，再由你确认执行。
                 </p>
@@ -382,13 +385,13 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
                       setInput(item.prompt);
                       composer.current?.focus();
                     }}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left text-xs font-medium text-slate-700 transition hover:border-indigo-200 hover:bg-indigo-50/50"
+                    className="border border-white/15 bg-white/5 px-3 py-2.5 text-left text-xs font-medium text-white/70 transition hover:border-white/40 hover:bg-white/10 hover:text-white"
                   >
                     {item.label}
                   </button>
                 ))}
               </div>
-              <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-[11px] leading-5 text-slate-500">
+              <div className="border border-white/10 px-4 py-3 text-[11px] leading-5 text-white/40">
                 可操作范围：工作区与项目、任务、邀请、成员状态、文档/白板/Office 创建、文件上传与数据查询。权限仍由服务端逐次校验，
                 助理不会绕过组织边界。
               </div>
@@ -398,28 +401,28 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
               <div key={message.id} className="space-y-2">
                 {message.role === "user" ? (
                   <div className="flex justify-end">
-                    <p className="max-w-[88%] rounded-2xl rounded-br-md bg-slate-900 px-3.5 py-2.5 text-sm leading-6 text-white">
+                    <p className="max-w-[88%] rounded-lg rounded-br-none bg-[#f4efe5] px-3.5 py-2.5 text-sm leading-6 text-[#191914]">
                       {message.text}
                     </p>
                   </div>
                 ) : (
                   <div className="flex gap-2.5">
-                    <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-xl bg-white text-indigo-600 ring-1 ring-slate-200">
+                    <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-sm bg-white/10 text-amber-300">
                       <Sparkles size={13} />
                     </span>
                     <div className="min-w-0 flex-1 space-y-2">
-                      <div className="rounded-2xl rounded-tl-md border border-slate-200/80 bg-white px-3.5 py-2.5 shadow-[0_2px_10px_-6px_rgba(15,23,42,0.15)]">
+                      <div className="rounded-lg rounded-tl-none border border-white/15 bg-white/5 px-3.5 py-2.5">
                         {message.pending ? (
-                          <p className="flex items-center gap-2 text-sm text-slate-500">
+                          <p className="flex items-center gap-2 text-sm text-white/60">
                             <Loader2 size={14} className="animate-spin" /> {message.text}
                           </p>
                         ) : (
-                          <p className="whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                          <p className="whitespace-pre-wrap text-sm leading-6 text-white/80">
                             {message.text}
                           </p>
                         )}
                         {message.source ? (
-                          <p className="mt-2 text-[10px] uppercase tracking-[0.12em] text-slate-400">
+                          <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.12em] text-white/30">
                             {message.source === "model" ? "模型规划" : "本地规则规划"}
                           </p>
                         ) : null}
@@ -433,11 +436,11 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
                         return (
                           <div
                             key={action.id}
-                            className="rounded-xl border border-slate-200 bg-white p-3 shadow-[0_1px_6px_-4px_rgba(15,23,42,0.2)]"
+                            className="rounded-lg border border-white/15 bg-[#f4efe5] p-3 text-slate-900"
                           >
                             <div className="flex items-start justify-between gap-2">
                               <div className="min-w-0">
-                                <p className="text-xs font-semibold text-slate-800">
+                                <p className="text-xs font-semibold text-slate-900">
                                   {action.label}
                                 </p>
                                 <p className="mt-1 text-xs leading-5 text-slate-500">
@@ -445,19 +448,19 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
                                 </p>
                               </div>
                               <span
-                                className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                                className={`shrink-0 rounded-sm px-2 py-0.5 text-[10px] font-medium ${
                                   action.risk === "high"
-                                    ? "bg-red-50 text-red-700"
+                                    ? "bg-indigo-100 text-indigo-800"
                                     : action.risk === "medium"
-                                      ? "bg-amber-50 text-amber-700"
-                                      : "bg-slate-100 text-slate-500"
+                                      ? "bg-amber-100 text-amber-800"
+                                      : "bg-slate-200 text-slate-600"
                                 }`}
                               >
                                 {RISK_LABEL[action.risk ?? "medium"]}
                               </span>
                             </div>
                             {action.tool === "upload_file" && state !== "done" ? (
-                              <label className="mt-3 block rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2.5 text-xs text-slate-600 transition focus-within:border-indigo-400 hover:border-indigo-300">
+                              <label className="mt-3 block rounded-sm border border-dashed border-slate-400 bg-white/60 px-3 py-2.5 text-xs text-slate-600 transition focus-within:border-indigo-500 hover:border-slate-900">
                                 <span className="mb-1.5 block font-medium text-slate-700">
                                   {uploadFiles[action.id]
                                     ? `${uploadFiles[action.id]?.name} · ${Math.ceil((uploadFiles[action.id]?.size ?? 0) / 1024)} KB`
@@ -473,18 +476,18 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
                                       [action.id]: event.target.files?.[0] ?? null,
                                     }))
                                   }
-                                  className="w-full text-[11px] file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-2.5 file:py-1.5 file:text-xs file:font-medium file:text-indigo-700 file:shadow-sm"
+                                  className="w-full text-[11px] file:mr-3 file:rounded-sm file:border-0 file:bg-slate-900 file:px-2.5 file:py-1.5 file:text-xs file:font-medium file:text-white"
                                 />
                               </label>
                             ) : null}
                             {message.actionError?.[action.id] ? (
-                              <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-5 text-red-600">
+                              <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-5 text-indigo-700">
                                 <ShieldAlert size={12} className="mt-0.5 shrink-0" />
                                 {message.actionError[action.id]}
                               </p>
                             ) : null}
                             <div className="mt-2.5 flex items-center justify-between gap-2">
-                              <span className="text-[10px] text-slate-400">
+                              <span className="text-[10px] text-slate-500">
                                 {blocked ||
                                   (state === "done"
                                     ? "已完成"
@@ -496,10 +499,10 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
                                 type="button"
                                 disabled={state === "running" || state === "done" || !!blocked}
                                 onClick={() => execute(message.id, action)}
-                                className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                                className={`inline-flex items-center gap-1.5 rounded-sm px-3 py-1.5 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
                                   action.risk === "high"
-                                    ? "bg-red-600 text-white hover:bg-red-700"
-                                    : "bg-slate-900 text-white hover:bg-slate-800"
+                                    ? "bg-indigo-600 text-white hover:bg-indigo-700"
+                                    : "bg-slate-900 text-white hover:bg-indigo-600"
                                 }`}
                               >
                                 {state === "running" ? (
@@ -521,8 +524,8 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
           )}
         </div>
 
-        <div className="border-t border-slate-200/70 bg-white px-4 py-3">
-          <div className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-white p-2 focus-within:border-indigo-300 focus-within:ring-2 focus-within:ring-indigo-500/10">
+        <div className="border-t border-white/10 bg-[#191914] px-4 py-3">
+          <div className="flex items-end gap-2 rounded-lg border border-white/15 bg-white/5 p-2 transition focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/20">
             <textarea
               ref={composer}
               aria-label="给 AI 助理的消息"
@@ -536,7 +539,7 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
                 }
               }}
               placeholder="描述你要完成的工作，例如：列出所有项目"
-              className="max-h-28 flex-1 resize-none bg-transparent px-2 py-1.5 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none"
+              className="max-h-28 flex-1 resize-none bg-transparent px-2 py-1.5 text-sm text-white placeholder:text-white/30 focus:outline-none"
             />
             <button
               type="button"
@@ -551,10 +554,10 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
               }
               disabled={busy || !speechSupported}
               onClick={toggleDictation}
-              className={`mb-0.5 grid h-9 w-9 place-items-center rounded-xl transition disabled:cursor-not-allowed disabled:opacity-40 ${
+              className={`mb-0.5 grid h-9 w-9 place-items-center rounded-sm transition disabled:cursor-not-allowed disabled:opacity-40 ${
                 listening
-                  ? "animate-pulse bg-red-50 text-red-600"
-                  : "bg-slate-100 text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+                  ? "animate-pulse bg-indigo-600 text-white"
+                  : "bg-white/10 text-white/60 hover:bg-white/20 hover:text-white"
               }`}
             >
               <Mic size={16} />
@@ -564,13 +567,13 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
               aria-label="发送"
               disabled={busy || !input.trim()}
               onClick={() => void send()}
-              className="mb-0.5 grid h-9 w-9 place-items-center rounded-xl bg-slate-900 text-white transition hover:bg-slate-800 disabled:bg-slate-300"
+              className="mb-0.5 grid h-9 w-9 place-items-center rounded-sm bg-indigo-600 text-white transition hover:bg-indigo-500 disabled:bg-white/10 disabled:text-white/30"
             >
               {busy ? <Loader2 size={15} className="animate-spin" /> : <ArrowUp size={16} />}
             </button>
           </div>
           <p
-            className={`mt-2 text-[10px] leading-4 ${voiceError ? "text-red-600" : "text-slate-400"}`}
+            className={`mt-2 text-[10px] leading-4 ${voiceError ? "text-indigo-300" : "text-white/30"}`}
           >
             {voiceError ||
               (listening

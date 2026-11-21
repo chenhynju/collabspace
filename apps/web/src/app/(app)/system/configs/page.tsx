@@ -1,29 +1,27 @@
-'use client';
-import { useEffect, useState, useCallback } from 'react';
-import {AgentAppearanceSettings} from '@/components/personas/AgentAppearanceSettings';
-import PageHeader from '@/components/PageHeader';
-import {
-  Card, Button, Modal, Input, Field, Empty, InlineError, Badge,
-} from '@/components/ui';
-import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth';
-import { Plus, Pencil, Trash2 } from 'lucide-react';
+"use client";
+import { useEffect, useState, useCallback } from "react";
+import { AgentAppearanceSettings } from "@/components/personas/AgentAppearanceSettings";
+import PageHeader from "@/components/PageHeader";
+import { Card, Button, Modal, Input, Field, Empty, InlineError, Badge } from "@/components/ui";
+import { api } from "@/lib/api";
+import { useAuthStore } from "@/store/auth";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 
 type ConfigRow = {
   id: string;
   name: string;
   key: string;
   value: string;
-  configType: 'YES' | 'NO';
+  configType: "YES" | "NO";
   remark: string | null;
 };
 
-const emptyForm = { name: '', key: '', value: '', configType: 'NO', remark: '' };
+const emptyForm = { name: "", key: "", value: "", configType: "NO", remark: "" };
 
 export default function ConfigManagePage() {
   const hasPerm = useAuthStore((s) => s.hasPerm);
   const [rows, setRows] = useState<ConfigRow[]>([]);
-  const [keyword, setKeyword] = useState('');
+  const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(true);
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -33,13 +31,15 @@ export default function ConfigManagePage() {
   const [saving, setSaving] = useState(false);
 
   const refresh = useCallback(async () => {
-    const { data } = await api.get('/configs');
+    const { data } = await api.get("/configs");
     setRows(data);
     setLoading(false);
     return data as ConfigRow[];
   }, []);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
   const openCreate = () => {
     setEditing(null);
@@ -50,14 +50,20 @@ export default function ConfigManagePage() {
 
   const openEdit = (c: ConfigRow) => {
     setEditing(c);
-    setForm({ name: c.name, key: c.key, value: c.value, configType: c.configType, remark: c.remark ?? '' });
+    setForm({
+      name: c.name,
+      key: c.key,
+      value: c.value,
+      configType: c.configType,
+      remark: c.remark ?? "",
+    });
     setError(null);
     setModalOpen(true);
   };
 
   const save = async () => {
     if (!form.name.trim() || !form.key.trim() || !form.value.trim()) {
-      setError('请填写参数名称、键名和键值');
+      setError("请填写参数名称、键名和键值");
       return;
     }
     setSaving(true);
@@ -70,11 +76,11 @@ export default function ConfigManagePage() {
     };
     try {
       if (editing) await api.patch(`/configs/${editing.id}`, payload);
-      else await api.post('/configs', payload);
+      else await api.post("/configs", payload);
       setModalOpen(false);
       await refresh();
     } catch (e: any) {
-      setError(e.response?.data?.message ?? '保存失败');
+      setError(e.response?.data?.message ?? "保存失败");
     } finally {
       setSaving(false);
     }
@@ -86,7 +92,7 @@ export default function ConfigManagePage() {
       await api.delete(`/configs/${c.id}`);
       await refresh();
     } catch (e: any) {
-      alert(e.response?.data?.message ?? '删除失败');
+      alert(e.response?.data?.message ?? "删除失败");
     }
   };
 
@@ -95,11 +101,15 @@ export default function ConfigManagePage() {
   );
 
   return (
-    <div>
-      <PageHeader title="参数设置" description="运营可调的系统参数，避免把易变配置硬编码进代码">
-        {hasPerm('config:add') && <Button onClick={openCreate}><Plus className="w-4 h-4" /> 新增参数</Button>}
+    <div className="page-enter mx-auto max-w-[1200px] px-4 py-8 md:px-10 md:py-10">
+      <PageHeader eyebrow="System" title="参数设置" description="运营可调的系统参数，避免把易变配置硬编码进代码">
+        {hasPerm("config:add") && (
+          <Button onClick={openCreate}>
+            <Plus className="w-4 h-4" /> 新增参数
+          </Button>
+        )}
       </PageHeader>
-      {hasPerm('config:edit')&&<AgentAppearanceSettings/>}
+      {hasPerm("config:edit") && <AgentAppearanceSettings />}
 
       <Card className="p-4 mb-4">
         <Input
@@ -112,7 +122,9 @@ export default function ConfigManagePage() {
 
       <Card className="overflow-hidden">
         {loading || !rows.length ? (
-          <div className="p-4"><Empty text={loading ? '加载中...' : '暂无参数'} /></div>
+          <div className="p-4">
+            <Empty text={loading ? "加载中..." : "暂无参数"} />
+          </div>
         ) : (
           <table className="w-full">
             <thead>
@@ -127,22 +139,38 @@ export default function ConfigManagePage() {
             </thead>
             <tbody>
               {filtered.map((c) => (
-                <tr key={c.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                <tr
+                  key={c.id}
+                  className="border-b border-slate-100 last:border-0 hover:bg-slate-50"
+                >
                   <td className="py-2.5 px-4 text-sm text-slate-800 whitespace-nowrap">{c.name}</td>
-                  <td className="py-2.5 px-4 text-xs font-mono text-blue-700 whitespace-nowrap">{c.key}</td>
-                  <td className="py-2.5 px-4 text-xs text-slate-600 max-w-[240px] truncate" title={c.value}>{c.value}</td>
-                  <td className="py-2.5 px-4">
-                    {c.configType === 'YES' ? <Badge tone="blue">是</Badge> : <Badge tone="slate">否</Badge>}
+                  <td className="py-2.5 px-4 text-xs font-mono text-blue-700 whitespace-nowrap">
+                    {c.key}
                   </td>
-                  <td className="py-2.5 px-4 text-xs text-slate-500 max-w-[160px] truncate">{c.remark ?? '-'}</td>
+                  <td
+                    className="py-2.5 px-4 text-xs text-slate-600 max-w-[240px] truncate"
+                    title={c.value}
+                  >
+                    {c.value}
+                  </td>
+                  <td className="py-2.5 px-4">
+                    {c.configType === "YES" ? (
+                      <Badge tone="blue">是</Badge>
+                    ) : (
+                      <Badge tone="slate">否</Badge>
+                    )}
+                  </td>
+                  <td className="py-2.5 px-4 text-xs text-slate-500 max-w-[160px] truncate">
+                    {c.remark ?? "-"}
+                  </td>
                   <td className="py-2.5 px-4 text-right whitespace-nowrap">
                     <div className="inline-flex gap-1">
-                      {hasPerm('config:edit') && (
+                      {hasPerm("config:edit") && (
                         <Button size="sm" variant="ghost" onClick={() => openEdit(c)}>
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>
                       )}
-                      {hasPerm('config:remove') && (
+                      {hasPerm("config:remove") && (
                         <Button size="sm" variant="ghost" onClick={() => remove(c)}>
                           <Trash2 className="w-3.5 h-3.5 text-red-500" />
                         </Button>
@@ -156,10 +184,17 @@ export default function ConfigManagePage() {
         )}
       </Card>
 
-      <Modal open={modalOpen} onClose={() => setModalOpen(false)} title={editing ? '编辑参数' : '新增参数'}>
+      <Modal
+        open={modalOpen}
+        onClose={() => setModalOpen(false)}
+        title={editing ? "编辑参数" : "新增参数"}
+      >
         <div className="space-y-4">
           <Field label="参数名称">
-            <Input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+            <Input
+              value={form.name}
+              onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+            />
           </Field>
           <Field label="参数键名" hint="字母开头，仅含字母/数字/下划线/点；编辑时不可修改">
             <Input
@@ -170,15 +205,25 @@ export default function ConfigManagePage() {
             />
           </Field>
           <Field label="参数键值">
-            <Input value={form.value} onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))} />
+            <Input
+              value={form.value}
+              onChange={(e) => setForm((f) => ({ ...f, value: e.target.value }))}
+            />
           </Field>
           <Field label="备注">
-            <Input value={form.remark} onChange={(e) => setForm((f) => ({ ...f, remark: e.target.value }))} />
+            <Input
+              value={form.remark}
+              onChange={(e) => setForm((f) => ({ ...f, remark: e.target.value }))}
+            />
           </Field>
           <InlineError message={error} />
           <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-            <Button variant="secondary" onClick={() => setModalOpen(false)}>取消</Button>
-            <Button onClick={save} disabled={saving}>{saving ? '保存中...' : '保存'}</Button>
+            <Button variant="secondary" onClick={() => setModalOpen(false)}>
+              取消
+            </Button>
+            <Button onClick={save} disabled={saving}>
+              {saving ? "保存中..." : "保存"}
+            </Button>
           </div>
         </div>
       </Modal>

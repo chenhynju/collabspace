@@ -1,6 +1,6 @@
-'use client';
-import { useImStore } from '@/store/im';
-import ConversationItem from './ConversationItem';
+"use client";
+import { useImStore } from "@/store/im";
+import ConversationItem from "./ConversationItem";
 
 export default function ConversationList() {
   const conversations = useImStore((s) => s.conversations);
@@ -10,7 +10,7 @@ export default function ConversationList() {
   }
 
   return (
-    <div className="overflow-y-auto">
+    <div className="flex-1 overflow-y-auto">
       {conversations.map((conv) => (
         <ConversationItem key={conv.id} conversation={conv} />
       ))}

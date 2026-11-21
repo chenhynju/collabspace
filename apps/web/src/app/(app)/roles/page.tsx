@@ -1,18 +1,26 @@
-'use client';
-import { useEffect, useState, useCallback } from 'react';
-import PageHeader from '@/components/PageHeader';
+"use client";
+import { useEffect, useState, useCallback } from "react";
+import PageHeader from "@/components/PageHeader";
 import {
-  Card, Button, Badge, Modal, Input, Select, Field, Empty, InlineError,
-} from '@/components/ui';
-import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth';
+  Card,
+  Button,
+  Badge,
+  Modal,
+  Input,
+  Select,
+  Field,
+  Empty,
+  InlineError,
+} from "@/components/ui";
+import { api } from "@/lib/api";
+import { useAuthStore } from "@/store/auth";
 
 const DS_OPTIONS = [
-  { value: 'ALL', label: '全部数据' },
-  { value: 'CUSTOM', label: '自定义' },
-  { value: 'DEPT', label: '本部门' },
-  { value: 'DEPT_AND_CHILD', label: '本部门及以下' },
-  { value: 'SELF', label: '仅本人' },
+  { value: "ALL", label: "全部数据" },
+  { value: "CUSTOM", label: "自定义" },
+  { value: "DEPT", label: "本部门" },
+  { value: "DEPT_AND_CHILD", label: "本部门及以下" },
+  { value: "SELF", label: "仅本人" },
 ];
 
 function flattenTree(nodes: any[], depth = 0): Array<{ node: any; depth: number }> {
@@ -34,25 +42,25 @@ export default function RolesPage() {
   const [editTarget, setEditTarget] = useState<any | null>(null);
   const [permTarget, setPermTarget] = useState<any | null>(null);
 
-  const [form, setForm] = useState({ name: '', key: '', dataScope: 'SELF', sort: 10 });
+  const [form, setForm] = useState({ name: "", key: "", dataScope: "SELF", sort: 10 });
   const [menuIds, setMenuIds] = useState<string[]>([]);
   const [deptIds, setDeptIds] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const refresh = useCallback(async () => {
-    const { data } = await api.get('/roles');
+    const { data } = await api.get("/roles");
     setList(data);
   }, []);
 
   useEffect(() => {
     refresh();
     api
-      .get('/menus/tree')
+      .get("/menus/tree")
       .then((r) => setFlatMenus(flattenTree(r.data)))
       .catch(() => setFlatMenus([]));
     api
-      .get('/depts/tree')
+      .get("/depts/tree")
       .then((r) => setFlatDepts(flattenTree(r.data)))
       .catch(() => setFlatDepts([]));
   }, [refresh]);
@@ -61,11 +69,11 @@ export default function RolesPage() {
     setBusy(true);
     setError(null);
     try {
-      await api.post('/roles', form);
+      await api.post("/roles", form);
       setCreateOpen(false);
       await refresh();
     } catch (e: any) {
-      setError(e.response?.data?.message ?? '创建失败');
+      setError(e.response?.data?.message ?? "创建失败");
     } finally {
       setBusy(false);
     }
@@ -83,7 +91,7 @@ export default function RolesPage() {
       setEditTarget(null);
       await refresh();
     } catch (e: any) {
-      setError(e.response?.data?.message ?? '保存失败');
+      setError(e.response?.data?.message ?? "保存失败");
     } finally {
       setBusy(false);
     }
@@ -102,13 +110,13 @@ export default function RolesPage() {
     setError(null);
     try {
       await api.put(`/roles/${permTarget.id}/menus`, { menuIds });
-      if (permTarget.dataScope === 'CUSTOM') {
+      if (permTarget.dataScope === "CUSTOM") {
         await api.put(`/roles/${permTarget.id}/depts`, { deptIds });
       }
       setPermTarget(null);
       await refresh();
     } catch (e: any) {
-      setError(e.response?.data?.message ?? '授权失败');
+      setError(e.response?.data?.message ?? "授权失败");
     } finally {
       setBusy(false);
     }
@@ -120,7 +128,7 @@ export default function RolesPage() {
       await api.delete(`/roles/${r.id}`);
       await refresh();
     } catch (e: any) {
-      alert(e.response?.data?.message ?? '删除失败');
+      alert(e.response?.data?.message ?? "删除失败");
     }
   };
 
@@ -129,12 +137,16 @@ export default function RolesPage() {
   };
 
   return (
-    <div className="p-6">
-      <PageHeader title="角色权限" description="自定义角色：功能权限（菜单/按钮）+ 数据权限（可见范围）">
-        {hasPerm('role:add') ? (
+    <div className="page-enter mx-auto max-w-[1440px] px-4 py-8 md:px-10 md:py-10">
+      <PageHeader
+        eyebrow="Roles"
+        title="角色权限"
+        description="自定义角色：功能权限（菜单/按钮）+ 数据权限（可见范围）"
+      >
+        {hasPerm("role:add") ? (
           <Button
             onClick={() => {
-              setForm({ name: '', key: '', dataScope: 'SELF', sort: 10 });
+              setForm({ name: "", key: "", dataScope: "SELF", sort: 10 });
               setError(null);
               setCreateOpen(true);
             }}
@@ -152,7 +164,7 @@ export default function RolesPage() {
             <Card key={r.id} className="p-4">
               <div className="flex items-center gap-2">
                 <h3 className="font-medium text-slate-800">{r.name}</h3>
-                {r.key === 'OWNER' ? <Badge tone="violet">保留</Badge> : null}
+                {r.key === "OWNER" ? <Badge tone="violet">保留</Badge> : null}
               </div>
               <div className="text-xs text-slate-400 mt-1">
                 {r.key} · {DS_OPTIONS.find((d) => d.value === r.dataScope)?.label}
@@ -161,7 +173,7 @@ export default function RolesPage() {
                 {r._count.memberships} 名成员 · {r._count.menus} 项授权
               </div>
               <div className="flex gap-2 mt-4">
-                {hasPerm('role:edit') && r.key !== 'OWNER' ? (
+                {hasPerm("role:edit") && r.key !== "OWNER" ? (
                   <Button
                     size="sm"
                     variant="secondary"
@@ -179,12 +191,12 @@ export default function RolesPage() {
                     编辑
                   </Button>
                 ) : null}
-                {hasPerm('role:assign-menu') ? (
+                {hasPerm("role:assign-menu") ? (
                   <Button size="sm" onClick={() => openPerm(r)}>
                     菜单授权
                   </Button>
                 ) : null}
-                {hasPerm('role:remove') && r.key !== 'OWNER' ? (
+                {hasPerm("role:remove") && r.key !== "OWNER" ? (
                   <Button size="sm" variant="danger" onClick={() => remove(r)}>
                     删除
                   </Button>
@@ -210,7 +222,9 @@ export default function RolesPage() {
               onChange={(e) => setForm({ ...form, dataScope: e.target.value })}
             >
               {DS_OPTIONS.map((d) => (
-                <option key={d.value} value={d.value}>{d.label}</option>
+                <option key={d.value} value={d.value}>
+                  {d.label}
+                </option>
               ))}
             </Select>
           </Field>
@@ -220,7 +234,7 @@ export default function RolesPage() {
               取消
             </Button>
             <Button onClick={create} disabled={busy || !form.name || !form.key}>
-              {busy ? '创建中…' : '创建'}
+              {busy ? "创建中…" : "创建"}
             </Button>
           </div>
         </div>
@@ -238,7 +252,9 @@ export default function RolesPage() {
               onChange={(e) => setForm({ ...form, dataScope: e.target.value })}
             >
               {DS_OPTIONS.map((d) => (
-                <option key={d.value} value={d.value}>{d.label}</option>
+                <option key={d.value} value={d.value}>
+                  {d.label}
+                </option>
               ))}
             </Select>
           </Field>
@@ -248,7 +264,7 @@ export default function RolesPage() {
               取消
             </Button>
             <Button onClick={saveEdit} disabled={busy}>
-              {busy ? '保存中…' : '保存'}
+              {busy ? "保存中…" : "保存"}
             </Button>
           </div>
         </div>
@@ -258,7 +274,7 @@ export default function RolesPage() {
       <Modal
         open={!!permTarget}
         onClose={() => setPermTarget(null)}
-        title={`菜单授权 · ${permTarget?.name ?? ''}`}
+        title={`菜单授权 · ${permTarget?.name ?? ""}`}
         wide
       >
         <div className="space-y-4">
@@ -274,15 +290,13 @@ export default function RolesPage() {
                   checked={menuIds.includes(node.id)}
                   onChange={() => toggleId(node.id, menuIds, setMenuIds)}
                 />
-                <span className={node.type === 'BUTTON' ? 'text-slate-500' : ''}>
-                  {node.name}
-                </span>
+                <span className={node.type === "BUTTON" ? "text-slate-500" : ""}>{node.name}</span>
                 {node.perms ? <span className="text-xs text-slate-400">[{node.perms}]</span> : null}
               </label>
             ))}
           </div>
 
-          {permTarget?.dataScope === 'CUSTOM' ? (
+          {permTarget?.dataScope === "CUSTOM" ? (
             <div>
               <span className="text-xs font-medium text-slate-600">自定义数据范围部门</span>
               <div className="mt-2 max-h-40 overflow-y-auto border border-slate-200 rounded-lg p-3 space-y-1">
@@ -310,7 +324,7 @@ export default function RolesPage() {
               取消
             </Button>
             <Button onClick={savePerms} disabled={busy}>
-              {busy ? '保存中…' : '保存授权'}
+              {busy ? "保存中…" : "保存授权"}
             </Button>
           </div>
         </div>

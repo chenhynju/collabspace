@@ -454,22 +454,27 @@ function HubContent({ projectId = "", initialKind = "ALL", initialView = "files"
   }
   const scopedProject = projects.find((p) => p.id === projectId);
   return (
-    <main className="mx-auto max-w-[1440px] space-y-6 p-5 sm:p-8">
-      <header className="flex flex-wrap items-center justify-between gap-4">
+    <main className="page-enter mx-auto max-w-[1440px] space-y-6 px-4 py-8 md:px-10 md:py-10">
+      <header className="flex flex-wrap items-end justify-between gap-5 border-b border-slate-300 pb-6">
         <div>
-          <p className="text-xs text-slate-500">
-            {orgs.find((o) => o.id === org)?.name} / {scopedProject?.name || "团队创作"}
-          </p>
-          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-slate-900">协作空间</h1>
-          <p className="mt-2 text-sm text-slate-500">
+          <div className="flex items-center gap-2">
+            <span aria-hidden="true" className="h-2 w-2 bg-indigo-600" />
+            <p className="eyebrow">
+              {orgs.find((o) => o.id === org)?.name} / {scopedProject?.name || "团队创作"}
+            </p>
+          </div>
+          <h1 className="display-title mt-3 text-[2.4rem] leading-[1.05] text-slate-900 md:text-[3rem]">
+            协作空间
+          </h1>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
             创建与管理文件，整理资料、翻译和发送项目邮件。
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {projectId && (
             <Link
               href={"/projects/" + projectId}
-              className="self-center px-3 text-sm text-slate-500"
+              className="self-center px-3 text-xs font-medium text-slate-500 hover:text-indigo-700"
             >
               项目详情
             </Link>
@@ -488,22 +493,34 @@ function HubContent({ projectId = "", initialKind = "ALL", initialView = "files"
       </header>
       <div
         aria-label="协作空间视图"
-        className="flex w-fit gap-1 rounded-xl border border-slate-200 bg-white p-1"
+        className="flex w-fit gap-6 border-b border-slate-300"
       >
-        <Button
-          variant={view === "files" ? "primary" : "ghost"}
+        <button
+          type="button"
           aria-pressed={view === "files"}
           onClick={() => setView("files")}
+          className={`relative inline-flex items-center gap-2 pb-3 text-sm font-medium transition ${
+            view === "files" ? "text-slate-900" : "text-slate-500 hover:text-slate-900"
+          }`}
         >
           <FolderClosed size={16} /> 文件协作
-        </Button>
-        <Button
-          variant={view === "assistant" ? "primary" : "ghost"}
+          {view === "files" ? (
+            <span className="absolute inset-x-0 bottom-0 h-[2px] bg-indigo-600" />
+          ) : null}
+        </button>
+        <button
+          type="button"
           aria-pressed={view === "assistant"}
           onClick={() => showAssistant()}
+          className={`relative inline-flex items-center gap-2 pb-3 text-sm font-medium transition ${
+            view === "assistant" ? "text-slate-900" : "text-slate-500 hover:text-slate-900"
+          }`}
         >
           <Sparkles size={16} /> AI 助手
-        </Button>
+          {view === "assistant" ? (
+            <span className="absolute inset-x-0 bottom-0 h-[2px] bg-indigo-600" />
+          ) : null}
+        </button>
       </div>
       {assistantOpened && (
         <div hidden={view !== "assistant"}>
@@ -520,7 +537,7 @@ function HubContent({ projectId = "", initialKind = "ALL", initialView = "files"
         {officeReady === false ? (
           <div
             role="status"
-            className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900"
+            className="border-l-2 border-amber-600 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900"
           >
             Word / Excel / PowerPoint 在线编辑未启用：需要启动 ONLYOFFICE
             DocumentServer，并在服务端配置 OFFICE_PUBLIC_URL、OFFICE_INTERNAL_URL、OFFICE_JWT_SECRET
@@ -529,7 +546,7 @@ function HubContent({ projectId = "", initialKind = "ALL", initialView = "files"
         ) : null}
         <section
           aria-label="新建协作内容"
-          className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5"
+          className="grid grid-cols-2 gap-px overflow-hidden border border-slate-300 bg-slate-300 md:grid-cols-3 xl:grid-cols-5"
         >
           {types.map((t) => (
             <button
@@ -548,40 +565,52 @@ function HubContent({ projectId = "", initialKind = "ALL", initialView = "files"
                   : undefined
               }
               onClick={() => void quickCreate(t.id)}
-              className="rounded-2xl border border-slate-200 bg-white p-3 text-left transition hover:border-indigo-300 hover:shadow-sm disabled:cursor-not-allowed disabled:opacity-40"
+              className="group bg-[#fffdf7] p-4 text-left transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              <span className={"inline-flex rounded-xl p-2 " + t.color}>
+              <span className={"inline-flex rounded-sm p-2 " + t.color}>
                 <t.icon size={20} />
               </span>
-              <h2 className="mt-3 text-sm font-semibold">{t.name}</h2>
-              <p className="mt-1 hidden text-xs leading-5 text-slate-500 sm:block">{t.hint}</p>
+              <h2 className="mt-4 text-sm font-medium text-slate-900 transition group-hover:text-white">
+                {t.name}
+              </h2>
+              <p className="mt-1 hidden text-xs leading-5 text-slate-500 transition group-hover:text-white/50 sm:block">
+                {t.hint}
+              </p>
             </button>
           ))}
         </section>
         <section
-          className="rounded-2xl border border-indigo-100 bg-indigo-50/70 p-4 sm:p-5"
+          className="bg-[#191914] p-5 text-[#f4efe5] sm:p-6"
           aria-label="AI快捷工具"
         >
-          <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-indigo-950">
-            <Sparkles size={17} /> 让资料继续变成成果
-          </h2>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="display-title flex items-center gap-2 text-xl">
+              <Sparkles size={18} className="text-amber-300" /> 让资料继续变成成果
+            </h2>
+            <span className="text-[10px] uppercase tracking-[0.2em] text-white/35">
+              AI Workbench
+            </span>
+          </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
             {assistantTools.map((t) => (
               <button
                 key={t.id}
                 onClick={() => showAssistant(t.id)}
-                className="flex items-center gap-3 rounded-xl border border-white bg-white p-3 text-left text-sm font-medium text-slate-700 transition hover:border-indigo-300 hover:text-indigo-700"
+                className="flex items-center gap-3 border border-white/15 bg-white/5 p-3 text-left text-sm font-medium text-white/70 transition hover:border-white/40 hover:bg-white/10 hover:text-white"
               >
-                <t.icon size={20} className="shrink-0 text-indigo-500" />
+                <t.icon size={18} className="shrink-0 text-indigo-300" />
                 {t.name}
               </button>
             ))}
           </div>
         </section>
         <Card className="overflow-hidden">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 p-5">
+          <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 p-5">
             <div>
-              <h2 className="font-semibold">{scopedProject?.name || "全部协作内容"}</h2>
+              <p className="eyebrow">Index</p>
+              <h2 className="display-title mt-1.5 text-xl text-slate-900">
+                {scopedProject?.name || "全部协作内容"}
+              </h2>
               <p className="mt-1 text-xs text-slate-500">最近编辑优先 · 仅显示你可访问的内容</p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -657,22 +686,22 @@ function HubContent({ projectId = "", initialKind = "ALL", initialView = "files"
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[740px] text-left text-sm">
-                <thead className="bg-slate-50 text-xs text-slate-500">
+                <thead className="border-b border-slate-300 bg-slate-50 text-[10px] uppercase tracking-[0.14em] text-slate-500">
                   <tr>
                     {["名称", "类型", "所属项目", "最近编辑人", "编辑时间", "权限"].map((h) => (
-                      <th key={h} className="px-5 py-3 font-medium">
+                      <th key={h} className="px-5 py-3 font-semibold">
                         {h}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-200">
                   {visible.map((d) => {
                     const t =
                       types.find((t) => t.id === (d.kind === "MARKDOWN" ? "DOCUMENT" : d.kind)) ||
                       types[0];
                     return (
-                      <tr key={d.id} className="hover:bg-indigo-50/30">
+                      <tr key={d.id} className="transition hover:bg-white/70">
                         <td className="px-5 py-4">
                           <span className="contents">
                             {d.href ? (
@@ -680,7 +709,7 @@ function HubContent({ projectId = "", initialKind = "ALL", initialView = "files"
                                 href={d.href}
                                 className="flex w-full items-center gap-3 text-left font-medium"
                               >
-                                <span className={"rounded-lg p-2 " + t.color}>
+                                <span className={"rounded-sm p-2 " + t.color}>
                                   <t.icon size={18} />
                                 </span>
                                 <span className="max-w-[340px] truncate">{d.title}</span>
@@ -691,7 +720,7 @@ function HubContent({ projectId = "", initialKind = "ALL", initialView = "files"
                                 onClick={() => void open(d)}
                                 className="flex w-full items-center gap-3 text-left font-medium"
                               >
-                                <span className={"rounded-lg p-2 " + t.color}>
+                                <span className={"rounded-sm p-2 " + t.color}>
                                   <t.icon size={18} />
                                 </span>
                                 <span className="max-w-[340px] truncate">{d.title}</span>
@@ -709,7 +738,7 @@ function HubContent({ projectId = "", initialKind = "ALL", initialView = "files"
                           {displayDate(d.date)}
                         </td>
                         <td className="px-5 py-4">
-                          <span className="whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-600">
+                          <span className="whitespace-nowrap rounded-sm border border-slate-300 px-2 py-1 text-[11px] text-slate-600">
                             {roleLabel(d.role)}
                           </span>
                         </td>
@@ -723,19 +752,23 @@ function HubContent({ projectId = "", initialKind = "ALL", initialView = "files"
         </Card>
         {!projectId && (
           <section>
-            <h2 className="mb-3 text-sm font-semibold text-slate-700">按项目进入</h2>
-            <div className="grid gap-3 md:grid-cols-3">
+            <p className="eyebrow">Projects</p>
+            <h2 className="display-title mt-1.5 text-xl text-slate-900">按项目进入</h2>
+            <div className="mt-3 grid gap-2 md:grid-cols-3">
               {projects.map((p) => (
                 <Link
                   key={p.id}
                   href={"/projects/" + p.id + "/content"}
-                  className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 text-sm hover:border-indigo-300"
+                  className="group flex items-center justify-between border border-slate-300 bg-white/60 p-4 text-sm transition hover:border-slate-900 hover:bg-white"
                 >
-                  <span className="flex items-center gap-2">
-                    <FolderOpen size={17} className="text-indigo-500" />
+                  <span className="flex items-center gap-2 font-medium text-slate-800">
+                    <FolderOpen size={17} className="text-indigo-600" />
                     {p.name}
                   </span>
-                  <ArrowUpRight size={15} />
+                  <ArrowUpRight
+                    size={15}
+                    className="text-slate-400 transition group-hover:text-indigo-600"
+                  />
                 </Link>
               ))}
             </div>

@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import {
-  Card,
   Button,
   Badge,
   Modal,
@@ -248,8 +247,9 @@ function ProjectSpace() {
   const currentWorkspace = workspaces.find((workspace) => workspace.id === workspaceFilter);
 
   return (
-    <div className="mx-auto max-w-[1440px] px-4 py-6 md:px-8 md:py-8">
+    <div className="page-enter mx-auto max-w-[1440px] px-4 py-8 md:px-10 md:py-12">
       <PageHeader
+        eyebrow="Projects"
         title="项目空间"
         description="工作区与项目共用一个入口。按工作区分组，在一个页面完成创建、编辑、状态流转与交付。"
       >
@@ -267,7 +267,7 @@ function ProjectSpace() {
         ) : null}
       </PageHeader>
 
-      <div className="mb-6 grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mb-8 grid grid-cols-2 border-y border-slate-300 md:grid-cols-4">
         {[
           { label: "当前视图项目", value: projects.length, icon: FolderKanban },
           { label: "进行中", value: activeCount, icon: ArrowUpRight },
@@ -277,33 +277,32 @@ function ProjectSpace() {
             value: projects.filter((project) => project.status === "DELIVERED").length,
             icon: ArrowRight,
           },
-        ].map((stat) => {
+        ].map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <Card key={stat.label} className="flex items-center gap-3 p-4">
-              <span className="grid h-9 w-9 place-items-center rounded-xl bg-slate-100 text-slate-500">
-                <Icon size={16} />
-              </span>
-              <div>
-                <p className="text-xl font-semibold leading-none tracking-tight text-slate-900">
-                  {stat.value}
-                </p>
-                <p className="mt-1 text-[11px] text-slate-500">{stat.label}</p>
-              </div>
-            </Card>
+            <div
+              key={stat.label}
+              className={`relative px-3 py-5 md:px-5 ${index ? "border-l border-slate-200" : ""}`}
+            >
+              <Icon size={14} className="text-slate-400" />
+              <p className="display-title mt-3 text-[2.2rem] leading-none text-slate-900">
+                {stat.value}
+              </p>
+              <p className="mt-2 text-xs text-slate-500">{stat.label}</p>
+            </div>
           );
         })}
       </div>
 
-      <div className="rounded-2xl border border-slate-200/80 bg-white p-2.5 shadow-[0_2px_12px_-6px_rgba(15,23,42,0.12)]">
-        <div className="flex flex-wrap items-center gap-2">
+      <div className="mb-5 border-b border-slate-300">
+        <div className="flex flex-wrap items-center gap-2 pb-3">
           <button
             type="button"
             onClick={() => setWorkspaceFilter("")}
-            className={`rounded-xl px-3 py-2 text-sm font-medium transition ${
+            className={`rounded-sm px-3 py-1.5 text-sm font-medium transition ${
               !workspaceFilter
                 ? "bg-slate-900 text-white"
-                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                : "text-slate-600 hover:bg-white/70 hover:text-slate-900"
             }`}
           >
             全部工作区
@@ -314,15 +313,15 @@ function ProjectSpace() {
                 key={workspace.id}
                 type="button"
                 onClick={() => setWorkspaceFilter(workspace.id)}
-                className={`whitespace-nowrap rounded-xl px-3 py-2 text-sm transition ${
+                className={`whitespace-nowrap rounded-sm px-3 py-1.5 text-sm transition ${
                   workspaceFilter === workspace.id
-                    ? "bg-indigo-50 font-medium text-indigo-700 ring-1 ring-inset ring-indigo-200"
-                    : "text-slate-600 hover:bg-slate-100"
+                    ? "border border-slate-900 font-medium text-slate-900"
+                    : "text-slate-600 hover:bg-white/70"
                 }`}
                 aria-pressed={workspaceFilter === workspace.id}
               >
                 {workspace.name}
-                <span className="ml-1.5 text-[11px] text-slate-400">
+                <span className="ml-1.5 font-mono text-[10px] text-slate-400">
                   {workspace._count.projects}
                 </span>
               </button>
@@ -380,35 +379,39 @@ function ProjectSpace() {
           ) : null}
         </div>
       ) : (
-        <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {visible.map((project) => (
+        <div className="mt-6 grid gap-px overflow-hidden border border-slate-300 bg-slate-300 md:grid-cols-2 xl:grid-cols-3">
+          {visible.map((project, index) => (
             <article
               key={project.id}
-              className="group flex flex-col rounded-2xl border border-slate-200/80 bg-white p-5 shadow-[0_2px_12px_-7px_rgba(15,23,42,0.16)] transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_16px_40px_-24px_rgba(15,23,42,0.35)]"
+              className="group relative flex flex-col bg-[#fffdf7] p-5 transition hover:bg-white"
             >
+              <span className="absolute left-0 top-0 h-[2px] w-0 bg-indigo-600 transition-all duration-300 group-hover:w-full" />
               <div className="flex items-start justify-between gap-2">
-                <Badge tone={STATUS_TONE[project.status]}>{STATUS_LABEL[project.status]}</Badge>
-                <span className="truncate text-[11px] text-slate-400">
-                  {project.workspace.name}
+                <span className="font-mono text-[10px] text-slate-400">
+                  P{String(index + 1).padStart(2, "0")}
                 </span>
+                <Badge tone={STATUS_TONE[project.status]}>{STATUS_LABEL[project.status]}</Badge>
               </div>
               <Link
                 href={`/projects/${project.id}`}
-                className="mt-3 text-lg font-semibold tracking-tight text-slate-900 hover:text-indigo-700"
+                className="display-title mt-5 text-[1.4rem] leading-tight text-slate-900 transition group-hover:text-indigo-700"
               >
                 {project.name}
               </Link>
-              <p className="mt-1.5 line-clamp-2 min-h-[2.5rem] text-sm leading-5 text-slate-500">
+              <p className="mt-2 line-clamp-2 min-h-[2.5rem] text-sm leading-6 text-slate-500">
                 {project.description || "暂无描述"}
               </p>
-              <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
+              <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.12em] text-slate-400">
+                {project.workspace.name}
+              </p>
+              <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-500">
                 <span>负责人 {project.owner.name}</span>
-                <span className="text-slate-300">·</span>
+                <span className="text-slate-300">/</span>
                 <span>{project._count.tasks} 个任务</span>
-                <span className="text-slate-300">·</span>
+                <span className="text-slate-300">/</span>
                 <span>{project._count.files} 个文件</span>
               </div>
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200 pt-3">
                 <Link
                   href={`/projects/${project.id}`}
                   className="inline-flex items-center gap-1 text-xs font-medium text-slate-600 hover:text-indigo-700"

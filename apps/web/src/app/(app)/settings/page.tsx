@@ -45,8 +45,9 @@ export default function SettingsPage() {
   }, [query, hasPerm]);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-6 md:px-8 md:py-8">
+    <div className="page-enter mx-auto max-w-5xl px-4 py-8 md:px-10 md:py-12">
       <PageHeader
+        eyebrow="Settings"
         title="设置"
         description="成员、权限、审计与系统能力集中在这里；日常协作仍留在项目空间与协作空间。"
       />
@@ -101,8 +102,8 @@ export default function SettingsPage() {
                   const Icon = item.icon;
                   return (
                     <Link key={item.href} href={item.href} className="group block">
-                      <Card className="flex h-full items-start gap-3 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_34px_-22px_rgba(15,23,42,0.35)]">
-                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-500 transition group-hover:bg-indigo-50 group-hover:text-indigo-600">
+                      <Card className="flex h-full items-start gap-3 p-4 transition duration-200 hover:border-slate-900 hover:bg-white">
+                        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-sm bg-slate-200 text-slate-600 transition group-hover:bg-indigo-600 group-hover:text-white">
                           <Icon size={16} />
                         </span>
                         <span className="min-w-0 flex-1">
@@ -141,8 +142,8 @@ function PersonalSection() {
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <Link href="/settings/persona" className="group block">
-          <Card className="flex h-full items-start gap-3 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_34px_-22px_rgba(15,23,42,0.35)]">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-500 transition group-hover:bg-violet-50 group-hover:text-violet-600">
+          <Card className="flex h-full items-start gap-3 p-4 transition duration-200 hover:border-slate-900 hover:bg-white">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-sm bg-slate-200 text-slate-600 transition group-hover:bg-indigo-600 group-hover:text-white">
               <UserRound size={16} />
             </span>
             <span className="min-w-0 flex-1">
@@ -150,7 +151,7 @@ function PersonalSection() {
                 <span className="text-sm font-medium text-slate-800">我的数字分身</span>
                 <ArrowUpRight
                   size={13}
-                  className="shrink-0 text-slate-300 transition group-hover:text-indigo-500"
+                  className="shrink-0 text-slate-300 transition group-hover:text-indigo-600"
                 />
               </span>
               <span className="mt-1 block text-xs leading-5 text-slate-500">
@@ -160,8 +161,8 @@ function PersonalSection() {
           </Card>
         </Link>
         <Link href="/account/security" className="group block">
-          <Card className="flex h-full items-start gap-3 p-4 transition hover:border-slate-300">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-500 group-hover:bg-indigo-50 group-hover:text-indigo-600">
+          <Card className="flex h-full items-start gap-3 p-4 transition hover:border-slate-900 hover:bg-white">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-sm bg-slate-200 text-slate-600 transition group-hover:bg-indigo-600 group-hover:text-white">
               <UserCog size={16} />
             </span>
             <span className="min-w-0 flex-1">

@@ -1,9 +1,9 @@
-'use client';
-import { useEffect, useState, useCallback, useRef } from 'react';
-import PageHeader from '@/components/PageHeader';
-import { Card, Button } from '@/components/ui';
-import { api } from '@/lib/api';
-import { RefreshCw } from 'lucide-react';
+"use client";
+import { useEffect, useState, useCallback, useRef } from "react";
+import PageHeader from "@/components/PageHeader";
+import { Card, Button } from "@/components/ui";
+import { api } from "@/lib/api";
+import { RefreshCw } from "lucide-react";
 
 type ServerInfo = {
   host: {
@@ -32,7 +32,7 @@ type ServerInfo = {
 
 function formatBytes(bytes: number): string {
   if (!bytes || bytes < 1024) return `${bytes} B`;
-  const units = ['KB', 'MB', 'GB', 'TB'];
+  const units = ["KB", "MB", "GB", "TB"];
   let value = bytes;
   let i = -1;
   do {
@@ -51,19 +51,35 @@ function formatUptime(seconds: number): string {
   return `${m}分钟`;
 }
 
-function Meter({ percent, tone = 'blue' }: { percent: number; tone?: 'blue' | 'amber' | 'red' }) {
-  const color = percent >= 90 ? 'bg-red-500' : percent >= 75 ? 'bg-amber-500' : tone === 'blue' ? 'bg-blue-500' : 'bg-emerald-500';
+function Meter({ percent, tone = "blue" }: { percent: number; tone?: "blue" | "amber" | "red" }) {
+  const color =
+    percent >= 90
+      ? "bg-red-500"
+      : percent >= 75
+        ? "bg-amber-500"
+        : tone === "blue"
+          ? "bg-blue-500"
+          : "bg-emerald-500";
   return (
     <div className="w-full h-2 rounded-full bg-slate-100 overflow-hidden">
-      <div className={`h-full rounded-full transition-all duration-700 ${color}`} style={{ width: `${Math.min(percent, 100)}%` }} />
+      <div
+        className={`h-full rounded-full transition-all duration-700 ${color}`}
+        style={{ width: `${Math.min(percent, 100)}%` }}
+      />
     </div>
   );
 }
 
 function MetricCard({
-  label, value, sub, percent,
+  label,
+  value,
+  sub,
+  percent,
 }: {
-  label: string; value: string; sub?: string; percent: number;
+  label: string;
+  value: string;
+  sub?: string;
+  percent: number;
 }) {
   return (
     <Card className="p-5">
@@ -82,7 +98,7 @@ export default function ServerMonitorPage() {
   const timerRef = useRef<ReturnType<typeof setInterval>>();
 
   const load = useCallback(async () => {
-    const { data: res } = await api.get('/monitor/server');
+    const { data: res } = await api.get("/monitor/server");
     setData(res);
   }, []);
 
@@ -95,10 +111,11 @@ export default function ServerMonitorPage() {
   if (!data) return <div className="text-sm text-slate-500">加载中...</div>;
 
   return (
-    <div>
-      <PageHeader title="服务监控" description="宿主机与 Node 运行时的实时资源指标（5 秒刷新）">
+    <div className="page-enter mx-auto max-w-[1440px] px-4 py-8 md:px-10 md:py-10">
+      <PageHeader eyebrow="Monitor" title="服务监控" description="宿主机与 Node 运行时的实时资源指标（5 秒刷新）">
         <Button variant="secondary" onClick={load}>
-          <RefreshCw className="w-4 h-4 mr-1.5" />刷新
+          <RefreshCw className="w-4 h-4 mr-1.5" />
+          刷新
         </Button>
       </PageHeader>
 
@@ -138,7 +155,10 @@ export default function ServerMonitorPage() {
             <InfoRow k="主机名" v={data.host.hostname} />
             <InfoRow k="系统" v={`${data.host.platform} (${data.host.arch})`} />
             <InfoRow k="系统运行时长" v={formatUptime(data.host.osUptimeSeconds)} />
-            <InfoRow k="平均负载" v={data.host.loadAverage.map((n) => n.toFixed(2)).join(' · ') || 'N/A (Windows)'} />
+            <InfoRow
+              k="平均负载"
+              v={data.host.loadAverage.map((n) => n.toFixed(2)).join(" · ") || "N/A (Windows)"}
+            />
           </dl>
         </Card>
 
@@ -148,7 +168,10 @@ export default function ServerMonitorPage() {
             <InfoRow k="版本 / PID" v={`${data.node.version} · ${data.node.pid}`} />
             <InfoRow k="进程运行时长" v={formatUptime(data.node.uptimeSeconds)} />
             <InfoRow k="RSS 常驻内存" v={formatBytes(data.node.rss)} />
-            <InfoRow k="External / ArrayBuffers" v={`${formatBytes(data.node.external)} / ${formatBytes(data.node.arrayBuffers)}`} />
+            <InfoRow
+              k="External / ArrayBuffers"
+              v={`${formatBytes(data.node.external)} / ${formatBytes(data.node.arrayBuffers)}`}
+            />
             <InfoRow
               k="事件循环延迟 (mean/p99/max)"
               v={`${data.node.eventLoopDelayMs.mean} / ${data.node.eventLoopDelayMs.p99} / ${data.node.eventLoopDelayMs.max} ms`}

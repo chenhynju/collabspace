@@ -1,9 +1,9 @@
-'use client';
-import { useEffect, useState, useCallback } from 'react';
-import PageHeader from '@/components/PageHeader';
-import { Card, Button, Badge, Input, Field, InlineError } from '@/components/ui';
-import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth';
+"use client";
+import { useEffect, useState, useCallback } from "react";
+import PageHeader from "@/components/PageHeader";
+import { Card, Button, Badge, Input, Field, InlineError } from "@/components/ui";
+import { api } from "@/lib/api";
+import { useAuthStore } from "@/store/auth";
 
 export default function BillingPage() {
   const hasPerm = useAuthStore((s) => s.hasPerm);
@@ -13,20 +13,20 @@ export default function BillingPage() {
   const [error, setError] = useState<string | null>(null);
 
   // webhook 模拟器
-  const [eventId, setEventId] = useState('evt-demo-001');
+  const [eventId, setEventId] = useState("evt-demo-001");
   const [amount, setAmount] = useState(50000);
   const [simLog, setSimLog] = useState<string[]>([]);
   const [simBusy, setSimBusy] = useState(false);
 
   const refresh = useCallback(async () => {
-    const [o, p] = await Promise.all([
-      api.get('/billing/overview'),
-      api.get('/billing/plans'),
-    ]);
+    const [o, p] = await Promise.all([api.get("/billing/overview"), api.get("/billing/plans")]);
     setOverview(o.data);
     setPlans(p.data);
-    if (hasPerm('billing:manage')) {
-      api.get('/billing/events').then((r) => setEvents(r.data)).catch(() => setEvents([]));
+    if (hasPerm("billing:manage")) {
+      api
+        .get("/billing/events")
+        .then((r) => setEvents(r.data))
+        .catch(() => setEvents([]));
     }
   }, [hasPerm]);
 
@@ -38,10 +38,10 @@ export default function BillingPage() {
     setError(null);
     if (!confirm(`确认在沙盒环境切换到「${code}」套餐？不会产生真实支付。`)) return;
     try {
-      await api.post('/billing/subscribe', { planCode: code, interval: 'monthly' });
+      await api.post("/billing/subscribe", { planCode: code, interval: "monthly" });
       await refresh();
     } catch (e: any) {
-      setError(e.response?.data?.message ?? '变更失败');
+      setError(e.response?.data?.message ?? "变更失败");
     }
   };
 
@@ -52,23 +52,23 @@ export default function BillingPage() {
     const orgId = overview.organization.id;
     const before = overview.entitlement.aiCreditsTotal;
     const body = {
-      provider: 'stripe-sandbox',
+      provider: "stripe-sandbox",
       eventId,
-      type: 'entitlement.grant_ai_credits',
+      type: "entitlement.grant_ai_credits",
       organizationId: orgId,
       payload: { amount: Number(amount) },
     };
     try {
-      const r1 = await api.post('/billing/webhook', body);
-      const mid = (await api.get('/billing/overview')).data.entitlement.aiCreditsTotal;
-      const r2 = await api.post('/billing/webhook', body);
-      const after = (await api.get('/billing/overview')).data.entitlement.aiCreditsTotal;
+      const r1 = await api.post("/billing/webhook", body);
+      const mid = (await api.get("/billing/overview")).data.entitlement.aiCreditsTotal;
+      const r2 = await api.post("/billing/webhook", body);
+      const after = (await api.get("/billing/overview")).data.entitlement.aiCreditsTotal;
 
       setSimLog([
         `发送前 AI 总额度：${before}`,
         `第 1 次事件：${JSON.stringify(r1.data)} → 额度变为 ${mid}（+${amount}）`,
         `第 2 次事件：${JSON.stringify(r2.data)} → 额度保持 ${after}`,
-        mid === after ? '✅ 重复事件被幂等拦截，权益未重复增加' : '❌ 幂等失败',
+        mid === after ? "✅ 重复事件被幂等拦截，权益未重复增加" : "❌ 幂等失败",
       ]);
       await refresh();
     } catch (e: any) {
@@ -82,8 +82,9 @@ export default function BillingPage() {
   const seatsUsed = overview?.activeSeats ?? 0;
 
   return (
-    <div className="p-6">
+    <div className="page-enter mx-auto max-w-[1200px] px-4 py-8 md:px-10 md:py-10">
       <PageHeader
+        eyebrow="Billing"
         title="套餐与权益"
         description="服务替身：当前为沙盒环境，所有变更不产生真实扣款"
       />
@@ -93,7 +94,7 @@ export default function BillingPage() {
       {/* 当前权益 */}
       {overview ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <Stat label="当前套餐" value={overview.organization.plan?.name ?? '-'} />
+          <Stat label="当前套餐" value={overview.organization.plan?.name ?? "-"} />
           <Stat
             label="席位使用"
             value={`${seatsUsed} / ${ent.seatsIncluded}`}
@@ -108,7 +109,7 @@ export default function BillingPage() {
       ) : null}
 
       {/* 套餐选择 */}
-      {hasPerm('billing:change') ? (
+      {hasPerm("billing:change") ? (
         <div className="grid md:grid-cols-3 gap-4 mb-6">
           {plans.map((p) => {
             const current = overview?.organization.plan?.code === p.code;
@@ -127,15 +128,17 @@ export default function BillingPage() {
                 <ul className="mt-4 space-y-1.5 text-xs text-slate-600">
                   <li>{p.seatsIncluded} 个席位</li>
                   <li>{(p.aiCredits / 10000).toFixed(0)} 万 AI tokens/月</li>
-                  <li>{p.maxProjects} 个项目 · {p.storageGb} GB 存储</li>
+                  <li>
+                    {p.maxProjects} 个项目 · {p.storageGb} GB 存储
+                  </li>
                 </ul>
                 <Button
                   className="w-full mt-5"
-                  variant={current ? 'secondary' : 'primary'}
+                  variant={current ? "secondary" : "primary"}
                   disabled={current}
                   onClick={() => subscribe(p.code)}
                 >
-                  {current ? '使用中' : '沙盒切换'}
+                  {current ? "使用中" : "沙盒切换"}
                 </Button>
               </Card>
             );
@@ -144,7 +147,7 @@ export default function BillingPage() {
       ) : null}
 
       {/* webhook 幂等模拟 */}
-      {hasPerm('billing:change') ? (
+      {hasPerm("billing:change") ? (
         <Card className="p-5 mb-6">
           <h2 className="text-sm font-semibold text-slate-700 mb-1">Webhook 幂等模拟器（AT05）</h2>
           <p className="text-xs text-slate-400 mb-4">
@@ -163,20 +166,20 @@ export default function BillingPage() {
             </Field>
             <div className="flex items-end">
               <Button onClick={simulateDuplicate} disabled={simBusy} className="w-full">
-                {simBusy ? '模拟中…' : '发送同一事件两次'}
+                {simBusy ? "模拟中…" : "发送同一事件两次"}
               </Button>
             </div>
           </div>
           {simLog.length > 0 ? (
             <pre className="bg-slate-900 text-slate-100 text-xs rounded-lg p-4 whitespace-pre-wrap">
-              {simLog.join('\n')}
+              {simLog.join("\n")}
             </pre>
           ) : null}
         </Card>
       ) : null}
 
       {/* 计费事件 */}
-      {hasPerm('billing:manage') ? (
+      {hasPerm("billing:manage") ? (
         <Card className="p-5">
           <h2 className="text-sm font-semibold text-slate-700 mb-3">计费事件（最近 50 条）</h2>
           {events.length === 0 ? (
@@ -197,7 +200,9 @@ export default function BillingPage() {
                     <td className="py-2 pr-3 text-slate-600">{e.provider}</td>
                     <td className="py-2 pr-3 text-slate-600">{e.eventId}</td>
                     <td className="py-2 pr-3 text-slate-600">{e.type}</td>
-                    <td className="py-2 text-slate-400">{new Date(e.createdAt).toLocaleString()}</td>
+                    <td className="py-2 text-slate-400">
+                      {new Date(e.createdAt).toLocaleString()}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -212,7 +217,9 @@ export default function BillingPage() {
 function Stat({ label, value, warn }: { label: string; value: string; warn?: boolean }) {
   return (
     <Card className="p-4">
-      <div className={`text-lg font-semibold ${warn ? 'text-red-600' : 'text-slate-800'}`}>{value}</div>
+      <div className={`text-lg font-semibold ${warn ? "text-red-600" : "text-slate-800"}`}>
+        {value}
+      </div>
       <div className="text-xs text-slate-500 mt-1">{label}</div>
     </Card>
   );

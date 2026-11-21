@@ -154,7 +154,7 @@ export default function NavDrawer({
     <div className="fixed inset-0 z-[60]">
       <button
         aria-label="关闭导航遮罩"
-        className="absolute inset-0 bg-slate-950/35 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-slate-950/45 backdrop-blur-[2px]"
         onClick={onClose}
       />
       <div
@@ -163,20 +163,22 @@ export default function NavDrawer({
         role="dialog"
         aria-modal="true"
         aria-label="工作台菜单"
-        className="absolute inset-y-0 left-0 flex w-[368px] max-w-[94vw] flex-col border-r border-slate-200/80 bg-white shadow-[0_24px_80px_-24px_rgba(15,23,42,0.45)] animate-[nav-drawer-in_180ms_cubic-bezier(.2,.8,.2,1)]"
+        className="absolute inset-y-0 left-0 flex w-[392px] max-w-[94vw] flex-col border-r border-black/40 bg-[#191914] text-[#f4efe5] shadow-[0_24px_80px_-24px_rgba(15,23,42,0.6)] animate-[nav-drawer-in_180ms_cubic-bezier(.2,.8,.2,1)]"
       >
-        <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-5 pb-4 pt-5">
+        <div className="flex items-start justify-between gap-3 border-b border-white/10 px-5 pb-5 pt-6">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="grid h-8 w-8 place-items-center rounded-xl bg-slate-900 text-white">
+            <div className="flex items-center gap-2.5">
+              <span className="grid h-8 w-8 place-items-center rounded-sm bg-indigo-600 text-white">
                 <Building2 size={16} />
               </span>
               <div>
-                <p className="text-sm font-semibold tracking-tight text-slate-900">CollabSpace</p>
-                <p className="text-xs text-slate-400">{org?.name ?? "尚未选择组织"}</p>
+                <p className="display-title text-[19px] leading-none text-[#fffdf7]">CollabSpace</p>
+                <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-white/40">
+                  {org?.name ?? "尚未选择组织"}
+                </p>
               </div>
             </div>
-            <p className="mt-3 text-xs leading-5 text-slate-500">
+            <p className="mt-4 max-w-[17rem] text-xs leading-5 text-white/45">
               常用入口、工作区与项目都在这里，需要时再展开。
             </p>
           </div>
@@ -184,17 +186,17 @@ export default function NavDrawer({
             type="button"
             aria-label="关闭导航"
             onClick={onClose}
-            className="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+            className="rounded-md p-2 text-white/40 transition hover:bg-white/10 hover:text-white"
           >
             <X size={18} />
           </button>
         </div>
 
-        <div className="border-b border-slate-100 px-4 py-3">
+        <div className="border-b border-white/10 px-4 py-3">
           <label className="relative block">
             <Search
               size={16}
-              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/35"
             />
             <input
               ref={search}
@@ -202,7 +204,7 @@ export default function NavDrawer({
               onChange={(event) => setQuery(event.target.value)}
               aria-label="搜索菜单、工作区和项目"
               placeholder="搜索页面、工作区或项目"
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-9 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/15"
+              className="w-full rounded-md border border-white/15 bg-white/5 py-2.5 pl-9 pr-9 text-sm text-[#fffdf7] placeholder:text-white/30 focus:border-indigo-400 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
             />
             {query ? (
               <button
@@ -212,18 +214,18 @@ export default function NavDrawer({
                   setQuery("");
                   search.current?.focus();
                 }}
-                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1 text-slate-400 hover:bg-slate-200/70"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-sm p-1 text-white/40 hover:bg-white/10 hover:text-white"
               >
                 <X size={14} />
               </button>
             ) : null}
           </label>
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className="mt-3 flex flex-wrap gap-2">
             {hasPerm("project:add") ? (
               <Link
                 href="/projects?new=project"
                 onClick={closeOnNavigate}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-2.5 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100"
+                className="inline-flex items-center gap-1.5 rounded-sm bg-indigo-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-indigo-500"
               >
                 <Plus size={13} /> 新建项目
               </Link>
@@ -235,7 +237,7 @@ export default function NavDrawer({
                   onClose();
                   router.push("/projects?panel=workspaces&new=workspace");
                 }}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-slate-100 px-2.5 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-200"
+                className="inline-flex items-center gap-1.5 rounded-sm border border-white/20 px-2.5 py-1.5 text-xs font-medium text-white/70 hover:border-white/40 hover:text-white"
               >
                 <Plus size={13} /> 新建工作区
               </button>
@@ -246,17 +248,20 @@ export default function NavDrawer({
                 onClose();
                 onOpenAgent();
               }}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
+              className="inline-flex items-center gap-1.5 rounded-sm bg-violet-800 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-violet-700"
             >
               <Sparkles size={13} /> 问问助理
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-3 py-3">
-          {filteredGroups.map((group) => (
-            <section key={group.label} className="mb-4">
-              <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+        <div className="flex-1 overflow-y-auto px-3 py-4">
+          {filteredGroups.map((group, index) => (
+            <section key={group.label} className="mb-5">
+              <p className="flex items-center gap-2 px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-white/35">
+                <span className="font-mono text-indigo-400">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
                 {group.label}
               </p>
               <div className="space-y-0.5">
@@ -271,22 +276,27 @@ export default function NavDrawer({
                         href={item.href}
                         onClick={closeOnNavigate}
                         aria-current={active ? "page" : undefined}
-                        className={`group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition ${
+                        className={`group relative flex items-center gap-3 rounded-md py-2.5 pl-3 pr-3 text-sm transition ${
                           active
-                            ? "bg-slate-900 text-white shadow-sm"
-                            : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                            ? "bg-[#f4efe5] font-medium text-[#191914]"
+                            : "text-white/65 hover:bg-white/5 hover:text-white"
                         }`}
                       >
+                        {active ? (
+                          <span className="absolute inset-y-2 left-0 w-[3px] bg-indigo-600" />
+                        ) : null}
                         <Icon
                           size={16}
                           className={
-                            active ? "text-white" : "text-slate-400 group-hover:text-slate-600"
+                            active ? "text-indigo-700" : "text-white/35 group-hover:text-white/70"
                           }
                         />
                         <span className="flex-1">{item.label}</span>
                         {item.href === "/projects" ? (
                           <span
-                            className={`text-[11px] ${active ? "text-white/60" : "text-slate-400"}`}
+                            className={`text-[10px] uppercase tracking-[0.14em] ${
+                              active ? "text-slate-500" : "text-white/25"
+                            }`}
                           >
                             统一入口
                           </span>
@@ -299,8 +309,8 @@ export default function NavDrawer({
           ))}
 
           {filteredSettings.length ? (
-            <section className="mb-4">
-              <p className="px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+            <section className="mb-5">
+              <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-[0.24em] text-white/35">
                 设置与系统
               </p>
               <div className="space-y-0.5">
@@ -312,11 +322,13 @@ export default function NavDrawer({
                         key={item.href}
                         href={item.href}
                         onClick={closeOnNavigate}
-                        className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                        className="group flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/5 hover:text-white"
                       >
-                        <Icon size={16} className="text-slate-400 group-hover:text-slate-600" />
+                        <Icon size={16} className="text-white/35 group-hover:text-white/70" />
                         <span className="flex-1">{item.label}</span>
-                        <span className="text-[11px] text-slate-400">{group.label}</span>
+                        <span className="text-[10px] uppercase tracking-[0.12em] text-white/25">
+                          {group.label}
+                        </span>
                       </Link>
                     );
                   }),
@@ -326,23 +338,23 @@ export default function NavDrawer({
           ) : null}
 
           {hasPerm("workspace:list") ? (
-            <section className="mb-4">
-              <div className="flex items-center justify-between px-3 pb-1.5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+            <section className="mb-5">
+              <div className="flex items-center justify-between px-3 pb-2">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/35">
                   工作区与项目
                 </p>
                 <Link
                   href="/projects?panel=workspaces"
                   onClick={closeOnNavigate}
-                  className="inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-indigo-600"
+                  className="inline-flex items-center gap-1 text-[11px] text-white/35 hover:text-white"
                 >
                   管理 <Settings2 size={12} />
                 </Link>
               </div>
               {!loaded ? (
-                <p className="px-3 py-2 text-xs text-slate-400">正在读取…</p>
+                <p className="px-3 py-2 text-xs text-white/35">正在读取…</p>
               ) : filteredWorkspaces.length === 0 ? (
-                <p className="px-3 py-2 text-xs text-slate-400">
+                <p className="px-3 py-2 text-xs text-white/35">
                   {query ? "没有匹配的工作区" : "还没有工作区"}
                 </p>
               ) : (
@@ -356,27 +368,27 @@ export default function NavDrawer({
                           project.name.toLowerCase().includes(query.trim().toLowerCase())),
                     );
                     return (
-                      <div key={ws.id} className="rounded-xl border border-transparent">
+                      <div key={ws.id} className="rounded-md border border-transparent">
                         <Link
                           href={`/projects?workspace=${ws.id}`}
                           onClick={closeOnNavigate}
-                          className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-white/65 hover:bg-white/5 hover:text-white"
                         >
-                          <FolderClosed size={15} className="text-slate-400" />
+                          <FolderClosed size={15} className="text-white/35" />
                           <span className="flex-1 truncate">{ws.name}</span>
-                          <span className="text-[11px] text-slate-400">
+                          <span className="text-[11px] text-white/30">
                             {ws._count?.projects ?? children.length}
                           </span>
-                          <ChevronRight size={13} className="text-slate-300" />
+                          <ChevronRight size={13} className="text-white/25" />
                         </Link>
                         {children.length ? (
-                          <div className="mb-1 ml-5 space-y-0.5 border-l border-slate-100 pl-2">
+                          <div className="mb-1 ml-5 space-y-0.5 border-l border-white/10 pl-2">
                             {children.slice(0, 5).map((project) => (
                               <Link
                                 key={project.id}
                                 href={`/projects/${project.id}`}
                                 onClick={closeOnNavigate}
-                                className="block truncate rounded-lg px-2 py-1.5 text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                                className="block truncate rounded-sm px-2 py-1.5 text-xs text-white/40 hover:bg-white/5 hover:text-white"
                               >
                                 {project.name}
                               </Link>
@@ -385,7 +397,7 @@ export default function NavDrawer({
                               <Link
                                 href={`/projects?workspace=${ws.id}`}
                                 onClick={closeOnNavigate}
-                                className="block px-2 py-1 text-[11px] text-slate-400 hover:text-indigo-600"
+                                className="block px-2 py-1 text-[11px] text-white/30 hover:text-white"
                               >
                                 还有 {children.length - 5} 个…
                               </Link>
@@ -398,16 +410,16 @@ export default function NavDrawer({
                 </div>
               )}
               {query && filteredProjects.length ? (
-                <div className="mt-2 border-t border-slate-100 pt-2">
-                  <p className="px-3 py-1 text-[11px] text-slate-400">项目搜索结果</p>
+                <div className="mt-2 border-t border-white/10 pt-2">
+                  <p className="px-3 py-1 text-[11px] text-white/30">项目搜索结果</p>
                   {filteredProjects.map((project) => (
                     <Link
                       key={project.id}
                       href={`/projects/${project.id}`}
                       onClick={closeOnNavigate}
-                      className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-white/65 hover:bg-white/5 hover:text-white"
                     >
-                      <ArrowRight size={14} className="text-slate-400" />
+                      <ArrowRight size={14} className="text-white/35" />
                       <span className="truncate">{project.name}</span>
                     </Link>
                   ))}
@@ -417,32 +429,34 @@ export default function NavDrawer({
           ) : null}
         </div>
 
-        <div className="border-t border-slate-100 px-3 py-3">
+        <div className="border-t border-white/10 px-3 py-3">
           <div className="flex items-center gap-3 px-1 py-1.5">
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
+            <span className="grid h-9 w-9 place-items-center rounded-md bg-indigo-600 text-sm font-semibold text-white">
               {(user?.name ?? "?").slice(0, 1)}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-slate-800">{user?.name}</p>
-              <p className="truncate text-xs text-slate-400">{user?.email}</p>
+              <p className="truncate text-sm font-medium text-[#fffdf7]">{user?.name}</p>
+              <p className="truncate text-xs text-white/35">{user?.email}</p>
             </div>
           </div>
           <div className="mt-1 space-y-0.5">
             <Link
               href="/settings"
               onClick={closeOnNavigate}
-              className="group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+              className="group flex items-center gap-3 rounded-md px-3 py-2.5 text-sm text-white/65 transition hover:bg-white/5 hover:text-white"
             >
-              <Settings2 size={16} className="text-slate-400 group-hover:text-slate-600" />
+              <Settings2 size={16} className="text-white/35 group-hover:text-white/70" />
               <span className="flex-1">设置与组织</span>
-              <span className="text-[11px] text-slate-400">成员、权限、系统</span>
+              <span className="text-[10px] uppercase tracking-[0.12em] text-white/25">
+                成员、权限、系统
+              </span>
             </Link>
             <Link
               href="/account/security"
               onClick={closeOnNavigate}
-              className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/50 transition hover:bg-white/5 hover:text-white"
             >
-              <UserCog size={15} className="text-slate-400" />
+              <UserCog size={15} className="text-white/35" />
               账号安全
             </Link>
             <LogoutButton />
@@ -463,9 +477,9 @@ function LogoutButton() {
         logout();
         router.push("/login");
       }}
-      className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+      className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm text-white/50 transition hover:bg-white/5 hover:text-white"
     >
-      <LogOut size={15} className="text-slate-400" />
+      <LogOut size={15} className="text-white/35" />
       退出登录
     </button>
   );

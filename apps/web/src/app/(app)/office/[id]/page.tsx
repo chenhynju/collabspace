@@ -363,24 +363,25 @@ export default function OfficePage({ params }: { params: { id: string } }) {
   );
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-slate-100 text-slate-900">
-      <header className="flex flex-none items-center gap-2 border-b border-slate-200/80 bg-white/90 px-2.5 py-2 backdrop-blur-md lg:gap-3 lg:px-4">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-[#f4efe5] text-slate-900">
+      <header className="flex flex-none items-center gap-2 border-b border-slate-300 bg-[#fffdf7]/95 px-2.5 py-2 backdrop-blur-md lg:gap-3 lg:px-4">
         <Link
           aria-label="返回协作空间"
           href={state?.projectId ? "/projects/" + state.projectId + "/content" : "/collaboration"}
-          className="grid size-9 shrink-0 place-items-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+          className="grid size-9 shrink-0 place-items-center rounded-sm text-slate-500 transition hover:bg-slate-900 hover:text-white"
         >
           <ChevronLeft className="size-5" aria-hidden="true" />
         </Link>
         <span
-          className={`grid size-9 shrink-0 place-items-center rounded-xl ring-1 ring-inset ${
+          className={`grid size-9 shrink-0 place-items-center rounded-sm ring-1 ring-inset ${
             fileStyle?.tile ?? "bg-slate-100 text-slate-500 ring-slate-200"
           }`}
         >
           <FileIcon className="size-4" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <h1 className="truncate text-[15px] font-semibold tracking-tight text-slate-900 lg:text-base">
+          <p className="eyebrow hidden sm:block">Office Studio</p>
+          <h1 className="display-title truncate text-lg leading-tight text-slate-900 lg:text-xl">
             {state?.title || "Office 协作文件"}
           </h1>
           <div className="mt-0.5 flex min-w-0 items-center gap-2 text-[11px] text-slate-500">
@@ -390,29 +391,29 @@ export default function OfficePage({ params }: { params: { id: string } }) {
               </Badge>
             )}
             <span className="inline-flex items-center gap-1.5">
-              <span className={`size-1.5 rounded-full ${statusTone}`} />
+              <span className={`size-1.5 ${statusTone}`} />
               {PHASE_LABEL[phase] ?? "正在连接"}
             </span>
-            {state && <span className="hidden text-slate-400 sm:inline">v{state.revision ?? "—"}</span>}
+            {state && <span className="hidden font-mono text-[10px] text-slate-400 sm:inline">v{state.revision ?? "—"}</span>}
             {fileStyle && (
               <span className={`hidden md:inline ${fileStyle.accent}`}>{fileStyle.label}</span>
             )}
             {userCount > 0 && (
               <span
-                className="ml-0.5 hidden items-center -space-x-1.5 sm:inline-flex"
+                className="ml-0.5 hidden items-center -space-x-1 sm:inline-flex"
                 aria-label="在线参与者"
               >
                 {users.map((user: any) => (
                   <span
                     key={user.id}
                     title={user.name}
-                    className="grid size-5 place-items-center rounded-full bg-indigo-100 text-[9px] font-semibold text-indigo-700 ring-2 ring-white"
+                    className="grid size-5 place-items-center rounded-sm bg-indigo-600 text-[9px] font-semibold text-white ring-2 ring-[#fffdf7]"
                   >
                     {String(user.name || "?").slice(0, 1)}
                   </span>
                 ))}
                 {userCount > users.length && (
-                  <span className="grid size-5 place-items-center rounded-full bg-slate-100 text-[9px] font-semibold text-slate-500 ring-2 ring-white">
+                  <span className="grid size-5 place-items-center rounded-sm bg-slate-300 text-[9px] font-semibold text-slate-700 ring-2 ring-[#fffdf7]">
                     +{userCount - users.length}
                   </span>
                 )}
@@ -422,14 +423,14 @@ export default function OfficePage({ params }: { params: { id: string } }) {
         </div>
       </header>
 
-      <div className="flex flex-none items-center gap-1 overflow-x-auto border-b border-slate-200 bg-white/70 px-2 py-1.5 lg:hidden">
+      <div className="flex flex-none items-center gap-1 overflow-x-auto border-b border-slate-300 bg-[#fffdf7]/70 px-2 py-1.5 lg:hidden">
         {actions}
       </div>
 
       {error && (
         <div
           role="alert"
-          className="mx-2 mt-2 flex flex-none flex-wrap items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700 lg:mx-3"
+          className="mx-2 mt-2 flex flex-none flex-wrap items-center gap-2 border-l-2 border-indigo-600 bg-indigo-50 px-3 py-2 text-xs text-indigo-800 lg:mx-3"
         >
           <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
           <span className="min-w-0 flex-1">{error}</span>
@@ -441,7 +442,7 @@ export default function OfficePage({ params }: { params: { id: string } }) {
         </div>
       )}
       {state?.error && phase !== "FROZEN" && (
-        <div className="mx-2 mt-2 flex flex-none flex-wrap items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 lg:mx-3">
+        <div className="mx-2 mt-2 flex flex-none flex-wrap items-center gap-2 border-l-2 border-amber-600 bg-amber-50 px-3 py-2 text-xs text-amber-900 lg:mx-3">
           <AlertTriangle className="size-4 shrink-0" aria-hidden="true" />
           <span className="min-w-0 flex-1">
             有未合并的保存结果，当前版本号仅代表已确认保存。
@@ -455,7 +456,7 @@ export default function OfficePage({ params }: { params: { id: string } }) {
       <div className="flex min-h-0 flex-1 gap-2 p-2 lg:gap-3 lg:p-3">
         <nav
           aria-label="文件操作"
-          className="hidden w-14 shrink-0 flex-col items-center gap-1 rounded-2xl border border-slate-200 bg-white/90 p-2 shadow-sm lg:flex"
+          className="hidden w-14 shrink-0 flex-col items-center gap-1 rounded-sm border border-slate-300 bg-[#fffdf7] p-2 lg:flex"
         >
           {actions}
         </nav>
@@ -463,7 +464,7 @@ export default function OfficePage({ params }: { params: { id: string } }) {
         <main className="relative flex min-w-0 flex-1 flex-col gap-2">
           <section
             data-office-ready={ready}
-            className="relative min-h-[360px] min-w-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_18px_50px_-30px_rgba(15,23,42,0.35)]"
+            className="relative min-h-[360px] min-w-0 flex-1 overflow-hidden rounded-sm border border-slate-300 bg-white"
           >
             {!ready && (
               <div className="absolute inset-0 z-10 grid place-items-center bg-white/90 backdrop-blur-[2px]">

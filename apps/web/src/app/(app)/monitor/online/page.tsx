@@ -1,10 +1,10 @@
-'use client';
-import { useEffect, useState, useCallback, useRef } from 'react';
-import PageHeader from '@/components/PageHeader';
-import { Card, Button, Empty, Badge } from '@/components/ui';
-import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth';
-import { RefreshCw, LogOut, Wifi } from 'lucide-react';
+"use client";
+import { useEffect, useState, useCallback, useRef } from "react";
+import PageHeader from "@/components/PageHeader";
+import { Card, Button, Empty, Badge } from "@/components/ui";
+import { api } from "@/lib/api";
+import { useAuthStore } from "@/store/auth";
+import { RefreshCw, LogOut, Wifi } from "lucide-react";
 
 type OnlineData = {
   totalConnections: number;
@@ -20,7 +20,7 @@ export default function OnlineUsersPage() {
   const timerRef = useRef<ReturnType<typeof setInterval>>();
 
   const load = useCallback(async () => {
-    const { data: res } = await api.get('/monitor/online');
+    const { data: res } = await api.get("/monitor/online");
     setData(res);
     setLoading(false);
   }, []);
@@ -32,16 +32,21 @@ export default function OnlineUsersPage() {
   }, [load]);
 
   const forceLogout = async (socketId: string) => {
-    if (!confirm('强制下线该连接？用户需重新连接。')) return;
+    if (!confirm("强制下线该连接？用户需重新连接。")) return;
     await api.delete(`/monitor/online/${socketId}`);
     load();
   };
 
   return (
-    <div>
-      <PageHeader title="在线用户" description="当前通过 WebSocket 接入的实时连接；集群部署时跨节点聚合">
+    <div className="page-enter mx-auto max-w-[1440px] px-4 py-8 md:px-10 md:py-10">
+      <PageHeader
+        eyebrow="Monitor"
+        title="在线用户"
+        description="当前通过 WebSocket 接入的实时连接；集群部署时跨节点聚合"
+      >
         <Button variant="secondary" onClick={load}>
-          <RefreshCw className="w-4 h-4 mr-1.5" />刷新
+          <RefreshCw className="w-4 h-4 mr-1.5" />
+          刷新
         </Button>
       </PageHeader>
 
@@ -52,7 +57,7 @@ export default function OnlineUsersPage() {
               <Wifi className="w-5 h-5 text-blue-600" />
             </div>
             <div>
-              <div className="text-2xl font-semibold text-slate-900">{data?.totalUsers ?? '-'}</div>
+              <div className="text-2xl font-semibold text-slate-900">{data?.totalUsers ?? "-"}</div>
               <div className="text-xs text-slate-500">在线用户</div>
             </div>
           </div>
@@ -63,7 +68,9 @@ export default function OnlineUsersPage() {
               <RefreshCw className="w-5 h-5 text-emerald-600" />
             </div>
             <div>
-              <div className="text-2xl font-semibold text-slate-900">{data?.totalConnections ?? '-'}</div>
+              <div className="text-2xl font-semibold text-slate-900">
+                {data?.totalConnections ?? "-"}
+              </div>
               <div className="text-xs text-slate-500">活动连接（含多端）</div>
             </div>
           </div>
@@ -72,9 +79,13 @@ export default function OnlineUsersPage() {
 
       <Card className="overflow-hidden">
         {loading || !data ? (
-          <div className="p-4"><Empty text="加载中..." /></div>
+          <div className="p-4">
+            <Empty text="加载中..." />
+          </div>
         ) : !data.users.length ? (
-          <div className="p-4"><Empty text="当前没有在线用户" /></div>
+          <div className="p-4">
+            <Empty text="当前没有在线用户" />
+          </div>
         ) : (
           <table className="w-full">
             <thead>
@@ -89,7 +100,10 @@ export default function OnlineUsersPage() {
               {data.users.map((u) => {
                 const conns = data.connections.filter((c) => c.userId === u.userId);
                 return (
-                  <tr key={u.userId} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 align-top">
+                  <tr
+                    key={u.userId}
+                    className="border-b border-slate-100 last:border-0 hover:bg-slate-50 align-top"
+                  >
                     <td className="py-2.5 px-4">
                       <div className="text-sm text-slate-800">{u.name}</div>
                       <div className="text-xs text-slate-500">{u.email}</div>
@@ -100,22 +114,25 @@ export default function OnlineUsersPage() {
                     <td className="py-2.5 px-4">
                       <div className="flex flex-col gap-1">
                         {conns.map((c) => (
-                          <code key={c.socketId} className="text-[11px] text-slate-500 font-mono">{c.socketId}</code>
+                          <code key={c.socketId} className="text-[11px] text-slate-500 font-mono">
+                            {c.socketId}
+                          </code>
                         ))}
                       </div>
                     </td>
                     <td className="py-2.5 px-4 text-right">
-                      {hasPerm('monitor:online:force-logout') && conns.map((c) => (
-                        <Button
-                          key={c.socketId}
-                          size="sm"
-                          variant="ghost"
-                          title={`强制下线 ${c.socketId}`}
-                          onClick={() => forceLogout(c.socketId)}
-                        >
-                          <LogOut className="w-3.5 h-3.5 text-red-500" />
-                        </Button>
-                      ))}
+                      {hasPerm("monitor:online:force-logout") &&
+                        conns.map((c) => (
+                          <Button
+                            key={c.socketId}
+                            size="sm"
+                            variant="ghost"
+                            title={`强制下线 ${c.socketId}`}
+                            onClick={() => forceLogout(c.socketId)}
+                          >
+                            <LogOut className="w-3.5 h-3.5 text-red-500" />
+                          </Button>
+                        ))}
                     </td>
                   </tr>
                 );

@@ -1,12 +1,10 @@
-'use client';
-import { useEffect, useState, useCallback } from 'react';
-import PageHeader from '@/components/PageHeader';
-import {
-  Card, Button, Input, Select, Field, Empty, Badge,
-} from '@/components/ui';
-import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth';
-import { Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+"use client";
+import { useEffect, useState, useCallback } from "react";
+import PageHeader from "@/components/PageHeader";
+import { Card, Button, Input, Select, Field, Empty, Badge } from "@/components/ui";
+import { api } from "@/lib/api";
+import { useAuthStore } from "@/store/auth";
+import { Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 
 type LoginLogRow = {
   id: string;
@@ -27,22 +25,27 @@ export default function LoginLogsPage() {
   const [data, setData] = useState<PageData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const [username, setUsername] = useState('');
-  const [ip, setIp] = useState('');
-  const [status, setStatus] = useState('');
+  const [username, setUsername] = useState("");
+  const [ip, setIp] = useState("");
+  const [status, setStatus] = useState("");
   const [page, setPage] = useState(1);
 
   const PAGE_SIZE = 20;
 
-  const load = useCallback(async (p = 1) => {
-    const { data: res } = await api.get('/login-logs', {
-      params: { username, ip, status, page: p, pageSize: PAGE_SIZE },
-    });
-    setData(res);
-    setLoading(false);
-  }, [username, ip, status]);
+  const load = useCallback(
+    async (p = 1) => {
+      const { data: res } = await api.get("/login-logs", {
+        params: { username, ip, status, page: p, pageSize: PAGE_SIZE },
+      });
+      setData(res);
+      setLoading(false);
+    },
+    [username, ip, status],
+  );
 
-  useEffect(() => { load(1); }, [load]);
+  useEffect(() => {
+    load(1);
+  }, [load]);
 
   const search = () => {
     setPage(1);
@@ -55,31 +58,38 @@ export default function LoginLogsPage() {
   };
 
   const remove = async (id: string) => {
-    if (!confirm('确认删除该条登录日志？')) return;
+    if (!confirm("确认删除该条登录日志？")) return;
     await api.delete(`/login-logs/${id}`);
     load(page);
   };
 
   const clearAll = async () => {
-    if (!confirm('确认清空全部登录日志？此操作不可恢复')) return;
-    await api.post('/login-logs/clear');
+    if (!confirm("确认清空全部登录日志？此操作不可恢复")) return;
+    await api.post("/login-logs/clear");
     load(1);
   };
 
   const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 0;
 
   return (
-    <div>
-      <PageHeader title="登录日志" description="登录、注册、邮箱验证、密码重置等认证事件的审计线索">
-        {hasPerm('logininfor:remove') && (
-          <Button variant="danger" onClick={clearAll}>清空日志</Button>
+    <div className="page-enter mx-auto max-w-[1440px] px-4 py-8 md:px-10 md:py-10">
+      <PageHeader eyebrow="System" title="登录日志" description="登录、注册、邮箱验证、密码重置等认证事件的审计线索">
+        {hasPerm("logininfor:remove") && (
+          <Button variant="danger" onClick={clearAll}>
+            清空日志
+          </Button>
         )}
       </PageHeader>
 
       <Card className="p-4 mb-4">
         <div className="flex flex-wrap items-end gap-2">
           <Field label="账号">
-            <Input value={username} onChange={(e) => setUsername(e.target.value)} className="w-48" placeholder="邮箱" />
+            <Input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-48"
+              placeholder="邮箱"
+            />
           </Field>
           <Field label="IP">
             <Input value={ip} onChange={(e) => setIp(e.target.value)} className="w-40" />
@@ -97,9 +107,13 @@ export default function LoginLogsPage() {
 
       <Card className="overflow-hidden">
         {loading || !data ? (
-          <div className="p-4"><Empty text="加载中..." /></div>
+          <div className="p-4">
+            <Empty text="加载中..." />
+          </div>
         ) : !data.items.length ? (
-          <div className="p-4"><Empty text="暂无登录日志" /></div>
+          <div className="p-4">
+            <Empty text="暂无登录日志" />
+          </div>
         ) : (
           <>
             <table className="w-full">
@@ -115,18 +129,27 @@ export default function LoginLogsPage() {
               </thead>
               <tbody>
                 {data.items.map((l) => (
-                  <tr key={l.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                    <td className="py-2.5 px-4 text-sm text-slate-800 whitespace-nowrap">{l.username}</td>
-                    <td className="py-2.5 px-4 text-xs text-slate-500 font-mono">{l.ip ?? '-'}</td>
-                    <td className="py-2.5 px-4">
-                      {l.status === 0 ? <Badge tone="green">成功</Badge> : <Badge tone="red">失败</Badge>}
+                  <tr
+                    key={l.id}
+                    className="border-b border-slate-100 last:border-0 hover:bg-slate-50"
+                  >
+                    <td className="py-2.5 px-4 text-sm text-slate-800 whitespace-nowrap">
+                      {l.username}
                     </td>
-                    <td className="py-2.5 px-4 text-xs text-slate-500">{l.msg ?? '-'}</td>
+                    <td className="py-2.5 px-4 text-xs text-slate-500 font-mono">{l.ip ?? "-"}</td>
+                    <td className="py-2.5 px-4">
+                      {l.status === 0 ? (
+                        <Badge tone="green">成功</Badge>
+                      ) : (
+                        <Badge tone="red">失败</Badge>
+                      )}
+                    </td>
+                    <td className="py-2.5 px-4 text-xs text-slate-500">{l.msg ?? "-"}</td>
                     <td className="py-2.5 px-4 text-xs text-slate-500 whitespace-nowrap">
-                      {new Date(l.createdAt).toLocaleString('zh-CN')}
+                      {new Date(l.createdAt).toLocaleString("zh-CN")}
                     </td>
                     <td className="py-2.5 px-4 text-right">
-                      {hasPerm('logininfor:remove') && (
+                      {hasPerm("logininfor:remove") && (
                         <Button size="sm" variant="ghost" onClick={() => remove(l.id)} title="删除">
                           <Trash2 className="w-3.5 h-3.5 text-red-500" />
                         </Button>
@@ -139,12 +162,24 @@ export default function LoginLogsPage() {
 
             {totalPages > 1 && (
               <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100">
-                <span className="text-xs text-slate-500">共 {data.total} 条，第 {page}/{totalPages} 页</span>
+                <span className="text-xs text-slate-500">
+                  共 {data.total} 条，第 {page}/{totalPages} 页
+                </span>
                 <div className="flex gap-1">
-                  <Button size="sm" variant="secondary" disabled={page <= 1} onClick={() => changePage(page - 1)}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={page <= 1}
+                    onClick={() => changePage(page - 1)}
+                  >
                     <ChevronLeft className="w-3.5 h-3.5" />
                   </Button>
-                  <Button size="sm" variant="secondary" disabled={page >= totalPages} onClick={() => changePage(page + 1)}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    disabled={page >= totalPages}
+                    onClick={() => changePage(page + 1)}
+                  >
                     <ChevronRight className="w-3.5 h-3.5" />
                   </Button>
                 </div>

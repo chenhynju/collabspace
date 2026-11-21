@@ -104,34 +104,44 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const org = organizations.find((item) => item.id === currentOrgId);
 
   return (
-    <div className="min-h-screen bg-[#f7f8fa]">
+    <div className="min-h-screen">
       {!immersive ? (
-        <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
-          <div className="mx-auto flex h-16 max-w-[1600px] items-center gap-2 px-3 sm:px-5">
+        <header className="sticky top-0 z-40 border-b border-slate-300/80 bg-[#f4efe5]/92 backdrop-blur-md">
+          <div aria-hidden="true" className="h-[3px] bg-indigo-600" />
+          <div className="mx-auto flex h-[61px] max-w-[1600px] items-center gap-2 px-3 sm:px-5">
             <button
               type="button"
               aria-label={navOpen ? "收起导航" : "打开导航"}
               aria-expanded={navOpen}
               aria-controls="app-navigation"
               onClick={() => setNavOpen((value) => !value)}
-              className="inline-flex items-center gap-2 rounded-xl px-2.5 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+              className="inline-flex items-center gap-2 rounded-md px-2.5 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-900 hover:text-white"
             >
-              <Menu size={19} />
-              <span className="hidden sm:inline">菜单</span>
+              <Menu size={18} />
+              <span className="hidden text-[11px] font-semibold uppercase tracking-[0.16em] sm:inline">
+                菜单
+              </span>
             </button>
 
             <Link
               href="/dashboard"
-              className="flex shrink-0 items-center gap-2 rounded-xl px-1.5 py-1"
+              className="group flex shrink-0 items-center gap-2.5 rounded-md px-1.5 py-1"
               aria-label="CollabSpace 首页"
             >
-              <span className="grid h-8 w-8 place-items-center rounded-xl bg-slate-900 text-white shadow-sm">
-                <span className="block h-3.5 w-3.5 rounded-[4px] border-2 border-white/90" />
+              <span className="grid h-8 w-8 place-items-center rounded-sm bg-slate-900 transition group-hover:bg-indigo-600">
+                <span className="block h-3 w-3 border-2 border-[#f4efe5]" />
               </span>
-              <span className="hidden text-[15px] font-semibold tracking-tight text-slate-900 md:inline">
-                CollabSpace
+              <span className="hidden items-baseline gap-2 md:flex">
+                <span className="display-title text-[19px] leading-none text-slate-900">
+                  CollabSpace
+                </span>
+                <span className="text-[9px] font-semibold uppercase tracking-[0.24em] text-slate-400">
+                  Atelier
+                </span>
               </span>
             </Link>
+
+            <span aria-hidden="true" className="mx-1 hidden h-6 w-px bg-slate-300 sm:block" />
 
             <div ref={orgButton} className="relative min-w-0">
               <button
@@ -139,15 +149,15 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 aria-label="切换组织"
                 aria-expanded={orgMenu}
                 onClick={() => setOrgMenu((value) => !value)}
-                className="flex max-w-[132px] items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 sm:max-w-[190px]"
+                className="flex max-w-[132px] items-center gap-1.5 rounded-md px-2 py-2 text-xs font-medium text-slate-600 transition hover:bg-slate-900/5 hover:text-slate-900 sm:max-w-[190px]"
               >
-                <Building2 size={13} className="shrink-0 text-slate-400" />
+                <Building2 size={13} className="shrink-0 text-indigo-600" />
                 <span className="truncate">{org?.name ?? "选择组织"}</span>
-                <ChevronDown size={13} className="shrink-0 text-slate-400" />
+                <ChevronDown size={12} className="shrink-0 text-slate-400" />
               </button>
               {orgMenu ? (
-                <div className="absolute left-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl shadow-slate-900/10">
-                  <p className="px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">
+                <div className="absolute left-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-lg border border-slate-300 bg-[#fffdf7] p-1.5 shadow-xl shadow-slate-900/15">
+                  <p className="px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
                     当前组织
                   </p>
                   {organizations.map((item) => (
@@ -155,7 +165,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                       key={item.id}
                       type="button"
                       onClick={() => void switchOrg(item.id)}
-                      className={`flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm transition ${
+                      className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm transition ${
                         item.id === currentOrgId
                           ? "bg-slate-900 text-white"
                           : "text-slate-700 hover:bg-slate-100"
@@ -163,11 +173,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     >
                       <Building2
                         size={14}
-                        className={item.id === currentOrgId ? "text-white/70" : "text-slate-400"}
+                        className={item.id === currentOrgId ? "text-white/60" : "text-slate-400"}
                       />
                       <span className="truncate">{item.name}</span>
                     </button>
                   ))}
+                  <div className="my-1 h-px bg-slate-200" />
                   <button
                     type="button"
                     onClick={() => {
@@ -175,7 +186,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                       logout();
                       router.push("/login");
                     }}
-                    className="mt-1 flex w-full items-center gap-2 rounded-xl px-2.5 py-2 text-left text-sm text-slate-500 hover:bg-slate-100"
+                    className="flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-sm text-slate-500 hover:bg-slate-100 hover:text-slate-900"
                   >
                     退出登录
                   </button>
@@ -183,7 +194,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               ) : null}
             </div>
 
-            <nav aria-label="主导航" className="ml-2 hidden items-center gap-0.5 lg:flex">
+            <nav aria-label="主导航" className="ml-3 hidden h-[61px] items-stretch gap-0.5 lg:flex">
               {PRIMARY_NAV.filter((item) => canSee(hasPerm, item)).map((item) => {
                 const active = isNavItemActive(pathname, item);
                 return (
@@ -191,39 +202,42 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     key={item.href}
                     href={item.href}
                     aria-current={active ? "page" : undefined}
-                    className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
+                    className={`relative inline-flex items-center px-3.5 text-[13px] font-medium tracking-tight transition ${
                       active
-                        ? "bg-slate-100 text-slate-900"
-                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
+                        ? "text-slate-900"
+                        : "text-slate-500 hover:text-slate-900"
                     }`}
                   >
                     {item.label}
+                    {active ? (
+                      <span className="absolute inset-x-2 bottom-0 h-[2px] bg-indigo-600" />
+                    ) : null}
                   </Link>
                 );
               })}
             </nav>
 
-            <div className="ml-auto flex items-center gap-1">
+            <div className="ml-auto flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setSearchOpen(true)}
                 aria-label="打开全局搜索"
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-400 transition hover:border-slate-300 hover:text-slate-600"
+                className="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white/60 px-2.5 py-2 text-xs text-slate-500 transition hover:border-slate-900 hover:text-slate-900"
               >
                 <Command size={13} />
                 <span className="hidden md:inline">全局搜索</span>
-                <kbd className="hidden rounded-md bg-slate-100 px-1.5 py-0.5 font-sans text-[10px] text-slate-500 md:inline">
+                <kbd className="hidden rounded-sm border border-slate-300 bg-slate-50 px-1.5 py-0.5 font-mono text-[10px] text-slate-500 md:inline">
                   ⌘K
                 </kbd>
               </button>
               <Link
                 href="/notifications"
                 aria-label={`通知中心${count ? `，${count} 条未读` : ""}`}
-                className="relative rounded-xl p-2.5 text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                className="relative rounded-md p-2.5 text-slate-500 transition hover:bg-slate-900/5 hover:text-slate-900"
               >
                 <Bell size={18} />
                 {count ? (
-                  <span className="absolute right-1.5 top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-indigo-600 px-1 text-[9px] font-semibold text-white">
+                  <span className="absolute right-1 top-1 grid h-4 min-w-4 place-items-center rounded-full bg-indigo-600 px-1 text-[9px] font-semibold text-white">
                     {count > 99 ? "99+" : count}
                   </span>
                 ) : null}
@@ -231,17 +245,17 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               <button
                 type="button"
                 onClick={() => setAgentOpen(true)}
-                className="inline-flex items-center gap-1.5 rounded-xl bg-slate-900 px-3 py-2 text-xs font-medium text-white shadow-sm transition hover:bg-slate-800"
+                className="inline-flex items-center gap-1.5 rounded-md bg-violet-800 px-3 py-2 text-xs font-medium text-white transition hover:bg-violet-900"
                 aria-label="打开 AI 工作助理"
               >
-                <Sparkles size={14} className="text-indigo-300" />
+                <Sparkles size={14} className="text-amber-300" />
                 <span className="hidden sm:inline">AI 助理</span>
               </button>
               <button
                 type="button"
                 onClick={() => setNavOpen(true)}
                 aria-label="打开工作台菜单和账号"
-                className="ml-0.5 grid h-9 w-9 place-items-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200 transition hover:bg-indigo-200"
+                className="ml-0.5 grid h-9 w-9 place-items-center rounded-md bg-indigo-600 text-sm font-semibold text-white transition hover:bg-indigo-700"
               >
                 {(user?.name ?? "?").slice(0, 1)}
               </button>
@@ -260,7 +274,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             aria-expanded={navOpen}
             aria-controls="app-navigation"
             onClick={() => setNavOpen((value) => !value)}
-            className="grid h-11 w-11 place-items-center rounded-2xl border border-slate-200 bg-white/95 text-slate-600 shadow-lg shadow-slate-900/10 backdrop-blur transition hover:text-slate-900"
+            className="grid h-11 w-11 place-items-center rounded-lg border border-slate-300 bg-[#fffdf7]/95 text-slate-600 shadow-lg shadow-slate-900/10 backdrop-blur transition hover:border-slate-900 hover:text-slate-900"
           >
             <Menu size={19} />
           </button>
@@ -268,7 +282,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             type="button"
             aria-label="打开 AI 工作助理"
             onClick={() => setAgentOpen(true)}
-            className="grid h-11 w-11 place-items-center rounded-2xl bg-slate-900 text-white shadow-lg shadow-slate-900/20 transition hover:bg-slate-800"
+            className="grid h-11 w-11 place-items-center rounded-lg bg-violet-800 text-white shadow-lg shadow-slate-900/20 transition hover:bg-violet-900"
           >
             <Sparkles size={18} />
           </button>

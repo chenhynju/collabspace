@@ -1,30 +1,44 @@
-'use client';
-import { useEffect, useState, useCallback } from 'react';
-import PageHeader from '@/components/PageHeader';
+"use client";
+import { useEffect, useState, useCallback } from "react";
+import PageHeader from "@/components/PageHeader";
 import {
-  Card, Button, Modal, Input, Select, Field, Empty, InlineError, Badge, Textarea,
-} from '@/components/ui';
-import { api } from '@/lib/api';
-import { useAuthStore } from '@/store/auth';
-import { Plus, Pencil, Trash2, Eye } from 'lucide-react';
+  Card,
+  Button,
+  Modal,
+  Input,
+  Select,
+  Field,
+  Empty,
+  InlineError,
+  Badge,
+  Textarea,
+} from "@/components/ui";
+import { api } from "@/lib/api";
+import { useAuthStore } from "@/store/auth";
+import { Plus, Pencil, Trash2, Eye } from "lucide-react";
 
 type NoticeRow = {
   id: string;
   title: string;
-  type: 'NOTICE' | 'ANNOUNCEMENT';
+  type: "NOTICE" | "ANNOUNCEMENT";
   content: string;
-  status: 'NORMAL' | 'DISABLED';
+  status: "NORMAL" | "DISABLED";
   readByMe: boolean;
   createdAt: string;
 };
 
-const emptyForm = { title: '', type: 'NOTICE' as NoticeRow['type'], content: '', status: 'NORMAL' as NoticeRow['status'] };
+const emptyForm = {
+  title: "",
+  type: "NOTICE" as NoticeRow["type"],
+  content: "",
+  status: "NORMAL" as NoticeRow["status"],
+};
 
 export default function NoticesPage() {
   const hasPerm = useAuthStore((s) => s.hasPerm);
   const [rows, setRows] = useState<NoticeRow[]>([]);
-  const [keyword, setKeyword] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
+  const [keyword, setKeyword] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
   const [loading, setLoading] = useState(true);
 
   const [detail, setDetail] = useState<NoticeRow | null>(null);
@@ -36,13 +50,15 @@ export default function NoticesPage() {
   const [saving, setSaving] = useState(false);
 
   const refresh = useCallback(async () => {
-    const { data } = await api.get('/notices');
+    const { data } = await api.get("/notices");
     setRows(data);
     setLoading(false);
     return data as NoticeRow[];
   }, []);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
   const openDetail = async (n: NoticeRow) => {
     setDetail(n);
@@ -69,7 +85,7 @@ export default function NoticesPage() {
 
   const save = async () => {
     if (!form.title.trim() || !form.content.trim()) {
-      setFormError('请填写标题和正文');
+      setFormError("请填写标题和正文");
       return;
     }
     setSaving(true);
@@ -82,11 +98,11 @@ export default function NoticesPage() {
     };
     try {
       if (editing) await api.patch(`/notices/${editing.id}`, payload);
-      else await api.post('/notices', payload);
+      else await api.post("/notices", payload);
       setEditOpen(false);
       await refresh();
     } catch (e: any) {
-      setFormError(e.response?.data?.message ?? '保存失败');
+      setFormError(e.response?.data?.message ?? "保存失败");
     } finally {
       setSaving(false);
     }
@@ -98,7 +114,7 @@ export default function NoticesPage() {
       await api.delete(`/notices/${n.id}`);
       await refresh();
     } catch (e: any) {
-      alert(e.response?.data?.message ?? '删除失败');
+      alert(e.response?.data?.message ?? "删除失败");
     }
   };
 
@@ -109,9 +125,13 @@ export default function NoticesPage() {
   });
 
   return (
-    <div>
-      <PageHeader title="通知公告" description="组织内向全体成员发布通知与公告，未读会在列表中标记">
-        {hasPerm('notice:add') && <Button onClick={openCreate}><Plus className="w-4 h-4" /> 发布公告</Button>}
+    <div className="page-enter mx-auto max-w-[1200px] px-4 py-8 md:px-10 md:py-10">
+      <PageHeader eyebrow="Notices" title="通知公告" description="组织内向全体成员发布通知与公告，未读会在列表中标记">
+        {hasPerm("notice:add") && (
+          <Button onClick={openCreate}>
+            <Plus className="w-4 h-4" /> 发布公告
+          </Button>
+        )}
       </PageHeader>
 
       <Card className="p-4 mb-4">
@@ -122,7 +142,11 @@ export default function NoticesPage() {
             onChange={(e) => setKeyword(e.target.value)}
             className="w-64"
           />
-          <Select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="w-32">
+          <Select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value)}
+            className="w-32"
+          >
             <option value="">全部类型</option>
             <option value="NOTICE">通知</option>
             <option value="ANNOUNCEMENT">公告</option>
@@ -132,7 +156,9 @@ export default function NoticesPage() {
 
       <Card className="overflow-hidden">
         {loading || !rows.length ? (
-          <div className="p-4"><Empty text={loading ? '加载中...' : '暂无通知公告'} /></div>
+          <div className="p-4">
+            <Empty text={loading ? "加载中..." : "暂无通知公告"} />
+          </div>
         ) : (
           <table className="w-full">
             <thead>
@@ -147,36 +173,55 @@ export default function NoticesPage() {
             </thead>
             <tbody>
               {filtered.map((n) => (
-                <tr key={n.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 cursor-pointer" onClick={() => openDetail(n)}>
+                <tr
+                  key={n.id}
+                  className="border-b border-slate-100 last:border-0 hover:bg-slate-50 cursor-pointer"
+                  onClick={() => openDetail(n)}
+                >
                   <td className="py-2.5 px-4">
-                    {n.type === 'NOTICE'
-                      ? <Badge tone="blue">通知</Badge>
-                      : <Badge tone="violet">公告</Badge>}
+                    {n.type === "NOTICE" ? (
+                      <Badge tone="blue">通知</Badge>
+                    ) : (
+                      <Badge tone="violet">公告</Badge>
+                    )}
                   </td>
                   <td className="py-2.5 px-4 text-sm text-slate-800">
                     {n.title}
-                    {n.status === 'DISABLED' && <span className="ml-2 text-xs text-slate-400">（草稿）</span>}
+                    {n.status === "DISABLED" && (
+                      <span className="ml-2 text-xs text-slate-400">（草稿）</span>
+                    )}
                   </td>
                   <td className="py-2.5 px-4">
-                    {n.status === 'NORMAL' ? <Badge tone="green">正常</Badge> : <Badge tone="slate">停用</Badge>}
+                    {n.status === "NORMAL" ? (
+                      <Badge tone="green">正常</Badge>
+                    ) : (
+                      <Badge tone="slate">停用</Badge>
+                    )}
                   </td>
                   <td className="py-2.5 px-4">
-                    {n.readByMe ? <span className="text-xs text-slate-400">已读</span> : <Badge tone="amber">未读</Badge>}
+                    {n.readByMe ? (
+                      <span className="text-xs text-slate-400">已读</span>
+                    ) : (
+                      <Badge tone="amber">未读</Badge>
+                    )}
                   </td>
                   <td className="py-2.5 px-4 text-xs text-slate-500 whitespace-nowrap">
-                    {new Date(n.createdAt).toLocaleString('zh-CN')}
+                    {new Date(n.createdAt).toLocaleString("zh-CN")}
                   </td>
-                  <td className="py-2.5 px-4 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                  <td
+                    className="py-2.5 px-4 text-right whitespace-nowrap"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <div className="inline-flex gap-1">
                       <Button size="sm" variant="ghost" onClick={() => openDetail(n)} title="查看">
                         <Eye className="w-3.5 h-3.5" />
                       </Button>
-                      {hasPerm('notice:edit') && (
+                      {hasPerm("notice:edit") && (
                         <Button size="sm" variant="ghost" onClick={() => openEdit(n)} title="编辑">
                           <Pencil className="w-3.5 h-3.5" />
                         </Button>
                       )}
-                      {hasPerm('notice:remove') && (
+                      {hasPerm("notice:remove") && (
                         <Button size="sm" variant="ghost" onClick={() => remove(n)} title="删除">
                           <Trash2 className="w-3.5 h-3.5 text-red-500" />
                         </Button>
@@ -191,12 +236,16 @@ export default function NoticesPage() {
       </Card>
 
       {/* 详情弹窗 */}
-      <Modal open={!!detail} onClose={() => setDetail(null)} title={detail?.title ?? ''} wide>
+      <Modal open={!!detail} onClose={() => setDetail(null)} title={detail?.title ?? ""} wide>
         {detail && (
           <div className="space-y-4">
             <div className="flex items-center gap-3 text-xs text-slate-500">
-              {detail.type === 'NOTICE' ? <Badge tone="blue">通知</Badge> : <Badge tone="violet">公告</Badge>}
-              <span>{new Date(detail.createdAt).toLocaleString('zh-CN')}</span>
+              {detail.type === "NOTICE" ? (
+                <Badge tone="blue">通知</Badge>
+              ) : (
+                <Badge tone="violet">公告</Badge>
+              )}
+              <span>{new Date(detail.createdAt).toLocaleString("zh-CN")}</span>
             </div>
             <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap border-t border-slate-100 pt-4">
               {detail.content}
@@ -206,14 +255,27 @@ export default function NoticesPage() {
       </Modal>
 
       {/* 编辑弹窗 */}
-      <Modal open={editOpen} onClose={() => setEditOpen(false)} title={editing ? '编辑公告' : '发布公告'} wide>
+      <Modal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        title={editing ? "编辑公告" : "发布公告"}
+        wide
+      >
         <div className="space-y-4">
           <div className="grid grid-cols-[1fr_140px] gap-4">
             <Field label="标题">
-              <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} />
+              <Input
+                value={form.title}
+                onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+              />
             </Field>
             <Field label="类型">
-              <Select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value as NoticeRow['type'] }))}>
+              <Select
+                value={form.type}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, type: e.target.value as NoticeRow["type"] }))
+                }
+              >
                 <option value="NOTICE">通知</option>
                 <option value="ANNOUNCEMENT">公告</option>
               </Select>
@@ -228,15 +290,24 @@ export default function NoticesPage() {
             />
           </Field>
           <Field label="状态" hint="停用状态为草稿，成员不可见">
-            <Select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as NoticeRow['status'] }))}>
+            <Select
+              value={form.status}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, status: e.target.value as NoticeRow["status"] }))
+              }
+            >
               <option value="NORMAL">正常发布</option>
               <option value="DISABLED">停用（草稿）</option>
             </Select>
           </Field>
           <InlineError message={formError} />
           <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
-            <Button variant="secondary" onClick={() => setEditOpen(false)}>取消</Button>
-            <Button onClick={save} disabled={saving}>{saving ? '保存中...' : '保存'}</Button>
+            <Button variant="secondary" onClick={() => setEditOpen(false)}>
+              取消
+            </Button>
+            <Button onClick={save} disabled={saving}>
+              {saving ? "保存中..." : "保存"}
+            </Button>
           </div>
         </div>
       </Modal>

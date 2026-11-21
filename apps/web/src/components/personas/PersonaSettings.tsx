@@ -249,7 +249,7 @@ function PersonaSession() {
   };
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 md:px-8 md:py-8">
+    <div className="page-enter mx-auto max-w-6xl px-4 py-8 md:px-10 md:py-10">
       <div className="mb-3">
         <Link
           href="/settings"
@@ -259,6 +259,7 @@ function PersonaSession() {
         </Link>
       </div>
       <PageHeader
+        eyebrow="Persona"
         title="我的数字分身"
         description="本人照片或视频只在本组织私有保存；真人形象与视频生成尚未接入。"
       />
