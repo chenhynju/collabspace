@@ -105,7 +105,7 @@ node node_modules/@playwright/test/cli.js test
 ## 当前状态
 
 - 生产站点：https://collabspace.purelamp.uk
-- 前端部署：`collabspace-1yk6b7f74-purelamp.vercel.app`（已别名）
+- 前端部署：`collabspace-iel3xqdex-purelamp.vercel.app`（已别名）
 - API 镜像：`collabspace-api:api-r20261121-11`
 - 提交：`e897487`（文档）/ `629f3c9`（白板与 AI 功能）；标签：`collabspace-20261122-docs`、`collabspace-20261121-board-ai`
 
@@ -120,7 +120,7 @@ node node_modules/@playwright/test/cli.js test
 - 真人数字人视频供应商未接入，只支持私有素材草稿；不会伪造成功或可播放结果。
 - 实时正文为单 collab 实例，跨实例/跨地域未验证。
 - 单文档 5MiB、WS 单帧 256KiB、白板 500 图元。
-- 白板连接线必须绑定两个图元，暂不支持自由起止点箭头；AI 单次最多 20 个操作，不支持删除/改色/改线型。
+- 白板支持图元间绑定连接线和空白处自由箭头；自由箭头不绑定图元，AI 连线只支持绑定。AI 单次最多 20 个操作，不支持删除/改色/改线型。
 - 语音为录音结束后 REST 识别/合成，不是流式字幕；无自动回退和自动重试。
 - 备份还原演练尚未完成。
 
@@ -131,6 +131,7 @@ node node_modules/@playwright/test/cli.js test
 - 界面/AI/语音：[UI-REDESIGN-AGENT-2026-11-20.md](evidence/collaboration/UI-REDESIGN-AGENT-2026-11-20.md)
 - ElevenLabs 生产验收：[voice-elevenlabs-online.json](evidence/collaboration/ui-editorial-2026-11-21/voice-elevenlabs-online.json)
 - 白板交互与 AI 改图：[BOARD-AI-INTERACTION-2026-11-21.md](evidence/collaboration/BOARD-AI-INTERACTION-2026-11-21.md)
+- 自由箭头与绑定箭头：[BOARD-ARROW-FREE-2026-11-22.md](evidence/collaboration/BOARD-ARROW-FREE-2026-11-22.md)
 
 验收口径：PASSED / BLOCKED / NOT_RUN 必须可复核；不以 HTTP 200、模型流返回或广播 hash 代替业务完成。
 

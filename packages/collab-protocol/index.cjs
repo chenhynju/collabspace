@@ -8,7 +8,7 @@ const auth = z
     org: z.string().min(1).max(100),
     user: z.string().min(1).max(100),
     docId: z.string().uuid(),
-    docSchema: z.union([z.literal(2),z.literal(3),z.literal(4)]).optional(),
+    docSchema: z.union([z.literal(2), z.literal(3), z.literal(4)]).optional(),
     ticket: z.string().regex(/^[a-f0-9]{64}$/),
   })
   .strict();
@@ -32,9 +32,7 @@ const frame = z.discriminatedUnion("type", [
     .object({
       v: z.literal(VERSION),
       type: z.literal("presence"),
-      selection: z
-        .object({ anchor: z.string().max(2000), head: z.string().max(2000) })
-        .nullable(),
+      selection: z.object({ anchor: z.string().max(2000), head: z.string().max(2000) }).nullable(),
       cursor: z
         .object({
           x: z.number().finite().min(-10000).max(10000),
@@ -87,6 +85,15 @@ const boardShape = z
       })
       .strict()
       .optional(),
+    points: z
+      .object({
+        x1: z.number().finite().min(-10000).max(10000),
+        y1: z.number().finite().min(-10000).max(10000),
+        x2: z.number().finite().min(-10000).max(10000),
+        y2: z.number().finite().min(-10000).max(10000),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 function validateBoard(shapes) {
@@ -95,29 +102,24 @@ function validateBoard(shapes) {
   for (const [id, shape] of entries) {
     z.string().uuid().parse(id);
     boardShape.parse(shape);
-    if (shape.parent && shape.type !== "mind")
-      throw Error("INVALID_MIND_PARENT");
-    if (
-      shape.type === "connector" &&
-      (!shape.binding || shape.binding.from === shape.binding.to)
-    )
+    if (shape.parent && shape.type !== "mind") throw Error("INVALID_MIND_PARENT");
+    if (shape.type === "connector" && !shape.binding && !shape.points)
       throw Error("INVALID_CONNECTOR");
-    if (shape.binding && shape.type !== "connector")
+    if (shape.type === "connector" && shape.binding && shape.binding.from === shape.binding.to)
       throw Error("INVALID_CONNECTOR");
+    if (shape.binding && shape.type !== "connector") throw Error("INVALID_CONNECTOR");
+    if (shape.points && shape.type !== "connector") throw Error("INVALID_CONNECTOR");
     // Missing endpoints are allowed after concurrent deletion; rendering hides
     // dangling links rather than resurrecting the deleted node.
     if (
       shape.binding &&
-      [shape.binding.from, shape.binding.to].some(
-        (key) => shapes[key]?.type === "connector",
-      )
+      [shape.binding.from, shape.binding.to].some((key) => shapes[key]?.type === "connector")
     )
       throw Error("INVALID_CONNECTOR");
     const seen = new Set([id]);
     let parent = shape.parent;
     while (parent && shapes[parent]) {
-      if (seen.has(parent) || shapes[parent].type !== "mind")
-        throw Error("INVALID_MIND_TREE");
+      if (seen.has(parent) || shapes[parent].type !== "mind") throw Error("INVALID_MIND_TREE");
       seen.add(parent);
       parent = shapes[parent].parent;
     }
@@ -136,10 +138,7 @@ function connectorPath(a, b, style = "elbow") {
       ? 1 / (Math.abs(dx) / (s.w / 2) + Math.abs(dy) / (s.h / 2))
       : s.type === "ellipse"
         ? 1 / Math.sqrt((dx / (s.w / 2)) ** 2 + (dy / (s.h / 2)) ** 2)
-        : Math.min(
-            dx ? s.w / 2 / Math.abs(dx) : Infinity,
-            dy ? s.h / 2 / Math.abs(dy) : Infinity,
-          );
+        : Math.min(dx ? s.w / 2 / Math.abs(dx) : Infinity, dy ? s.h / 2 / Math.abs(dy) : Infinity);
   const ta = boundary(a),
     tb = boundary(b);
   if (ta + tb >= 1) return "";
@@ -186,20 +185,12 @@ function layoutMindmap(items) {
   const values = Object.values(result),
     maxX = Math.max(1, ...values.map((g) => g.x)),
     maxY = Math.max(1, ...values.map((g) => g.y));
-  const obstacles = items.filter(
-    (s) => s.type !== "mind" && s.type !== "connector",
-  );
-  let left = Math.max(
-      80,
-      ...obstacles.map((s) => s.geometry.x + s.geometry.w + 100),
-    ),
+  const obstacles = items.filter((s) => s.type !== "mind" && s.type !== "connector");
+  let left = Math.max(80, ...obstacles.map((s) => s.geometry.x + s.geometry.w + 100)),
     top = 80;
   if (left > 6000) {
     left = 80;
-    top = Math.max(
-      80,
-      ...obstacles.map((s) => s.geometry.y + s.geometry.h + 100),
-    );
+    top = Math.max(80, ...obstacles.map((s) => s.geometry.y + s.geometry.h + 100));
   }
   if (top > 9000) throw Error("自动布局空间不足，请先移动其他图形");
   for (const g of values) {

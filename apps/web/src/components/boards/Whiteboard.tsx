@@ -74,12 +74,18 @@ function findLinkTarget(items: Item[], x: number, y: number, exclude: string, to
     );
 }
 function fitItems(items: Item[]) {
-  const nodes = items.filter((s) => s.type !== "connector");
+  const nodes = items.filter((s) => s.type !== "connector" || s.points);
   if (!nodes.length) return { x: 0, y: 0, zoom: 1 };
-  const x = Math.min(...nodes.map((s) => s.geometry.x)) - 50,
-    y = Math.min(...nodes.map((s) => s.geometry.y)) - 50;
-  const w = Math.max(...nodes.map((s) => s.geometry.x + s.geometry.w)) - x + 50,
-    h = Math.max(...nodes.map((s) => s.geometry.y + s.geometry.h)) - y + 50;
+  const xs = nodes.flatMap((s) =>
+      s.points ? [s.points.x1, s.points.x2] : [s.geometry.x, s.geometry.x + s.geometry.w],
+    ),
+    ys = nodes.flatMap((s) =>
+      s.points ? [s.points.y1, s.points.y2] : [s.geometry.y, s.geometry.y + s.geometry.h],
+    );
+  const x = Math.min(...xs) - 50,
+    y = Math.min(...ys) - 50;
+  const w = Math.max(...xs) - x + 50,
+    h = Math.max(...ys) - y + 50;
   return { x, y, zoom: Math.max(0.03, Math.min(1.5, 1200 / w, 800 / h)) };
 }
 export function BoardDrawing({
@@ -122,13 +128,16 @@ export function BoardDrawing({
         const { x, y, w, h } = item.geometry;
         if (item.type === "connector") {
           const a = items.find((s) => s.id === item.binding?.from),
-            b = items.find((s) => s.id === item.binding?.to);
-          if (!a || !b) return null;
-          const d = connectorPath(
-            { ...a.geometry, type: a.type },
-            { ...b.geometry, type: b.type },
-            item.binding?.style,
-          );
+            b = items.find((s) => s.id === item.binding?.to),
+            points = item.points;
+          if (!points && (!a || !b)) return null;
+          const d = points
+            ? `M ${points.x1} ${points.y1} L ${points.x2} ${points.y2}`
+            : connectorPath(
+                { ...a!.geometry, type: a!.type },
+                { ...b!.geometry, type: b!.type },
+                item.binding?.style,
+              );
           return (
             <g
               key={item.id}
@@ -150,8 +159,16 @@ export function BoardDrawing({
                 pointerEvents="none"
               />
               <text
-                x={(a.geometry.x + a.geometry.w / 2 + b.geometry.x + b.geometry.w / 2) / 2}
-                y={(a.geometry.y + a.geometry.h / 2 + b.geometry.y + b.geometry.h / 2) / 2 - 8}
+                x={
+                  points
+                    ? (points.x1 + points.x2) / 2
+                    : (a!.geometry.x + a!.geometry.w / 2 + b!.geometry.x + b!.geometry.w / 2) / 2
+                }
+                y={
+                  points
+                    ? (points.y1 + points.y2) / 2 - 8
+                    : (a!.geometry.y + a!.geometry.h / 2 + b!.geometry.y + b!.geometry.h / 2) / 2 - 8
+                }
                 textAnchor="middle"
                 fontSize="13"
                 fill="#334155"
@@ -349,6 +366,13 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     startX: number;
     startY: number;
   } | null>(null);
+  const [arrowDraft, setArrowDraft] = useState<{
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
+  } | null>(null);
+  const arrowStart = useRef<{ x: number; y: number } | null>(null);
   const [snap, setSnap] = useState(false);
   const [shapePanel, setShapePanel] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false),
@@ -466,6 +490,15 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     setTool("select");
     return id;
   };
+  const createFreeArrow = (start: { x: number; y: number }, end: { x: number; y: number }) => {
+    if (Math.hypot(end.x - start.x, end.y - start.y) < 8) return;
+    return create("connector", { x: 0, y: 0 }, {
+      geometry: { x: 0, y: 0, w: 20, h: 20 },
+      points: { x1: start.x, y1: start.y, x2: end.x, y2: end.y },
+      text: "",
+      fill: "#ffffff",
+    });
+  };
   const branch = (sibling = false) => {
     if (!active || active.type !== "mind") return;
     const parent = sibling ? active.parent : active.id;
@@ -580,8 +613,10 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       return;
     }
     if (tool === "arrow") {
-      setError("从一个图元拖到另一个图元，松开即可生成箭头。");
-      setTool("select");
+      arrowStart.current = p;
+      setArrowDraft({ x1: p.x, y1: p.y, x2: p.x, y2: p.y });
+      setSelected("");
+      e.currentTarget.setPointerCapture(e.pointerId);
       return;
     }
     if (tool !== "select") {
@@ -633,6 +668,15 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
   const move = (e: React.PointerEvent<SVGSVGElement>) => {
     const p = point(e),
       d = drag.current;
+    if (arrowStart.current) {
+      setArrowDraft({
+        x1: arrowStart.current.x,
+        y1: arrowStart.current.y,
+        x2: p.x,
+        y2: p.y,
+      });
+      return;
+    }
     if (connectingRef.current) {
       connectingRef.current = { ...connectingRef.current, x: p.x, y: p.y };
       setConnecting(connectingRef.current);
@@ -664,7 +708,14 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     d.latest = g;
     setItems((current) => current.map((s) => (s.id === d.id ? { ...s, geometry: g } : s)));
   };
-  const finish = () => {
+  const finish = (e?: React.PointerEvent<SVGSVGElement>) => {
+    const start = arrowStart.current;
+    if (start) {
+      arrowStart.current = null;
+      setArrowDraft(null);
+      if (e) createFreeArrow(start, point(e));
+      return;
+    }
     const link = connectingRef.current;
     if (link) {
       connectingRef.current = null;
@@ -682,7 +733,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
         );
         if (id) setSelected(id);
       } else {
-        setError("没有找到目标图元：请从一个图元拖到另一个图元上再松开。");
+        createFreeArrow({ x: link.startX, y: link.startY }, { x: link.x, y: link.y });
       }
       return;
     }
@@ -816,11 +867,17 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
                   '[data-testid="board-resize"], [data-testid="board-connect-hit"], [data-testid="board-connect-handle"], [aria-label$="的白板光标"]',
                 )
                 .forEach((n) => n.remove());
-              const nodes = items.filter((s) => s.type !== "connector");
-              const x = Math.min(0, ...nodes.map((s) => s.geometry.x)) - 30,
-                y = Math.min(0, ...nodes.map((s) => s.geometry.y)) - 30;
-              const w = Math.max(900, ...nodes.map((s) => s.geometry.x + s.geometry.w)) - x + 30,
-                h = Math.max(600, ...nodes.map((s) => s.geometry.y + s.geometry.h)) - y + 30;
+              const nodes = items.filter((s) => s.type !== "connector" || s.points);
+              const xs = nodes.flatMap((s) =>
+                  s.points ? [s.points.x1, s.points.x2] : [s.geometry.x, s.geometry.x + s.geometry.w],
+                ),
+                ys = nodes.flatMap((s) =>
+                  s.points ? [s.points.y1, s.points.y2] : [s.geometry.y, s.geometry.y + s.geometry.h],
+                );
+              const x = Math.min(0, ...xs) - 30,
+                y = Math.min(0, ...ys) - 30;
+              const w = Math.max(900, ...xs) - x + 30,
+                h = Math.max(600, ...ys) - y + 30;
               copy.setAttribute("viewBox", `${x} ${y} ${w} ${h}`);
               copy.setAttribute("width", String(w));
               copy.setAttribute("height", String(h));
@@ -860,7 +917,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       </div>
       <p aria-live="polite" className="px-1 py-0.5 text-[11px] leading-5 text-slate-500">
         {tool === "arrow"
-          ? "从一个图元内部拖到另一个图元，松开即可生成箭头。"
+          ? "从一个图元内部拖到另一个图元生成连接线；从空白处拖动生成自由箭头。"
           : tool === "connect"
             ? connectFrom
               ? "请选择终点节点；连接线会跟随节点移动。"
@@ -1139,6 +1196,8 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
             setTool("select");
             setConnectFrom("");
             setSelected("");
+            arrowStart.current = null;
+            setArrowDraft(null);
           }
         }}
         viewBox={`${view.x} ${view.y} ${1200 / view.zoom} ${800 / view.zoom}`}
@@ -1166,6 +1225,8 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           drag.current = undefined;
           connectingRef.current = null;
           setConnecting(null);
+          arrowStart.current = null;
+          setArrowDraft(null);
           setItems(read(provider.doc));
         }}
         onLostPointerCapture={() => {
@@ -1173,6 +1234,8 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
             connectingRef.current = null;
             setConnecting(null);
           }
+          arrowStart.current = null;
+          setArrowDraft(null);
           drag.current = undefined;
         }}
         onPointerLeave={() => {
@@ -1257,6 +1320,26 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
               }}
             />
           </>
+        )}
+        {arrowDraft && (
+          <g pointerEvents="none" aria-label="自由箭头预览">
+            <line
+              x1={arrowDraft.x1}
+              y1={arrowDraft.y1}
+              x2={arrowDraft.x2}
+              y2={arrowDraft.y2}
+              stroke="#6366f1"
+              strokeWidth={2 / view.zoom}
+              strokeDasharray={`${6 / view.zoom} ${4 / view.zoom}`}
+              markerEnd={`url(#${marker})`}
+            />
+            <circle
+              cx={arrowDraft.x2}
+              cy={arrowDraft.y2}
+              r={4 / view.zoom}
+              fill="#6366f1"
+            />
+          </g>
         )}
         {linkTarget && (
           <rect
@@ -1343,31 +1426,39 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
                   </select>
                 </label>
               )}
-              {(["x", "y", "w", "h"] as const).map((key, i) => (
-                <label key={key} className="text-xs">
-                  {["X", "Y", "宽度", "高度"][i]}
-                  <input
-                    key={`${active.id}:${key}:${active.geometry[key]}`}
-                    type="number"
-                    aria-label={`图形${["X", "Y", "宽度", "高度"][i]}`}
-                    defaultValue={Math.round(active.geometry[key])}
-                    min={key === "x" || key === "y" ? -10000 : 20}
-                    max={key === "x" || key === "y" ? 10000 : 2000}
-                    disabled={!provider.writable}
-                    onBlur={(e) => {
-                      const value = e.currentTarget.valueAsNumber;
-                      if (value !== active.geometry[key])
-                        change(active.id, {
-                          geometry: { ...active.geometry, [key]: value },
-                        });
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") e.currentTarget.blur();
-                    }}
-                    className="mt-1 block w-20 rounded-lg border border-slate-200 bg-white p-2 text-sm"
-                  />
-                </label>
-              ))}
+              {active.type === "connector" ? (
+                <p className="rounded-lg bg-slate-50 px-2 py-2 text-xs leading-5 text-slate-500">
+                  {active.points
+                    ? "自由箭头：起止点由拖动位置决定；可改文字、线型或删除。"
+                    : "连接线位置跟随两端图元；可改文字、线型或删除。"}
+                </p>
+              ) : (
+                (["x", "y", "w", "h"] as const).map((key, i) => (
+                  <label key={key} className="text-xs">
+                    {["X", "Y", "宽度", "高度"][i]}
+                    <input
+                      key={`${active.id}:${key}:${active.geometry[key]}`}
+                      type="number"
+                      aria-label={`图形${["X", "Y", "宽度", "高度"][i]}`}
+                      defaultValue={Math.round(active.geometry[key])}
+                      min={key === "x" || key === "y" ? -10000 : 20}
+                      max={key === "x" || key === "y" ? 10000 : 2000}
+                      disabled={!provider.writable}
+                      onBlur={(e) => {
+                        const value = e.currentTarget.valueAsNumber;
+                        if (value !== active.geometry[key])
+                          change(active.id, {
+                            geometry: { ...active.geometry, [key]: value },
+                          });
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") e.currentTarget.blur();
+                      }}
+                      className="mt-1 block w-20 rounded-lg border border-slate-200 bg-white p-2 text-sm"
+                    />
+                  </label>
+                ))
+              )}
               <Button
                 size="sm"
                 variant="secondary"

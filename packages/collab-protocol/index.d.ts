@@ -36,6 +36,7 @@ export type BoardShape = {
   order: number;
   parent?: string;
   binding?: { from: string; to: string; style: "straight" | "elbow" | "curve" };
+  points?: { x1: number; y1: number; x2: number; y2: number };
 };
 export const boardShape: z.ZodTypeAny;
 export const shapeCatalog: readonly {
@@ -53,7 +54,4 @@ export function layoutMindmap(
   items: (BoardShape & { id: string })[],
 ): Record<string, BoardShape["geometry"]>;
 export function parseMermaid(input: string): (BoardShape & { id: string })[];
-export function exportMermaid(
-  items: (BoardShape & { id: string })[],
-  mind?: boolean,
-): string;
+export function exportMermaid(items: (BoardShape & { id: string })[], mind?: boolean): string;
