@@ -1,7 +1,7 @@
 # CollabSpace 功能归档
 
 > 更新日期：2026-11-22 ｜ 生产站点：https://collabspace.purelamp.uk
-> 当前发布：前端 `collabspace-16fuk141e-purelamp.vercel.app`（已别名）；API 镜像 `collabspace-api:api-r20261121-11`（`sha256:527038532857a3a221902719833c0d17fcc7cc15a9c977ed0b2d900d59b1a126`）；提交 `77d8366`；标签 `collabspace-20261122-multiselect`、`collabspace-20261122-arrow`、`collabspace-20261122-docs`、`collabspace-20261121-board-ai`。
+> 当前发布：前端 `collabspace-bvdake9bc-purelamp.vercel.app`（已别名）；API 镜像 `collabspace-api:api-r20261121-11`（`sha256:527038532857a3a221902719833c0d17fcc7cc15a9c977ed0b2d900d59b1a126`）；提交 `77d8366`；标签 `collabspace-20261122-multiselect`、`collabspace-20261122-arrow`、`collabspace-20261122-docs`、`collabspace-20261121-board-ai`。
 > 本文是“已完成功能”的唯一归档入口。功能完成并通过验收后，必须同时更新本文、对应 evidence 和 README 状态；未验证的内容不得写成已上线。
 
 ## 状态口径
@@ -62,6 +62,7 @@
 | 箭头 / 连线：图元间绑定连接线 + 空白处自由箭头 | 已上线 | `BOARD-AI-INTERACTION-2026-11-21.md`、`BOARD-ARROW-FREE-2026-11-22.md` | 自由箭头不绑定图元；AI 连线仍只支持绑定两个图元 |
 | 图元拖拽、改字、连接点拖线、目标高亮、连接线样式 | 已上线 | `MERMAID-CONNECT-2026-10-26.md`、`BOARD-AI-INTERACTION-2026-11-21.md` | 任意 Mermaid 语法/坐标回写仍有限制 |
 | 多选、框选、组拖、六向对齐、水平/垂直分布、批量复制/删除 | 已上线 | `BOARD-MULTI-SELECT-2026-11-22.md` | 连接线/自由箭头不参与对齐；组拖只移动图元 |
+| 智能对齐参考线、图元层级置顶/置底/上移/下移 | 已上线 | `BOARD-SMART-GUIDES-2026-11-22.md` | 参考线只做边缘/中心吸附；连接线固定显示在图元之上 |
 | 流程图 / 思维导图模板、自动布局 | 已上线 | `DIAGRAMS-2026-10-21.md` | 模板放置空间不足时有提示 |
 | 业务图表模板库与图元目录 | 已上线 | `BUSINESS-DIAGRAMS-2026-10-22.md` | 覆盖高频场景，不宣称全行业 |
 | 导入/导出 Mermaid、SVG、PNG | 已上线 | `WHITEBOARD.md` | 导入为追加；导出可能简化样式 |

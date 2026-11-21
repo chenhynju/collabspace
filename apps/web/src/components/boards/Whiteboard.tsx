@@ -1,7 +1,11 @@
 "use client";
 import { useEffect, useRef, useState, useId } from "react";
 import {
+  ArrowDown,
+  ArrowUp,
   ArrowUpRight,
+  ChevronsDown,
+  ChevronsUp,
   Circle,
   Diamond,
   Download,
@@ -58,7 +62,12 @@ function read(doc: Y.Doc): Item[] {
       const parsed = boardShape.safeParse(m instanceof Y.Map ? m.toJSON() : null);
       return parsed.success ? [{ ...parsed.data, id } as Item] : [];
     })
-    .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
+    .sort(
+      (a, b) =>
+        (a.type === "connector" ? 1 : 0) - (b.type === "connector" ? 1 : 0) ||
+        a.order - b.order ||
+        a.id.localeCompare(b.id),
+    );
 }
 function findLinkTarget(items: Item[], x: number, y: number, exclude: string, tolerance: number) {
   return [...items]
@@ -390,6 +399,8 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     latest?: Record<string, Item["geometry"]>;
   } | null>(null);
   const [snap, setSnap] = useState(false);
+  const [smart, setSmart] = useState(true);
+  const [guides, setGuides] = useState<{ v: number[]; h: number[] }>({ v: [], h: [] });
   const [shapePanel, setShapePanel] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false),
     [source, setSource] = useState(
@@ -517,6 +528,47 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     });
   };
   const selectedNodes = () => items.filter((s) => selectedIds.has(s.id) && s.type !== "connector");
+  const clearGuides = () =>
+    setGuides((current) => (current.v.length || current.h.length ? { v: [], h: [] } : current));
+  const snapToGuides = (
+    rect: Item["geometry"],
+    exclude: Set<string>,
+    dx: number,
+    dy: number,
+  ) => {
+    if (!smart) return { dx, dy, v: [] as number[], h: [] as number[] };
+    const tolerance = Math.max(3, Math.min(10, 6 / view.zoom));
+    const targetsX: number[] = [],
+      targetsY: number[] = [];
+    for (const shape of items) {
+      if (shape.type === "connector" || exclude.has(shape.id)) continue;
+      const g = shape.geometry;
+      targetsX.push(g.x, g.x + g.w / 2, g.x + g.w);
+      targetsY.push(g.y, g.y + g.h / 2, g.y + g.h);
+    }
+    const movingX = [rect.x + dx, rect.x + dx + rect.w / 2, rect.x + dx + rect.w],
+      movingY = [rect.y + dy, rect.y + dy + rect.h / 2, rect.y + dy + rect.h];
+    let bestX: { delta: number; line: number } | null = null,
+      bestY: { delta: number; line: number } | null = null;
+    for (const from of movingX)
+      for (const to of targetsX) {
+        const delta = to - from;
+        if (Math.abs(delta) <= tolerance && (!bestX || Math.abs(delta) < Math.abs(bestX.delta)))
+          bestX = { delta, line: to };
+      }
+    for (const from of movingY)
+      for (const to of targetsY) {
+        const delta = to - from;
+        if (Math.abs(delta) <= tolerance && (!bestY || Math.abs(delta) < Math.abs(bestY.delta)))
+          bestY = { delta, line: to };
+      }
+    return {
+      dx: dx + (bestX?.delta ?? 0),
+      dy: dy + (bestY?.delta ?? 0),
+      v: bestX ? [bestX.line] : [],
+      h: bestY ? [bestY.line] : [],
+    };
+  };
   const writeGeometries = (next: Record<string, Item["geometry"]>) => {
     if (!provider.writable || !Object.keys(next).length) return;
     undo.current?.stopCapturing();
@@ -597,6 +649,36 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     setItems(read(provider.doc));
     setSelectedIds(new Set(ids));
     setSelected(ids[0] || "");
+  };
+  const changeOrder = (mode: "front" | "back" | "forward" | "backward") => {
+    if (!provider.writable) return;
+    const ids = selectedIds.size ? selectedIds : new Set(selected ? [selected] : []);
+    const nodes = items
+      .filter((s) => s.type !== "connector")
+      .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
+    const picked = new Set(nodes.filter((s) => ids.has(s.id)).map((s) => s.id));
+    if (!picked.size) return;
+    const sequence = nodes.map((s) => s.id);
+    if (mode === "front" || mode === "back") {
+      const rest = sequence.filter((id) => !picked.has(id)),
+        moving = sequence.filter((id) => picked.has(id));
+      sequence.splice(0, sequence.length, ...(mode === "front" ? [...rest, ...moving] : [...moving, ...rest]));
+    } else if (mode === "forward") {
+      for (let i = sequence.length - 2; i >= 0; i--)
+        if (picked.has(sequence[i]) && !picked.has(sequence[i + 1]))
+          [sequence[i], sequence[i + 1]] = [sequence[i + 1], sequence[i]];
+    } else {
+      for (let i = 1; i < sequence.length; i++)
+        if (picked.has(sequence[i]) && !picked.has(sequence[i - 1]))
+          [sequence[i], sequence[i - 1]] = [sequence[i - 1], sequence[i]];
+    }
+    if (sequence.every((id, i) => nodes[i].id === id)) return;
+    undo.current?.stopCapturing();
+    provider.doc.transact(() => {
+      sequence.forEach((id, i) => shapes.get(id)?.set("order", i + 1));
+    }, origin);
+    undo.current?.stopCapturing();
+    setItems(read(provider.doc));
   };
   const branch = (sibling = false) => {
     if (!active || active.type !== "mind") return;
@@ -692,6 +774,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
   };
   const down = (e: React.PointerEvent<SVGSVGElement>) => {
     const p = point(e);
+    clearGuides();
     if (tool === "connect") {
       setConnectFrom("");
       setSelected("");
@@ -814,8 +897,20 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     }
     if (groupDrag.current) {
       const g = groupDrag.current,
-        dx = p.x - g.start.x,
-        dy = p.y - g.start.y;
+        boxes = Object.values(g.geometries),
+        left = Math.min(...boxes.map((b) => b.x)),
+        top = Math.min(...boxes.map((b) => b.y)),
+        right = Math.max(...boxes.map((b) => b.x + b.w)),
+        bottom = Math.max(...boxes.map((b) => b.y + b.h));
+      const snapped = snapToGuides(
+        { x: left, y: top, w: right - left, h: bottom - top },
+        new Set(Object.keys(g.geometries)),
+        p.x - g.start.x,
+        p.y - g.start.y,
+      );
+      setGuides({ v: snapped.v, h: snapped.h });
+      const dx = snapped.dx,
+        dy = snapped.dy;
       const latest: Record<string, Item["geometry"]> = {};
       for (const [id, geometry] of Object.entries(g.geometries)) {
         latest[id] = {
@@ -849,19 +944,32 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       return;
     }
     if (!d.geometry || !provider.writable) return;
-    const g = { ...d.geometry };
     if (d.mode === "resize") {
+      const g = { ...d.geometry };
       g.w = Math.max(20, Math.min(2000, g.w + p.x - d.start.x));
       g.h = Math.max(20, Math.min(2000, g.h + p.y - d.start.y));
-    } else {
-      g.x = Math.max(-10000, Math.min(10000, g.x + p.x - d.start.x));
-      g.y = Math.max(-10000, Math.min(10000, g.y + p.y - d.start.y));
+      d.latest = g;
+      setItems((current) => current.map((s) => (s.id === d.id ? { ...s, geometry: g } : s)));
+      return;
     }
+    const snapped = snapToGuides(
+      d.geometry,
+      new Set(d.id ? [d.id] : []),
+      p.x - d.start.x,
+      p.y - d.start.y,
+    );
+    setGuides({ v: snapped.v, h: snapped.h });
+    const g = {
+      ...d.geometry,
+      x: Math.max(-10000, Math.min(10000, d.geometry.x + snapped.dx)),
+      y: Math.max(-10000, Math.min(10000, d.geometry.y + snapped.dy)),
+    };
     // Local drag preview is smooth; one atomic geometry update commits on release.
     d.latest = g;
     setItems((current) => current.map((s) => (s.id === d.id ? { ...s, geometry: g } : s)));
   };
   const finish = (e?: React.PointerEvent<SVGSVGElement>) => {
+    clearGuides();
     const marqueeOrigin = marqueeStart.current;
     if (marqueeOrigin) {
       marqueeStart.current = null;
@@ -978,6 +1086,17 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
         <label className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-slate-600">
           <input type="checkbox" checked={snap} onChange={(e) => setSnap(e.target.checked)} />{" "}
           网格吸附
+        </label>
+        <label className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-slate-600">
+          <input
+            type="checkbox"
+            checked={smart}
+            onChange={(e) => {
+              setSmart(e.target.checked);
+              if (!e.target.checked) clearGuides();
+            }}
+          />{" "}
+          智能参考线
         </label>
         <span className="h-6 w-px bg-slate-200" />
         <Button size="sm" variant="secondary" disabled={!provider.writable} onClick={() => template(false)}>
@@ -1278,6 +1397,13 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           <Button size="sm" variant="ghost" disabled={!provider.writable || selectedIds.size < 3} onClick={() => distributeSelection("y")}>
             垂直分布
           </Button>
+          <span className="h-5 w-px bg-indigo-200" />
+          <Button size="sm" variant="ghost" disabled={!provider.writable} onClick={() => changeOrder("front")}>
+            置顶
+          </Button>
+          <Button size="sm" variant="ghost" disabled={!provider.writable} onClick={() => changeOrder("back")}>
+            置底
+          </Button>
           <Button size="sm" variant="ghost" disabled={!provider.writable} onClick={duplicateSelection}>
             复制所选
           </Button>
@@ -1441,6 +1567,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
             marqueeStart.current = null;
             setMarquee(null);
             groupDrag.current = null;
+            clearGuides();
           }
         }}
         viewBox={`${view.x} ${view.y} ${1200 / view.zoom} ${800 / view.zoom}`}
@@ -1473,6 +1600,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           marqueeStart.current = null;
           setMarquee(null);
           groupDrag.current = null;
+          clearGuides();
           setItems(read(provider.doc));
         }}
         onLostPointerCapture={() => {
@@ -1486,6 +1614,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           setMarquee(null);
           groupDrag.current = null;
           drag.current = undefined;
+          clearGuides();
         }}
         onPointerLeave={() => {
           if (!drag.current) provider.cursor(null);
@@ -1519,6 +1648,36 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
               : undefined
           }
         />
+        {(guides.v.length > 0 || guides.h.length > 0) && (
+          <g data-testid="align-guides" pointerEvents="none" aria-label="对齐参考线">
+            {guides.v.map((x) => (
+              <line
+                key={`v-${x}`}
+                data-testid="align-guide"
+                x1={x}
+                y1={view.y}
+                x2={x}
+                y2={view.y + 800 / view.zoom}
+                stroke="#ec4899"
+                strokeWidth={1 / view.zoom}
+                strokeDasharray={`${4 / view.zoom} ${4 / view.zoom}`}
+              />
+            ))}
+            {guides.h.map((y) => (
+              <line
+                key={`h-${y}`}
+                data-testid="align-guide"
+                x1={view.x}
+                y1={y}
+                x2={view.x + 1200 / view.zoom}
+                y2={y}
+                stroke="#ec4899"
+                strokeWidth={1 / view.zoom}
+                strokeDasharray={`${4 / view.zoom} ${4 / view.zoom}`}
+              />
+            ))}
+          </g>
+        )}
         {active && selectedIds.size === 1 && active.type !== "connector" && provider.writable && (
           <>
             {[
@@ -1749,6 +1908,22 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
               >
                 复制图形
               </Button>
+              {active.type !== "connector" && (
+                <div className="mt-2 grid grid-cols-2 gap-1" aria-label="层级顺序">
+                  <Button size="sm" variant="ghost" disabled={!provider.writable} onClick={() => changeOrder("front")}>
+                    <ChevronsUp size={13} /> 置顶
+                  </Button>
+                  <Button size="sm" variant="ghost" disabled={!provider.writable} onClick={() => changeOrder("forward")}>
+                    <ArrowUp size={13} /> 上移
+                  </Button>
+                  <Button size="sm" variant="ghost" disabled={!provider.writable} onClick={() => changeOrder("backward")}>
+                    <ArrowDown size={13} /> 下移
+                  </Button>
+                  <Button size="sm" variant="ghost" disabled={!provider.writable} onClick={() => changeOrder("back")}>
+                    <ChevronsDown size={13} /> 置底
+                  </Button>
+                </div>
+              )}
             </>
           )}
           {active.type === "mind" && (
