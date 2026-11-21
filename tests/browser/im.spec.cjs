@@ -103,3 +103,84 @@ test('two IM accounts exchange one bubble per message and retain exact history a
     for (const context of contexts) await context.close();
   }
 });
+
+test("IM shows peer typing, clears it, and persists the sender read receipt", async ({ browser, request }) => {
+  test.setTimeout(180000);
+  async function token(email) {
+    const response = await request.post(config.NEXT_PUBLIC_API_URL + "/auth/login", {
+      data: { email, password: config.TEST_PASSWORD },
+    });
+    expect(response.ok()).toBeTruthy();
+    return (await response.json()).accessToken;
+  }
+  const ownerToken = await token(config.TEST_OWNER_EMAIL);
+  const memberToken = await token(config.TEST_MEMBER_EMAIL);
+  const adminToken = await token(config.TEST_ADMIN_EMAIL);
+  const ownerId = JSON.parse(Buffer.from(ownerToken.split(".")[1], "base64url")).sub;
+  const headers = { Authorization: "Bearer " + ownerToken, "x-organization-id": config.TEST_ORG };
+  const created = await request.post(config.NEXT_PUBLIC_API_URL + "/conversations/direct", {
+    headers,
+    data: { userId: config.TEST_MEMBER },
+  });
+  expect(created.ok()).toBeTruthy();
+  const conversationId = (await created.json()).id;
+  const contexts = [];
+  async function open(authToken) {
+    const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+    contexts.push(context);
+    await context.addInitScript(({ token, org }) => {
+      localStorage.setItem("access_token", token);
+      localStorage.setItem("current_org_id", org);
+    }, { token: authToken, org: config.TEST_ORG });
+    const page = await context.newPage();
+    let connected;
+    const ready = new Promise((resolve) => (connected = resolve));
+    page.on("websocket", (socket) => {
+      if (!socket.url().includes("/socket.io/")) return;
+      socket.on("framereceived", ({ payload }) => {
+        if (String(payload).startsWith("40")) connected();
+      });
+    });
+    await page.goto(config.WEB_URL + "/im?c=" + conversationId, { timeout: 120000 });
+    await expect(page.getByPlaceholder("输入消息...")).toBeVisible({ timeout: 60000 });
+    await Promise.race([
+      ready,
+      new Promise((_, reject) => setTimeout(() => reject(Error("IM socket timeout")), 20000)),
+    ]);
+    return page;
+  }
+  try {
+    const owner = await open(ownerToken);
+    const member = await open(memberToken);
+    await member.getByPlaceholder("输入消息...").fill("正在核对这条消息");
+    await expect(owner.getByText(/正在输入…/)).toBeVisible({ timeout: 15000 });
+    await member.getByPlaceholder("输入消息...").fill("");
+    await expect(owner.getByText(/正在输入…/)).toHaveCount(0, { timeout: 10000 });
+    const text = "read-receipt-" + randomUUID().slice(0, 8);
+    await member.getByPlaceholder("输入消息...").fill(text);
+    await member.getByRole("button", { name: "发送", exact: true }).click();
+    await expect(owner.locator(".whitespace-pre-wrap").filter({ hasText: text })).toHaveCount(1);
+    await expect(member.locator("[data-read-label]").last()).toHaveText(/已读/, { timeout: 15000 });
+    const history = await request.get(
+      config.NEXT_PUBLIC_API_URL + "/conversations/" + conversationId + "/messages?limit=50",
+      { headers },
+    );
+    expect(history.ok()).toBeTruthy();
+    const message = (await history.json()).find((row) => row.content === text);
+    expect(message.readBy).toContain(ownerId);
+    const denied = await request.post(
+      config.NEXT_PUBLIC_API_URL + "/conversations/" + conversationId + "/read",
+      {
+        headers: { Authorization: "Bearer " + adminToken, "x-organization-id": config.TEST_ORG },
+        data: { lastReadMessageId: message.id },
+      },
+    );
+    expect(denied.status()).toBe(403);
+    await member.screenshot({
+      path: "evidence/collaboration/collaboration-next-2026-11-21/im-read-receipt.png",
+      fullPage: true,
+    });
+  } finally {
+    for (const context of contexts) await context.close();
+  }
+});

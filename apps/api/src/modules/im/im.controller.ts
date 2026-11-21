@@ -386,11 +386,44 @@ export class ImController {
     @Body() dto: MarkReadDto,
   ) {
     return this.prisma.withOrgUser(org.organizationId, me.id, async (tx) => {
+      const myMs = await tx.conversationMember.findFirst({
+        where: { conversationId: id, userId: me.id, status: 'ACTIVE' },
+        select: { lastReadMessageId: true },
+      });
+      if (!myMs) throw new ForbiddenException({ code: 'NOT_MEMBER', message: '不是该会话成员' });
+      const message = await tx.message.findFirst({
+        where: { id: dto.lastReadMessageId, conversationId: id, organizationId: org.organizationId },
+        select: { id: true, createdAt: true },
+      });
+      if (!message) throw new NotFoundException({ code: 'MESSAGE_NOT_FOUND', message: '消息不存在' });
+      if (myMs.lastReadMessageId) {
+        const current = await tx.message.findFirst({
+          where: { id: myMs.lastReadMessageId, conversationId: id },
+          select: { createdAt: true },
+        });
+        if (current && current.createdAt > message.createdAt)
+          return { ok: true, lastReadMessageId: myMs.lastReadMessageId };
+      }
       await tx.conversationMember.updateMany({
         where: { conversationId: id, userId: me.id, status: 'ACTIVE' },
-        data: { lastReadMessageId: dto.lastReadMessageId },
+        data: { lastReadMessageId: message.id },
       });
-      return { ok: true };
+      const members = await tx.conversationMember.findMany({
+        where: { conversationId: id, status: 'ACTIVE' },
+        select: { userId: true },
+      });
+      this.realtime.emitToUsers(
+        members.map((member) => member.userId),
+        'im:read',
+        {
+          organizationId: org.organizationId,
+          conversationId: id,
+          userId: me.id,
+          lastReadMessageId: message.id,
+          readAt: message.createdAt.toISOString(),
+        },
+      );
+      return { ok: true, lastReadMessageId: message.id };
     });
   }
 
@@ -417,14 +450,42 @@ export class ImController {
       const messages = await tx.message.findMany({
         where: {
           conversationId: id,
+          organizationId: org.organizationId,
           ...(beforeId ? { id: { lt: beforeId } } : {}),
         },
         include: { sender: { select: { id: true, name: true, avatarUrl: true } }, attachment: true },
         orderBy: { createdAt: 'desc' },
         take,
       });
+      const members = await tx.conversationMember.findMany({
+        where: { conversationId: id, organizationId: org.organizationId, status: 'ACTIVE' },
+        select: { userId: true, lastReadMessageId: true },
+      });
+      const readIds = members.flatMap((member) =>
+        member.lastReadMessageId ? [member.lastReadMessageId] : [],
+      );
+      const readMessages = readIds.length
+        ? await tx.message.findMany({
+            where: {
+              id: { in: readIds },
+              conversationId: id,
+              organizationId: org.organizationId,
+            },
+            select: { id: true, createdAt: true },
+          })
+        : [];
+      const readTimes = new Map(readMessages.map((message) => [message.id, message.createdAt]));
+      const receipts = members.flatMap((member) => {
+        const readAt = member.lastReadMessageId
+          ? readTimes.get(member.lastReadMessageId)
+          : undefined;
+        return readAt ? [{ userId: member.userId, readAt }] : [];
+      });
       return messages.reverse().map((m) => ({
         ...m,
+        readBy: receipts
+          .filter((receipt) => receipt.userId !== m.senderId && receipt.readAt >= m.createdAt)
+          .map((receipt) => receipt.userId),
         attachment: m.attachment ? { ...m.attachment, size: m.attachment.size.toString() } : null,
       }));
     });

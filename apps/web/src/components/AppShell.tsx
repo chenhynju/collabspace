@@ -7,6 +7,7 @@ import { useAuthStore } from "@/store/auth";
 import { usePersonalNotifications } from "@/lib/use-personal-notifications";
 import NavDrawer from "@/components/NavDrawer";
 import AgentDock from "@/components/AgentDock";
+import GlobalSearch from "@/components/GlobalSearch";
 import { PRIMARY_NAV, canSee, isNavItemActive } from "@/components/navigation";
 
 const IMMERSIVE = /^\/office\/[^/]+$|^\/projects\/[^/]+\/documents\/[^/]+$/;
@@ -17,6 +18,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const immersive = IMMERSIVE.test(pathname);
   const [navOpen, setNavOpen] = useState(false);
   const [agentOpen, setAgentOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [orgMenu, setOrgMenu] = useState(false);
   const user = useAuthStore((s) => s.user);
   const organizations = useAuthStore((s) => s.organizations);
@@ -30,6 +32,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setNavOpen(false);
     setAgentOpen(false);
+    setSearchOpen(false);
     setOrgMenu(false);
   }, [pathname]);
 
@@ -39,23 +42,38 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       if (meta && event.key.toLowerCase() === "k") {
         event.preventDefault();
         setAgentOpen(false);
-        setNavOpen(true);
+        setNavOpen(false);
+        setSearchOpen(true);
       }
       if (meta && event.key.toLowerCase() === "j") {
         event.preventDefault();
         setNavOpen(false);
+        setSearchOpen(false);
         setAgentOpen(true);
       }
     };
-    const openAgent = () => setAgentOpen(true);
-    const openNav = () => setNavOpen(true);
+    const openAgent = () => {
+      setSearchOpen(false);
+      setAgentOpen(true);
+    };
+    const openNav = () => {
+      setSearchOpen(false);
+      setNavOpen(true);
+    };
+    const openSearch = () => {
+      setNavOpen(false);
+      setAgentOpen(false);
+      setSearchOpen(true);
+    };
     document.addEventListener("keydown", keydown);
     window.addEventListener("collabspace:open-agent", openAgent);
     window.addEventListener("collabspace:open-nav", openNav);
+    window.addEventListener("collabspace:open-search", openSearch);
     return () => {
       document.removeEventListener("keydown", keydown);
       window.removeEventListener("collabspace:open-agent", openAgent);
       window.removeEventListener("collabspace:open-nav", openNav);
+      window.removeEventListener("collabspace:open-search", openSearch);
     };
   }, []);
 
@@ -188,13 +206,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             <div className="ml-auto flex items-center gap-1">
               <button
                 type="button"
-                onClick={() => setNavOpen(true)}
-                aria-label="搜索菜单、工作区和项目"
-                className="hidden items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-400 transition hover:border-slate-300 hover:text-slate-600 md:flex"
+                onClick={() => setSearchOpen(true)}
+                aria-label="打开全局搜索"
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-400 transition hover:border-slate-300 hover:text-slate-600"
               >
                 <Command size={13} />
-                <span>搜索</span>
-                <kbd className="rounded-md bg-slate-100 px-1.5 py-0.5 font-sans text-[10px] text-slate-500">
+                <span className="hidden md:inline">全局搜索</span>
+                <kbd className="hidden rounded-md bg-slate-100 px-1.5 py-0.5 font-sans text-[10px] text-slate-500 md:inline">
                   ⌘K
                 </kbd>
               </button>
@@ -263,6 +281,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         onOpenAgent={() => setAgentOpen(true)}
       />
       <AgentDock open={agentOpen} onClose={() => setAgentOpen(false)} />
+      <GlobalSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   );
 }

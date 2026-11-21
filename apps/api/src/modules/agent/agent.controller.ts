@@ -29,6 +29,8 @@ export class AgentController {
         "create_task",
         "update_task",
         "create_content",
+        "create_office",
+        "upload_file",
         "draw_diagram",
         "list_members",
         "invite_member",

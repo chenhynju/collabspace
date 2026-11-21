@@ -36,6 +36,13 @@ import { IsOptional, IsString, IsInt, Min, Max } from 'class-validator';
 const UPLOAD_ROOT = path.resolve(process.env.UPLOAD_ROOT || path.join(process.cwd(), '.uploads'));
 const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 
+// Multer exposes non-extended multipart filenames as latin1. Recover UTF-8 only
+// when the complete decode is valid, so already-correct Unicode names are kept.
+function uploadName(name: string) {
+  const decoded = Buffer.from(name, 'latin1').toString('utf8');
+  return decoded.includes('\uFFFD') ? name : decoded;
+}
+
 class ShareDto {
   @IsOptional()
   @IsString()
@@ -95,6 +102,7 @@ export class FilesController {
     @Req() req: Request,
   ) {
     if (!file) throw new BadRequestException({ code: 'FILE_REQUIRED', message: '缺少上传文件' });
+    file.originalname = uploadName(file.originalname);
     if (!projectId) {
       throw new BadRequestException({ code: 'PROJECT_REQUIRED', message: '缺少 projectId' });
     }

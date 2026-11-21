@@ -10,8 +10,21 @@ const apiBase = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v
 export default function MessageBubble({ message }: { message: Message }) {
   const me = useAuthStore((s) => s.user);
   const conversationId=useImStore(s=>s.currentConversationId);
+  const conversation = useImStore((s) =>
+    s.conversations.find((item) => item.id === s.currentConversationId),
+  );
   const isMe = message.senderId === me?.id;
   const senderName = message.senderName || message.sender?.name || '';
+  const readBy = message.readBy ?? [];
+  const readLabel = !isMe
+    ? ''
+    : conversation?.type === 'DIRECT'
+      ? conversation.peerUserId && readBy.includes(conversation.peerUserId)
+        ? '已读'
+        : '未读'
+      : readBy.length
+        ? `${readBy.length} 人已读`
+        : '未读';
 
   return (
     <div className={`flex gap-2 mb-3 ${isMe ? 'flex-row-reverse' : ''}`}>
@@ -50,6 +63,7 @@ export default function MessageBubble({ message }: { message: Message }) {
         </div>
         {message.type==='TEXT'&&conversationId&&<Disclosure title="朗读消息" className="mt-1 text-slate-600" unmountOnClose><VoiceTools scope={{conversationId}} text={message.content}/></Disclosure>}
         <span className="text-[10px] text-slate-400 mt-0.5">
+          {readLabel ? <span data-read-label className="mr-1">{readLabel} · </span> : null}
           {new Date(message.createdAt).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
         </span>
       </div>

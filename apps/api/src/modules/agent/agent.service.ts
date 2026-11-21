@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
+import { randomUUID } from "crypto";
 import { PrismaService } from "../../prisma/prisma.service";
 import { ResourcePolicyService } from "../groups/resource-policy.service";
 import { AuditService } from "../audit/audit.service";
@@ -108,7 +109,9 @@ export class AgentService {
     allow: (permission: string) => boolean,
   ): Promise<Snapshot> {
     return this.prisma.withOrg(org.organizationId, async (tx) => {
-      const accessible = allow("project:list")
+      const canResolveProjects =
+        allow("project:list") || allow("task:manage") || allow("file:manage");
+      const accessible = canResolveProjects
         ? await this.policy.accessible(tx, org.organizationId, userId, "READ")
         : [];
       const workspaces = allow("workspace:list")
@@ -118,7 +121,7 @@ export class AgentService {
             orderBy: { createdAt: "asc" },
           })
         : [];
-      const projects = allow("project:list")
+      const projects = canResolveProjects
         ? await tx.project.findMany({
             where: {
               organizationId: org.organizationId,
@@ -404,6 +407,82 @@ export class AgentService {
       };
     }
 
+    /* ---------- Office / 文件上传 ---------- */
+    const officeMatch = text.match(
+      /(?:新建|创建|添加)\s*(?:一个|一份|一张)?\s*(word|excel|ppt|powerpoint|office)(?:\s*文档)?/i,
+    );
+    if (officeMatch) {
+      if (!allow("file:manage")) return this.denied("新建 Office", "file:manage");
+      const rawKind = officeMatch[1].toLowerCase();
+      const extension =
+        rawKind === "excel" ? "xlsx" : rawKind === "ppt" || rawKind === "powerpoint" ? "pptx" : "docx";
+      const label = extension === "xlsx" ? "Excel" : extension === "pptx" ? "PowerPoint" : "Word";
+      const title = this.nameAfter(text, "文档") ?? quoted.find((name) => name !== projectName);
+      if (!title)
+        return this.clarify(`请告诉我要创建的 ${label} 标题，例如：新建 ${label}「季度报告」到项目「官网改版」。`);
+      const projectTarget = projectName
+        ? this.resolve(snapshot.projects, projectName)
+        : {
+            one: snapshot.projects.length === 1 ? snapshot.projects[0] : null,
+            matches: snapshot.projects,
+          };
+      if (!projectTarget.one)
+        return this.clarify(
+          `请指定 Office 所属项目。当前可访问项目：${snapshot.projects.map((row) => `「${row.name}」`).join("、") || "（暂无）"}。`,
+        );
+      return {
+        reply: `准备在项目「${projectTarget.one.name}」中新建 ${label}「${title}」，创建后直接打开编辑器。`,
+        source: "rules",
+        actions: [
+          this.action(
+            "create_office",
+            `新建 ${label}「${title}」`,
+            `所属项目：${projectTarget.one.name}；使用现有 Office 服务创建，重复确认不会重复新建。`,
+            "POST",
+            "/office/create",
+            {
+              projectId: projectTarget.one.id,
+              title,
+              extension,
+              requestId: randomUUID(),
+            },
+            "file:manage",
+            "medium",
+          ),
+        ],
+      };
+    }
+
+    if (/(上传|导入)/.test(text) && /(文件|附件)/.test(text) && !READ_WORDS.test(text)) {
+      if (!allow("file:manage")) return this.denied("上传文件", "file:manage");
+      const projectTarget = projectName
+        ? this.resolve(snapshot.projects, projectName)
+        : {
+            one: snapshot.projects.length === 1 ? snapshot.projects[0] : null,
+            matches: snapshot.projects,
+          };
+      if (!projectTarget.one)
+        return this.clarify(
+          `请指定文件所属项目，例如：上传文件到项目「官网改版」。当前可访问项目：${snapshot.projects.map((row) => `「${row.name}」`).join("、") || "（暂无）"}。`,
+        );
+      return {
+        reply: `准备上传文件到项目「${projectTarget.one.name}」。请先在下方选择本地文件，再确认执行。`,
+        source: "rules",
+        actions: [
+          this.action(
+            "upload_file",
+            `上传文件到「${projectTarget.one.name}」`,
+            "选择不超过 20MB 的本地文件；同名文件会自动生成新版本，上传后可在附件中查看。",
+            "POST",
+            "/files/upload",
+            { projectId: projectTarget.one.id },
+            "file:manage",
+            "medium",
+          ),
+        ],
+      };
+    }
+
     /* ---------- 文档 / 白板 ---------- */
     const contentMatch = text.match(/(?:新建|创建|添加)\s*(?:一个)?\s*(文档|白板)/);
     if (contentMatch && /项目/.test(text)) {
@@ -465,8 +544,9 @@ export class AgentService {
           }。`,
         );
       const title = `${drawKind} · ${text.replace(/\s+/g, " ").slice(0, 20)}`.slice(0, 40);
+      const canvas = drawKind === "流程图" || drawKind === "思维导图";
       return {
-        reply: `准备在项目「${projectTarget.one.name}」中生成${drawKind}「${title}」，确认后会调用模型生成 Mermaid 并直接打开白板。`,
+        reply: `准备在项目「${projectTarget.one.name}」中生成${drawKind}「${title}」，确认后会调用模型并直接打开${canvas ? "可拖拽的自由画布" : "白板"}。`,
         source: "rules",
         actions: [
           this.action(
@@ -475,7 +555,7 @@ export class AgentService {
             `所属项目：${projectTarget.one.name}；生成后可继续在画布中拖拽、改字或连线。`,
             "POST",
             "/documents/agent/draw",
-            { projectId: projectTarget.one.id, title, instruction: text },
+            { projectId: projectTarget.one.id, title, instruction: text, canvas },
             "project:list",
             "medium",
           ),
@@ -771,7 +851,6 @@ export class AgentService {
         { keys: ["成员"], path: "/members" },
         { keys: ["邀请"], path: "/invitations" },
         { keys: ["审计"], path: "/audit" },
-        { keys: ["账单", "套餐"], path: "/billing" },
         { keys: ["概览", "首页"], path: "/dashboard" },
       ].find((item) => item.keys.some((key) => text.toLowerCase().includes(key.toLowerCase())));
       if (/项目/.test(text) && projectName) {
@@ -883,6 +962,8 @@ export class AgentService {
 • 给项目「官网改版」添加任务「首页设计」指派给 张三
 • 把任务「首页设计」标记完成
 • 新建文档「项目周报」到项目「官网改版」
+• 新建 Word「季度报告」到项目「官网改版」
+• 上传文件到项目「官网改版」
 • 给项目「官网改版」画一个三步审批流程图
 • 邀请 alice@example.com 为成员
 • 停用或恢复成员「李四」

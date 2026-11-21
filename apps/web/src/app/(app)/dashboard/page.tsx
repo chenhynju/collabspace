@@ -85,7 +85,7 @@ export default function DashboardPage() {
       icon: BookOpen,
       perm: "project:list",
     },
-    { href: "/im", label: "消息", hint: "团队沟通与会议", icon: MessageSquare, perm: "im:view" },
+    { href: "/im", label: "消息", hint: "单聊、群聊与文件消息", icon: MessageSquare, perm: "im:view" },
     {
       href: "/files",
       label: "附件",

@@ -19,6 +19,7 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import type { Response } from "express";
 import { Store } from "@collabspace/store";
+import { parseMermaid } from "@collabspace/protocol";
 import { OrgContextGuard } from "../../common/guards/org-context.guard";
 import {
   CurrentOrg,
@@ -94,7 +95,13 @@ export class DocumentsController implements OnModuleDestroy, OnModuleInit {
       });
     const result = await this.ai.generate(
       JSON.stringify([o.organizationId, u.id, projectId, Date.now()]),
-      JSON.stringify({ instruction, source: "" }),
+      JSON.stringify({
+        instruction:
+          b?.canvas === true
+            ? `${instruction}\n请只使用 flowchart TD/LR 或 mindmap；节点用 id[文字]、id{判断}、id((开始))，连线只写 --> 或 -->|标签|，不要 subgraph、样式、HTML 或额外说明。`
+            : instruction,
+        source: "",
+      }),
       "generate-mermaid",
       `${o.organizationId}:${u.id}`,
     );
@@ -118,17 +125,32 @@ export class DocumentsController implements OnModuleDestroy, OnModuleInit {
       );
     if (text.length > 32000 || text.includes("\0"))
       throw new HttpException({ code: "MERMAID_TOO_LARGE", message: "图表源码超出限制。" }, 422);
+    if (b?.canvas === true) {
+      try {
+        parseMermaid(text);
+      } catch {
+        throw new HttpException(
+          {
+            code: "MERMAID_CANVAS_UNSUPPORTED",
+            message: "模型结果无法转换为自由画布，请改用更简单的流程图或思维导图描述。",
+          },
+          422,
+        );
+      }
+    }
     const title = String(b?.title || "").trim().slice(0, 40) || "AI 图表";
     const doc: any = await this.run(o, u, "create", projectId, {
       title,
       kind: "BOARD",
       source: text,
+      canvas: b?.canvas === true,
     });
     return {
       id: doc.id,
       projectId: doc.project_id || projectId,
       title: doc.title || title,
       text,
+      canvas: b?.canvas === true,
     };
   }
   @Post(":id/images")

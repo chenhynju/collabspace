@@ -12,7 +12,6 @@ const HINTS: Record<string, string> = {
   "/invitations": "邀请、撤回与过期处理",
   "/depts": "部门树、岗位与数据范围",
   "/roles": "角色权限矩阵与菜单授权",
-  "/billing": "套餐、席位与账单事件",
   "/audit": "操作审计与 trace_id 追溯",
   "/notices": "组织公告与已读范围",
   "/system/menus": "菜单与按钮权限标识",

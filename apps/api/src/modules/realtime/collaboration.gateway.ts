@@ -190,6 +190,55 @@ export class CollaborationGateway
     return { ok: true };
   }
 
+  /* ---------------- IM 输入状态（短暂事件，不持久化） ---------------- */
+
+  @SubscribeMessage('im:typing')
+  async imTyping(
+    @ConnectedSocket() client: CollabSocket,
+    @MessageBody() body: { organizationId: string; conversationId: string; typing: boolean },
+  ) {
+    const user = await this.authenticate(client);
+    if (!user) {
+      client.disconnect(true);
+      return { ok: false, code: 'UNAUTHORIZED' };
+    }
+    if (!body?.organizationId || !body?.conversationId || typeof body.typing !== 'boolean')
+      return { ok: false, code: 'INVALID_INPUT' };
+    return this.prisma.withOrgUser(body.organizationId, user.id, async (tx) => {
+      const membership = await tx.conversationMember.findFirst({
+        where: {
+          organizationId: body.organizationId,
+          conversationId: body.conversationId,
+          userId: user.id,
+          status: 'ACTIVE',
+        },
+        select: { id: true },
+      });
+      if (!membership) return { ok: false, code: 'NOT_MEMBER' };
+      const members = await tx.conversationMember.findMany({
+        where: {
+          organizationId: body.organizationId,
+          conversationId: body.conversationId,
+          status: 'ACTIVE',
+          userId: { not: user.id },
+        },
+        select: { userId: true },
+      });
+      this.events.emitToUsers(
+        members.map((member) => member.userId),
+        'im:typing',
+        {
+          organizationId: body.organizationId,
+          conversationId: body.conversationId,
+          userId: user.id,
+          userName: user.name,
+          typing: body.typing,
+        },
+      );
+      return { ok: true };
+    });
+  }
+
   /* ---------------- 光标 / presence ---------------- */
 
   @SubscribeMessage('cursor:update')

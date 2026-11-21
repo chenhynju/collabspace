@@ -17,7 +17,6 @@ import {
   Database,
   Clock,
   HardDrive,
-  CreditCard,
   Menu as MenuIcon,
 } from "lucide-react";
 
@@ -62,7 +61,7 @@ export const CORE_NAV: NavGroup[] = [
         label: "消息",
         icon: MessageSquare,
         perm: "im:view",
-        hint: "团队沟通与会议",
+        hint: "单聊、群聊与文件消息",
       },
       { href: "/files", label: "附件", icon: Files, perm: "file:manage" },
       { href: "/notifications", label: "通知中心", icon: Bell, perm: "" },
@@ -79,7 +78,6 @@ export const SETTINGS_NAV: NavGroup[] = [
       { href: "/invitations", label: "邀请", icon: UserCog, perm: "invite:list" },
       { href: "/depts", label: "部门与岗位", icon: Network, perm: "dept:manage" },
       { href: "/roles", label: "角色权限", icon: UserCog, perm: "role:list" },
-      { href: "/billing", label: "套餐与账单", icon: CreditCard, perm: "billing:view" },
     ],
   },
   {

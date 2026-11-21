@@ -7,6 +7,7 @@ import { useAuthStore } from '@/store/auth';
 import {Disclosure} from '@/components/disclosure';
 import {DictationInput} from '@/components/voice/DictationInput';
 import {ArrowUp,ImagePlus,Paperclip,Volume2} from 'lucide-react';
+import { emitImTyping } from '@/lib/use-im-realtime';
 
 export default function MessageComposer({ conversationId }: { conversationId: string }) {
   const org=useAuthStore(s=>s.currentOrgId),user=useAuthStore(s=>s.user?.id),alive=useRef(true);
@@ -19,7 +20,44 @@ export default function MessageComposer({ conversationId }: { conversationId: st
   const focusAfterDictation=useRef(false);
   useEffect(()=>{const input=inputRef.current;if(input){input.style.height='auto';input.style.height=Math.min(160,input.scrollHeight)+'px';}},[text]);
   useEffect(()=>{if(focusAfterDictation.current&&!dictationBusy){focusAfterDictation.current=false;inputRef.current?.focus();}},[dictationBusy,text]);
-  const acceptTranscript=(value:string)=>{focusAfterDictation.current=true;setText(current=>current?`${current.trimEnd()}\n${value}`:value);};
+  const typingSent = useRef(false),
+    lastTypingAt = useRef(0),
+    typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stopTyping = () => {
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    typingTimer.current = null;
+    if (typingSent.current) emitImTyping(conversationId, false);
+    typingSent.current = false;
+    lastTypingAt.current = 0;
+  };
+  const updateText = (value: string) => {
+    setText(value);
+    if (!value.trim()) {
+      stopTyping();
+      return;
+    }
+    const now = Date.now();
+    if (!typingSent.current || now - lastTypingAt.current >= 1500) {
+      emitImTyping(conversationId, true);
+      typingSent.current = true;
+      lastTypingAt.current = now;
+    }
+    if (typingTimer.current) clearTimeout(typingTimer.current);
+    typingTimer.current = setTimeout(() => {
+      emitImTyping(conversationId, false);
+      typingSent.current = false;
+      lastTypingAt.current = 0;
+      typingTimer.current = null;
+    }, 2500);
+  };
+  useEffect(
+    () => () => {
+      if (typingTimer.current) clearTimeout(typingTimer.current);
+      if (typingSent.current) emitImTyping(conversationId, false);
+    },
+    [conversationId],
+  );
+  const acceptTranscript=(value:string)=>{focusAfterDictation.current=true;updateText(text?`${text.trimEnd()}\n${value}`:value);};
   const sendingRef = useRef(false);
   const appendMessage = useImStore((s) => s.appendMessage);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -37,6 +75,7 @@ export default function MessageComposer({ conversationId }: { conversationId: st
       });
       if(!current())return;
       appendMessage(res.data);
+      stopTyping();
       setText('');
     } catch (e) {
       console.error('send failed', e);
@@ -82,7 +121,7 @@ export default function MessageComposer({ conversationId }: { conversationId: st
   return (
     <div className="border-t border-slate-100 bg-white p-3 sm:p-4">
       <div className="rounded-2xl border border-slate-200 bg-white p-2 shadow-sm transition focus-within:border-slate-300 focus-within:ring-2 focus-within:ring-slate-100">
-      <textarea ref={inputRef} value={text} disabled={sending||dictationBusy} onChange={e=>setText(e.target.value)} onKeyDown={handleKeyDown} placeholder="输入消息..." aria-label="消息正文" rows={1} className="max-h-40 min-h-12 w-full resize-none bg-transparent px-3 py-3 text-base leading-6 outline-none disabled:opacity-60 sm:text-sm"/>
+      <textarea ref={inputRef} value={text} disabled={sending||dictationBusy} onChange={e=>updateText(e.target.value)} onKeyDown={handleKeyDown} placeholder="输入消息..." aria-label="消息正文" rows={1} className="max-h-40 min-h-12 w-full resize-none bg-transparent px-3 py-3 text-base leading-6 outline-none disabled:opacity-60 sm:text-sm"/>
       <div className="flex items-start gap-1">
         <button
           onClick={() => imageInputRef.current?.click()}
@@ -121,7 +160,7 @@ export default function MessageComposer({ conversationId }: { conversationId: st
           const response=await api.post(`/conversations/${conversationId}/messages`,{type:'FILE',content:intent.content,attachmentId:intent.attachmentId,requestId:intent.requestId});
           if(!current())return;
           voiceIntent.current=null;
-          appendMessage(response.data);setText('');
+          appendMessage(response.data);stopTyping();setText('');
         }finally{sendingRef.current=false;setSending(false);}
       }}/></div></Disclosure>
       <input

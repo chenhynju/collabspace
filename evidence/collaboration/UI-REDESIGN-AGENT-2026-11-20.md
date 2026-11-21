@@ -278,3 +278,68 @@
 - 保护边界：只追加、不覆盖已有画布；源码为空、解析失败、超过 500 图元或图元已存在时给出明确提示；只读成员不可转换。
 - 这样 AI 画图生成的 Mermaid 可以直接进入自由画布继续拖拽、改字和连线，减少两种视图之间的重复操作。
 - 前端生产部署：`collabspace-i0p5caoh5-purelamp.vercel.app`，已通过服务器侧验证正式域名返回 200；本机到 Vercel 的网络在部署后短暂超时，浏览器侧转换验收待网络恢复后补跑。
+
+## 2026-11-21 补充：入口收敛、AI Office/上传/画布、全局搜索、IM 已读与输入中
+
+### 范围与边界
+
+- 会议：后端能力保留，入口从项目页隐藏；生产继续 `MEETINGS_ENABLED=false`。
+- 支付：`/billing` 路由保留只读说明，从设置导航移除；不宣称已完成真实支付。
+- 数字人：只承诺静态 Agent 形象与 7 天私有素材草稿；隐藏可动 3D 实验室入口，文案明确真人/视频生成未接入。
+- 未新增数据库迁移，WS 镜像保持不变。
+
+### 功能实现
+
+- AI 助理新增 `create_office`、`upload_file` 动作：仍走“先出计划、确认后执行”，分别复用 `/office/create` 和 `/files/upload`；上传动作在前端提供文件选择与 20MB 限制。
+- 画图动作对流程图/思维导图带 `canvas:true`：服务端 `parseMermaid` 校验后，在新建 BOARD 时直接写入 Yjs `shapes`，打开即为可拖拽画布。
+- 图表工作区改为“切到自由画布时自动生成图元”（原独立转换按钮移除）：仅当画布为空且源码存在时转换，失败显示解析原因，不覆盖已有图元。
+- 全局搜索：`GET /search?q=` 覆盖工作区、项目、文档、任务、附件，按组织、项目 ACL、文档授权过滤；Ctrl/⌘+K 打开搜索面板，Enter 进入 `/search` 完整结果页。
+- IM 已读：`POST /conversations/:id/read` 校验成员与消息归属，已读游标单调不回退，广播 `im:read`；历史消息返回 `readBy`。私聊显示已读/未读，群聊显示已读人数。
+- IM 输入中：Socket.IO `im:typing` 事件在组织+用户 RLS 上下文中校验会话成员，只向同会话其他成员广播；前端 1.5 秒节流、2.5 秒停止、4 秒兜底清除。
+- 在线发现并修复：`/files/upload` 中文文件名被 Busboy 按 latin1 解析成乱码；现仅在完整 UTF-8 解码有效时恢复文件名。
+
+### 本地验证
+
+| 命令 | 结果 |
+| --- | --- |
+| `pnpm --filter @teamspace/api lint` | 通过 |
+| `pnpm --filter @teamspace/web exec tsc --noEmit` | 通过 |
+| `pnpm --filter @teamspace/web test` | 32/32 通过 |
+| `pnpm --filter @teamspace/api test` | 68 通过 / 8 按环境跳过 / 0 失败 |
+| `node apps/web/tests/im-delivery.test.cjs` | 3/3 通过（去重、已读、输入中） |
+| `pnpm --filter @teamspace/web build` | 41 个页面构建通过 |
+| `pnpm --filter @teamspace/api build` | 通过 |
+
+### 生产发布
+
+- 前端：Vercel `dpl_Ape67VHXaB7R9KkLm9hJGpUpZrnS`（`collabspace-qk9fqzx73-purelamp.vercel.app`），已别名到 `https://collabspace.purelamp.uk`。
+- 后端：`collabspace-api:api-r20261121-07`，镜像 `sha256:2e6f34e04b3a57e15589cc4f0f0f627698ff3675c582c3f99ff2018aaf76d5c8`；`r04`→`r05`→`r06`→`r07` 逐次回滚点保留。
+- 健康检查 `database: up / redis: up`；API/WS 均 `OOM=false restarts=0`。
+- 本机到 Vercel 长期超时；浏览器验收在生产服务器（`/usr/bin/google-chrome` + 临时 `/opt/collabspace-browser` 测试运行器）执行，未改动生产容器。
+
+### 线上验收（正式域名，合成账号）
+
+| 检查 | 结果 |
+| --- | --- |
+| `collaboration-next.spec.cjs` 入口收敛与搜索授权 | 通过：项目页无视频会议、设置无套餐与账单、无 3D 实验室入口；搜索能命中本人文档，同组织非授权成员查不到 |
+| `collaboration-next.spec.cjs` AI 三项闭环 | 通过：AI 新建 Word 进入编辑器并回读标题；AI 上传中文文件名附件后列表可回读；AI 画流程图直接打开画布，图元 ≥3、连线 ≥2 |
+| `im.spec.cjs` 双账号消息 | 通过：互发、相同内容、快速 Enter 去重、刷新历史 |
+| `im.spec.cjs` 已读/输入中 | 通过：对方输入中提示出现并可清除；发送方显示已读；历史 `readBy` 含对方；非会话成员标记已读 403 |
+| Socket.IO 双账号脚本 | 通过：`im:typing` 广播与停止、`im:read` 回执、已读游标不回退、非成员 403 |
+| Mermaid 转自由画布 | 通过：切到自由画布自动生成 5 个图元、2 条连线，刷新后仍保留 |
+
+截图：
+
+- [全局搜索](collaboration-next-2026-11-21/global-search.png)
+- [AI 新建 Word](collaboration-next-2026-11-21/ai-office.png)
+- [AI 画布图元](collaboration-next-2026-11-21/ai-office-upload-canvas.png)
+- [IM 已读回执](collaboration-next-2026-11-21/im-read-receipt.png)
+- [Mermaid 转自由画布](collaboration-next-2026-11-21/mermaid-to-canvas-online.png)
+- 原始结果：[browser-results.json](collaboration-next-2026-11-21/browser-results.json)
+
+### 未验证边界
+
+- 会议与支付仅隐藏入口，未接入真实音视频/支付供应商。
+- 数字人未接入真人或视频生成供应商；仅静态形象与私有草稿可用。
+- 全局搜索为标题/名称/描述的子串匹配，不含文档正文全文检索。
+- 群聊已读展示为已读人数，未提供逐人已读名单。

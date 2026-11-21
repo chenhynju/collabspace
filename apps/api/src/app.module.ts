@@ -30,6 +30,7 @@ import { AssistantModule } from "./modules/assistant/assistant.module";
 import { AgentModule } from "./modules/agent/agent.module";
 import { VoiceModule } from "./modules/voice/voice.module";
 import { MeetingsModule } from "./modules/meetings/meetings.module";
+import { SearchController } from "./modules/search/search.controller";
 
 @Module({
   imports: [
@@ -61,7 +62,7 @@ import { MeetingsModule } from "./modules/meetings/meetings.module";
     MonitorModule,
     HealthModule,
   ],
-  controllers: [DocumentsController],
+  controllers: [DocumentsController, SearchController],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],
 })
 export class AppModule implements NestModule {

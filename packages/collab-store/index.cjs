@@ -3,7 +3,7 @@ const Y = require("yjs");
 const { randomUUID, randomBytes, createHash } = require("node:crypto");
 const { z } = require("zod");
 const { isDeepStrictEqual } = require("node:util");
-const { validateBoard } = require("@collabspace/protocol");
+const { validateBoard, parseMermaid } = require("@collabspace/protocol");
 class StoreError extends Error {
   constructor(status, code) {
     super(code);
@@ -359,7 +359,17 @@ class Store {
         const initial=new Y.Doc();try{initial.getText('markdown').insert(0,source);checkMarkdown(initial);state=Buffer.from(Y.encodeStateAsUpdate(initial));}finally{initial.destroy();}
       }else if(kind==='BOARD'&&input.source!==undefined){
         const source=z.string().max(32000).parse(input.source);if(source.includes('\0'))fail(400,'INVALID_BOARD');
-        const initial=new Y.Doc();try{initial.getText('mermaid').insert(0,source);checkBoard(initial);state=Buffer.from(Y.encodeStateAsUpdate(initial));}finally{initial.destroy();}
+        const initial=new Y.Doc();try{
+          initial.getText('mermaid').insert(0,source);
+          if(input.canvas===true){
+            let parsed;
+            try{parsed=parseMermaid(source);}catch{fail(422,'MERMAID_CANVAS_UNSUPPORTED');}
+            if(parsed.length>500)fail(422,'BOARD_SHAPE_LIMIT');
+            const shapes=initial.getMap('shapes');
+            for(const {id,...data} of parsed)shapes.set(id,new Y.Map(Object.entries(data)));
+          }
+          checkBoard(initial);state=Buffer.from(Y.encodeStateAsUpdate(initial));
+        }finally{initial.destroy();}
       }
       return this.insert(c, ctx, project, name, state, kind);
     });

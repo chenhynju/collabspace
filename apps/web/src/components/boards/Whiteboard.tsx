@@ -1347,57 +1347,44 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
 }
 function BoardWorkspace({ provider }: { provider: DocumentProvider }) {
   const [mode, setMode] = useState(() =>
-    provider.doc.getText("mermaid").length || !provider.doc.getMap("shapes").size
-      ? "mermaid"
-      : "canvas",
+    provider.doc.getMap("shapes").size ? "canvas" : "mermaid",
   );
   const [convertMessage, setConvertMessage] = useState("");
   const convertToCanvas = () => {
-    if (!provider.writable) {
-      setConvertMessage("当前为只读，不能转换。");
-      return;
-    }
-    const source = provider.doc.getText("mermaid").toString().trim();
-    if (!source) {
-      setConvertMessage("Mermaid 源码为空，没有可转换的图元。");
-      return;
-    }
-    let parsed: ReturnType<typeof parseMermaid>;
     try {
-      parsed = parseMermaid(source);
+      if (!provider.writable) {
+        setConvertMessage("当前为只读，不能转换。");
+        return;
+      }
+      const shapes = provider.doc.getMap<Y.Map<unknown>>("shapes");
+      const source = provider.doc.getText("mermaid").toString().trim();
+      if (!source || shapes.size) return;
+      let parsed: ReturnType<typeof parseMermaid>;
+      try {
+        parsed = parseMermaid(source);
+      } catch (e) {
+        setConvertMessage(e instanceof Error ? e.message : "图表源码无法解析，未生成图元。");
+        return;
+      }
+      if (parsed.length > 500) {
+        setConvertMessage("转换后超过 500 个图元上限，请精简图表。");
+        return;
+      }
+      provider.doc.transact(() => {
+        for (const { id, ...data } of parsed)
+          shapes.set(id, new Y.Map(Object.entries(data)));
+      }, "collabspace:mermaid:convert");
+      setConvertMessage("已从 Mermaid 生成可拖拽图元，可继续改字或连线。");
     } catch (e) {
-      setConvertMessage(e instanceof Error ? e.message : "图表源码无法解析。");
-      return;
+      setConvertMessage(e instanceof Error ? e.message : "图表转换失败，未生成图元。");
     }
-    const shapes = provider.doc.getMap<Y.Map<unknown>>("shapes");
-    if (shapes.size + parsed.length > 500) {
-      setConvertMessage("转换后超过 500 个图元上限，请精简图表。");
-      return;
-    }
-    if (parsed.some((shape) => shapes.has(shape.id))) {
-      setConvertMessage("这些图元已经在画布中，请勿重复转换；可直接在画布中编辑。");
-      return;
-    }
-    const current = [...shapes.values()].map((shape) => shape.toJSON() as BoardShape);
-    const nodes = current.filter((shape) => shape.type !== "connector");
-    const offsetY = nodes.length
-      ? Math.max(...nodes.map((shape) => shape.geometry.y + shape.geometry.h)) + 120
-      : 0;
-    provider.doc.transact(() => {
-      for (const { id, ...data } of parsed)
-        shapes.set(
-          id,
-          new Y.Map(
-            Object.entries({
-              ...data,
-              geometry: { ...data.geometry, y: data.geometry.y + offsetY },
-            }),
-          ),
-        );
-    }, "collabspace:mermaid:convert");
-    setConvertMessage("已追加到自由画布，可拖拽、改字或继续连线。");
-    setMode("canvas");
   };
+  // The tab switch is the single entry point: entering the canvas with no
+  // shapes derives them from Mermaid, so there is no separate convert button.
+  useEffect(() => {
+    if (mode === "canvas") convertToCanvas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode]);
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-slate-200 bg-white/90 px-2 py-1.5 shadow-sm">
@@ -1435,14 +1422,7 @@ function BoardWorkspace({ provider }: { provider: DocumentProvider }) {
           {provider.writable ? "可编辑" : "只读"} · 同一文档保留两种视图
         </span>
         {mode === "mermaid" && (
-          <button
-            type="button"
-            disabled={!provider.writable}
-            onClick={convertToCanvas}
-            className="ml-auto rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50/50 disabled:opacity-40"
-          >
-            转到自由画布
-          </button>
+          <span className="ml-auto text-[11px] text-slate-400">切到自由画布会自动生成图元</span>
         )}
       </div>
       {convertMessage && (

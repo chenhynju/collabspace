@@ -12,17 +12,32 @@ export default function ChatWindow() {
   const messages = useImStore((s) => s.messages);
   const setMessages = useImStore((s) => s.setMessages);
   const conversations = useImStore((s) => s.conversations);
+  const typingUsers = useImStore((s) => s.typingUsers);
   const currentOrgId = useAuthStore((s) => s.currentOrgId);
+  const currentUserId = useAuthStore((s) => s.user?.id);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const conv = conversations.find((c) => c.id === currentConversationId);
+  const typing = (currentConversationId ? (typingUsers[currentConversationId] ?? []) : []).filter(
+    (user) => user.userId !== currentUserId,
+  );
 
   useEffect(() => {
     if (!currentConversationId || !currentOrgId) return;
     let active = true;
     setMessages([]);
     api.get(`/conversations/${currentConversationId}/messages?limit=50`)
-      .then((res) => { if (active) setMessages(res.data); })
+      .then((res) => {
+        if (!active) return;
+        setMessages(res.data);
+        const latest = res.data[res.data.length - 1];
+        if (latest) {
+          useImStore.getState().resetUnread(currentConversationId);
+          void api.post(`/conversations/${currentConversationId}/read`, {
+            lastReadMessageId: latest.id,
+          }).catch(() => {});
+        }
+      })
       .catch(() => { if (active) setMessages([]); });
     return () => { active = false; };
   }, [currentConversationId, currentOrgId, setMessages]);
@@ -43,6 +58,9 @@ export default function ChatWindow() {
     <>
       <div className="px-4 py-3 border-b border-slate-200 bg-white">
         <h2 className="font-semibold text-slate-800">{conv.title || '未命名会话'}</h2>
+        <div aria-live="polite" className="min-h-5 text-xs text-indigo-600">
+          {typing.length ? `${typing.map((user) => user.userName).join('、')} 正在输入…` : ''}
+        </div>
         <PersonaPanel/>
       </div>
       <div className="flex-1 overflow-y-auto p-4 bg-slate-50">

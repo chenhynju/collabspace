@@ -40,6 +40,8 @@ const SUGGESTIONS = [
   { label: "新建工作区", prompt: "新建工作区「」" },
   { label: "新建项目", prompt: "新建项目「」到工作区「」" },
   { label: "给项目加任务", prompt: "给项目「」添加任务「」" },
+  { label: "新建 Word", prompt: "新建 Word「」到项目「」" },
+  { label: "上传文件", prompt: "上传文件到项目「」" },
   { label: "画一个流程图", prompt: "给项目「」画一个三步审批流程图" },
 ];
 
@@ -56,6 +58,7 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
   const [listening, setListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(false);
   const [voiceError, setVoiceError] = useState("");
+  const [uploadFiles, setUploadFiles] = useState<Record<string, File | null>>({});
   const panel = useRef<HTMLDivElement>(null);
   const scroller = useRef<HTMLDivElement>(null);
   const composer = useRef<HTMLTextAreaElement>(null);
@@ -75,6 +78,7 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
     setMessages([]);
     setInput("");
     setVoiceError("");
+    setUploadFiles({});
     dictation.current?.abort?.();
     dictation.current = null;
     setListening(false);
@@ -242,18 +246,21 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
   };
 
   const execute = async (messageId: string, action: AgentAction) => {
-    if (action.permission && !hasPerm(action.permission)) {
+    const fail = (detail: string) => {
       setMessages((list) =>
         list.map((item) =>
           item.id === messageId
             ? {
                 ...item,
                 actionState: { ...item.actionState, [action.id]: "error" },
-                actionError: { ...item.actionError, [action.id]: "当前角色缺少此操作权限。" },
+                actionError: { ...item.actionError, [action.id]: detail },
               }
             : item,
         ),
       );
+    };
+    if (action.permission && !hasPerm(action.permission)) {
+      fail("当前角色缺少此操作权限。");
       return;
     }
     if (action.method === "NAVIGATE") {
@@ -261,30 +268,14 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
       router.push(action.path);
       return;
     }
-    if (action.tool === "draw_diagram") {
-      try {
-        const { data } = await api.post("/documents/agent/draw", action.body);
-        onClose();
-        router.push(`/projects/${data.projectId}/documents/${data.id}`);
-        return;
-      } catch (e: any) {
-        const detail =
-          e.response?.data?.message ??
-          e.response?.data?.code ??
-          "图表生成失败，请检查模型配置后重试。";
-        setMessages((list) =>
-          list.map((item) =>
-            item.id === messageId
-              ? {
-                  ...item,
-                  actionState: { ...item.actionState, [action.id]: "error" },
-                  actionError: { ...item.actionError, [action.id]: String(detail) },
-                }
-              : item,
-          ),
-        );
-        return;
-      }
+    const file = action.tool === "upload_file" ? uploadFiles[action.id] : null;
+    if (action.tool === "upload_file" && !file) {
+      fail("请先选择要上传的本地文件。");
+      return;
+    }
+    if (file && file.size > 20 * 1024 * 1024) {
+      fail("文件不能超过 20MB，请重新选择。");
+      return;
     }
     setMessages((list) =>
       list.map((item) =>
@@ -294,14 +285,26 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
       ),
     );
     try {
-      const response = await api.request({
-        method: action.method,
-        url: action.path,
-        data: action.body,
-      });
-      if (action.tool === "create_content" && response.data?.id && action.body?.projectId) {
+      let data: Record<string, unknown> | FormData | undefined = action.body;
+      if (action.tool === "upload_file" && file) {
+        data = new FormData();
+        data.append("projectId", String(action.body?.projectId ?? ""));
+        data.append("file", file);
+      }
+      const response = await api.request({ method: action.method, url: action.path, data });
+      if (
+        ["create_content", "draw_diagram"].includes(action.tool) &&
+        response.data?.id &&
+        (response.data.projectId || action.body?.projectId)
+      ) {
+        const projectId = response.data.projectId || action.body?.projectId;
         onClose();
-        router.push(`/projects/${String(action.body.projectId)}/documents/${response.data.id}`);
+        router.push(`/projects/${String(projectId)}/documents/${response.data.id}`);
+        return;
+      }
+      if (action.tool === "create_office" && response.data?.id) {
+        onClose();
+        router.push(`/office/${response.data.id}`);
         return;
       }
       setMessages((list) =>
@@ -320,17 +323,7 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
     } catch (e: any) {
       const detail =
         e.response?.data?.message ?? e.response?.data?.code ?? "执行失败，请检查权限或稍后重试。";
-      setMessages((list) =>
-        list.map((item) =>
-          item.id === messageId
-            ? {
-                ...item,
-                actionState: { ...item.actionState, [action.id]: "error" },
-                actionError: { ...item.actionError, [action.id]: String(detail) },
-              }
-            : item,
-        ),
-      );
+      fail(String(detail));
     }
   };
 
@@ -396,7 +389,7 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
                 ))}
               </div>
               <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-[11px] leading-5 text-slate-500">
-                可操作范围：工作区与项目、任务、邀请、成员状态、文档/白板创建、文件与项目数据查询。权限仍由服务端逐次校验，
+                可操作范围：工作区与项目、任务、邀请、成员状态、文档/白板/Office 创建、文件上传与数据查询。权限仍由服务端逐次校验，
                 助理不会绕过组织边界。
               </div>
             </div>
@@ -463,6 +456,27 @@ export default function AgentDock({ open, onClose }: { open: boolean; onClose: (
                                 {RISK_LABEL[action.risk ?? "medium"]}
                               </span>
                             </div>
+                            {action.tool === "upload_file" && state !== "done" ? (
+                              <label className="mt-3 block rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-2.5 text-xs text-slate-600 transition focus-within:border-indigo-400 hover:border-indigo-300">
+                                <span className="mb-1.5 block font-medium text-slate-700">
+                                  {uploadFiles[action.id]
+                                    ? `${uploadFiles[action.id]?.name} · ${Math.ceil((uploadFiles[action.id]?.size ?? 0) / 1024)} KB`
+                                    : "选择本地文件（不超过 20MB）"}
+                                </span>
+                                <input
+                                  type="file"
+                                  aria-label="选择要上传的本地文件"
+                                  disabled={state === "running" || !!blocked}
+                                  onChange={(event) =>
+                                    setUploadFiles((current) => ({
+                                      ...current,
+                                      [action.id]: event.target.files?.[0] ?? null,
+                                    }))
+                                  }
+                                  className="w-full text-[11px] file:mr-3 file:rounded-lg file:border-0 file:bg-white file:px-2.5 file:py-1.5 file:text-xs file:font-medium file:text-indigo-700 file:shadow-sm"
+                                />
+                              </label>
+                            ) : null}
                             {message.actionError?.[action.id] ? (
                               <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-5 text-red-600">
                                 <ShieldAlert size={12} className="mt-0.5 shrink-0" />

@@ -29,3 +29,25 @@ for (const order of ['POST before realtime', 'realtime before POST']) {
     assert.equal(im.getState().messages.length, 1);
   });
 }
+
+test("read receipts advance only in the open conversation and typing is ephemeral", () => {
+  const im = store();
+  im.getState().setCurrentConversationId("room-1");
+  im.getState().setMessages([
+    { id: "m1", senderId: "alice", type: "TEXT", content: "first", createdAt: "2026-10-20T00:00:00Z" },
+    { id: "m2", senderId: "bob", type: "TEXT", content: "second", createdAt: "2026-10-20T00:00:01Z" },
+    { id: "m3", senderId: "alice", type: "TEXT", content: "later", createdAt: "2026-10-20T00:00:03Z" },
+  ]);
+  im.getState().markRead("room-2", "bob", "2026-10-20T00:00:02Z");
+  assert.equal(im.getState().messages[0].readBy, undefined);
+  im.getState().markRead("room-1", "bob", "2026-10-20T00:00:02Z");
+  assert.deepEqual([...im.getState().messages[0].readBy], ["bob"]);
+  assert.equal(im.getState().messages[1].readBy, undefined);
+  assert.equal(im.getState().messages[2].readBy, undefined);
+  im.getState().markRead("room-1", "bob", "2026-10-20T00:00:02Z");
+  assert.deepEqual([...im.getState().messages[0].readBy], ["bob"]);
+  im.getState().setTyping("room-1", { userId: "bob", userName: "Bob" }, true);
+  assert.equal(im.getState().typingUsers["room-1"][0].userName, "Bob");
+  im.getState().setTyping("room-1", { userId: "bob", userName: "Bob" }, false);
+  assert.deepEqual([...im.getState().typingUsers["room-1"]], []);
+});
