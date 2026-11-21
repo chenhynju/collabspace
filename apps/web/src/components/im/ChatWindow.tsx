@@ -1,11 +1,12 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { UserRound } from 'lucide-react';
 import { useImStore } from '@/store/im';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
 import MessageBubble from './MessageBubble';
 import MessageComposer from './MessageComposer';
-import { PersonaPanel } from '@/components/personas/PersonaPanel';
 
 export default function ChatWindow() {
   const currentConversationId = useImStore((s) => s.currentConversationId);
@@ -88,7 +89,12 @@ export default function ChatWindow() {
         <div aria-live="polite" className="min-h-5 text-xs text-indigo-600">
           {typing.length ? `${typing.map((user) => user.userName).join('、')} 正在输入…` : ''}
         </div>
-        <PersonaPanel/>
+        <Link
+          href="/settings/persona"
+          className="mt-1 inline-flex items-center gap-1.5 text-xs text-slate-500 transition hover:text-indigo-600"
+        >
+          <UserRound size={13} /> 数字分身设置
+        </Link>
       </div>
       <div className="flex-1 overflow-y-auto p-4 bg-slate-50">
         {messages.map((msg) => (

@@ -1,14 +1,14 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 import { useAuthStore } from '@/store/auth';
 import { Modal,Button,Card,inputCls } from '@/components/ui';
 import {FilePicker} from '@/components/file-picker';
 import {assistantTools} from './assistant-tools';
 import {Disclosure} from '@/components/disclosure';
-import {Sparkles} from 'lucide-react';
+import {Sparkles,UserRound} from 'lucide-react';
 import {VoiceTools} from '@/components/voice/VoiceTools';
-import {PersonaPanel} from '@/components/personas/PersonaPanel';
 import {AgentPersona} from '@/components/personas/AgentPersona';
 import type {PersonaEvent} from '@/components/personas/persona-events';
 
@@ -124,7 +124,7 @@ function AssistantWorkspace({org,user,initialMode,projectId,active,onProjectChan
     <Disclosure title="用量、隐私与朗读说明" className="text-xs leading-5 text-slate-500"><p className="mt-2">摘要/行动项/邮件输出上限700 token；翻译1200 token。每个组织用户每小时10次，相同内容15分钟内复用，无自动付费重试。生成时将文本发送至DeepSeek。朗读前4000字，不消耗模型 token；系统语音可能使用浏览器供应商的在线服务。</p></Disclosure>
     </Card>
     <div className="min-w-0 space-y-4">
-    <PersonaPanel active={active}/>
+    <Link href="/settings/persona" className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 transition hover:border-indigo-200 hover:text-indigo-600"><UserRound size={14}/> 我的数字分身（在设置中管理）</Link>
     <AgentPersona projectId={project} name="协作助手" event={runEvent} skill={runSkill} active={active} onStopSpeech={speaking?stop:undefined}/>
     {runtimeAvailable&&<div className="space-y-2"><p className="text-xs text-slate-500">受限协作助手运行时：只读项目事实与资料生成；状态保留15分钟，服务重启后不可恢复。不会自动发邮件。</p>{busy&&runId.current&&<Button type="button" variant="secondary" onClick={()=>void cancelRun()}>取消当前任务</Button>}</div>}
     {error&&<p role="alert" className="text-red-700">{error}</p>}{info&&<p role="status" className="text-sm text-slate-600">{info}</p>}

@@ -1,7 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, Search, Shield, UserCog } from "lucide-react";
+import { ArrowUpRight, Search, Shield, UserCog, UserRound } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { Card, Empty, Input } from "@/components/ui";
 import { SETTINGS_NAV, canSee } from "@/components/navigation";
@@ -139,19 +139,40 @@ function PersonalSection() {
         <h2 className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">个人</h2>
         <span className="h-px flex-1 bg-slate-200/70" />
       </div>
-      <Link href="/account/security" className="group block">
-        <Card className="flex items-start gap-3 p-4 transition hover:border-slate-300">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-500 group-hover:bg-indigo-50 group-hover:text-indigo-600">
-            <UserCog size={16} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="text-sm font-medium text-slate-800">账号与安全</span>
-            <span className="mt-1 block text-xs leading-5 text-slate-500">
-              修改密码、登录状态与账号信息
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Link href="/settings/persona" className="group block">
+          <Card className="flex h-full items-start gap-3 p-4 transition duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-[0_14px_34px_-22px_rgba(15,23,42,0.35)]">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-500 transition group-hover:bg-violet-50 group-hover:text-violet-600">
+              <UserRound size={16} />
             </span>
-          </span>
-        </Card>
-      </Link>
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-slate-800">我的数字分身</span>
+                <ArrowUpRight
+                  size={13}
+                  className="shrink-0 text-slate-300 transition group-hover:text-indigo-500"
+                />
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-slate-500">
+                本人素材草稿、默认语言与隐私边界
+              </span>
+            </span>
+          </Card>
+        </Link>
+        <Link href="/account/security" className="group block">
+          <Card className="flex h-full items-start gap-3 p-4 transition hover:border-slate-300">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-slate-100 text-slate-500 group-hover:bg-indigo-50 group-hover:text-indigo-600">
+              <UserCog size={16} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="text-sm font-medium text-slate-800">账号与安全</span>
+              <span className="mt-1 block text-xs leading-5 text-slate-500">
+                修改密码、登录状态与账号信息
+              </span>
+            </span>
+          </Card>
+        </Link>
+      </div>
     </section>
   );
 }
