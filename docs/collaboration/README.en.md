@@ -1,5 +1,7 @@
 # CollabSpace
 
+> Historical English walkthrough. The current UI, scope, and acceptance status are in [README.md](../../README.md), [REQUIREMENTS.md](REQUIREMENTS.md), [DESIGN.md](DESIGN.md), and [FEATURE-ARCHIVE.md](FEATURE-ARCHIVE.md). Some statements below predate the editorial UI, Office, board AI, and ElevenLabs work.
+
 Reliable project documents for remote delivery teams. Built on an independently copied TeamSpace foundation: Next.js, React, NestJS, Prisma and PostgreSQL. Live demo: https://collabspace.purelamp.uk/collaboration. Deployment and acceptance claims are scoped to the evidence reports.
 
 ## The product journey

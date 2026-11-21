@@ -1,192 +1,276 @@
-# CollabSpace — 详细设计 v1
+# CollabSpace 详细设计
 
-2026-10-30 当前发布及 P/BR/D/AT-REV 在线状态修复见[当前状态](CURRENT-STATUS-2026-10-30.md)；API/WS 原生数据库配置链和实际验收见[发布审查](../../evidence/collaboration/REVIEW-RELEASE-2026-10-30.md)，历史记录保留。
+> 版本：2026-11-21 ｜ 状态：当前实现基线
+> 关联文档：[需求分析](REQUIREMENTS.md) ｜ [功能归档](FEATURE-ARCHIVE.md) ｜ [用户手册](USER-OPERATIONS-MANUAL.md) ｜ [ADR](ADR.md) ｜ [历史设计](archive/DESIGN-HISTORY-2026-11-21.md)
 
-2026-10-29新增 D/AT-SNAP：同事务自动快照、不可变状态、游标时间轴和现有ACL下的预览/副本恢复，见 [快照时间轴](SNAPSHOT-TIMELINE.md)。
+## 1. 架构总览
 
-2026-10-28新增项目会议M1–M3，状态机、授权、媒体凭据、SQL/RLS与验收见[会议专项设计](MEETINGS.md)。当前开发中，媒体撤权/真实双账号验收未完成，不生产发布。
+```text
+浏览器（Next.js / React）
+  ├─ REST /api/v1  ──────────────► NestJS API（鉴权、组织上下文、业务事务）
+  ├─ /collab WebSocket ──────────► 独立协作服务（Yjs 房间、presence、durable ACK）
+  └─ /office 编辑页 ─────────────► ONLYOFFICE 引擎（文件编辑权威）
 
-2026-10-28：数字人基础、支付路由和DOCX解析改进已发布；真实范围见[当前交付与剩余项](CURRENT-STATUS-2026-10-28.md)及[发布验收](../../evidence/collaboration/DEPLOYMENT-PERSONA-2026-10-28.md)。完整3D、真人生成、真实语音及官方沙盒付款仍未完成。
+NestJS API
+  ├─ Prisma + PostgreSQL（业务事实源，FORCE RLS）
+  ├─ Redis（IM 广播、缓存；可选降级）
+  ├─ DeepSeek（助手 / Agent 模型规划）
+  ├─ ElevenLabs（STT Scribe v2 / TTS multilingual v2）
+  ├─ Resend（验证、邀请、项目邮件）
+  └─ Outbox / OperLog / LoginLog（异步与审计）
 
-2026-10-27第一阶段已本地实现，完整数字人仍未完成且未发布；实际通过/阻塞/未完成见[数字人实施记录](../../evidence/collaboration/DIGITAL-HUMAN-2026-10-27.md)。用户追加后台配置、男10女10预设与捏脸、高相似真人验收，纳入详细设计，不以静态角色或素材草稿替代完整交付。
+部署
+  ├─ Vercel：Web 前端（collabspace.purelamp.uk）
+  └─ 腾讯云 Docker Compose：API、collab WS、PostgreSQL、Redis、Office 引擎
+```
 
-2026-10-27数字人新决策：Agent使用原创亲和卡通角色，真人同事使用本人授权照片/视频生成的写实数字分身，两条路线均必须交付。P/BR/D/AT-DH01–10、详细技术/美术/接口/验收与现存差距见[数字人详细设计](DIGITAL-HUMAN-DESIGN.md)。此为设计，非已实现或已上线声明；身份归属与新范围以该文档为准。
+设计原则：
 
-2026-10-26追加：P/BR/D/AT-MPOS支持画布连接点拖线，复用共享源码、ACL和ACK。具体契约见[画布交互](MERMAID-POSITION.md)；实际验收见[直接连线报告](../../evidence/collaboration/MERMAID-CONNECT-2026-10-26.md)。
+1. **数据库是业务事实源**，实时内存与广播都不是最终事实。
+2. **每个状态对象只有一个权威写入方**：正文归协作服务，ACL/版本/评论归 API，Office 细粒度编辑归引擎。
+3. **失败关闭**：权限、版本、供应商未配置时明确拒绝，不静默回退、不伪造成功。
+4. **证据优先**：PASSED / BLOCKED / NOT_RUN 必须可复核，不以 HTTP 200 代替业务完成。
 
-2026-10-26定位修复已正式发布，线上4/4通过；契约：见[实际画布交互](MERMAID-POSITION.md)。以最新验收报告的发布身份为准，保留官方渲染与源码权限边界。
+## 2. 代码结构
 
-2026-10-25开发阶段记录（已由10月26日正式验收取代）：实际画布拖入/移动、位置协作注释与模板节点部分删除，见[交接与剩余门槛](MERMAID-POSITION-HANDOFF.md)、[实际验收](../../evidence/collaboration/MERMAID-POSITION-2026-10-25.md)。此前仅自动布局的行为是本轮修复原因，不能把本地通过当作正式发布。
-
-2026-10-25入口整理：操作区域按钮化、未提供功能的占位项移除，P/BR/D/AT-AUI见[功能入口规范](ACTION-UI.md)，范围和实际成绩见[验收记录](../../evidence/collaboration/ACTION-UI-2026-10-25.md)。
-
-2026-10-25后续：Azure global/china显式端点及失败关闭、IM听写草稿生命周期、只读项目事实+DeepSeek工作流与15分钟进程内收据见[听写设计](VOICE-DICTATION-UX.md)、[供应商决策](SPEECH-PROVIDER-SELECTION.md)和[实际验收](../../evidence/collaboration/DICTATION-RUNTIME-2026-10-25.md)。不把该运行时记成持久化/自治Agent引擎。
-
-2026-10-25：合并协作空间与助手、图标直达功能、上传控件及响应式布局，P-UX / BR / D / AT 见 [统一工作区 UI/UX](WORKSPACE-UX.md)。
-
-2026-10-25：语音与数字形象规划已确定，涵盖IM、邮件及未来Agent/Skill；采用独立模块融入现有体系。需求、技术栈、范围及AT-VP01–08见 [语音与数字形象](VOICE-PERSONA.md)。已完成部分本地实现，实际通过项、供应商阻塞与未完成范围见[本地验收报告](../../evidence/collaboration/VOICE-PERSONA-2026-10-25.md)，不代表完整验收或生产发布。
-
-2026-10-25：Office重命名单一权威、幂等私有副本、确认版本PDF与分层验收见 [OFFICE-PARITY.md](OFFICE-PARITY.md)。
-
-2026-10-25：Office图片本地准备、原图选择及精确上传/保存验收见 [OFFICE-IMAGE-PREPARATION.md](OFFICE-IMAGE-PREPARATION.md)，复用原生上传和保存权威，不新增图片写入接口。
-
-2026-10-24 协作助手：组织/项目授权、有限模型调用、隔离文档解析、邮件持久意图与幂等、语音和互译设计见 [ASSISTANT.md](ASSISTANT.md)。
-
-2026-10-24：统一协作空间、空白 Office 创建和入口/权限验收，见 [UNIFIED-WORKSPACE.md](UNIFIED-WORKSPACE.md)。
-
-2026-10-24：多项目 Resend 回调验签、业务分流、持久化队列与其他项目适配补丁，见 [邮件回调路由](MAIL-WEBHOOK-ROUTING.md)。
-
-2026-10-24：新增富文本文档数学公式模板拖拽、LaTeX 输入与源码修改，P-MATH / BR-MATH / D-MATH / AT-MATH 及客户端升级要求见 [数学公式](MATH.md)。
-
-2026-10-22 高频业务绘图扩展：场景覆盖、24个模板/图元、源码属性操作、导入及SVG/PNG交付见 [BUSINESS-DIAGRAMS.md](BUSINESS-DIAGRAMS.md)。90%是待业务验收的目标，不是已通过比例。
-
-2026-10-22 编辑体验改进：完整 Office 工具入口、协作/设计工作区 UI、文件最近编辑人与确认保存日期，契约见 [EDITOR-EXPERIENCE.md](EDITOR-EXPERIENCE.md)。
-
-用户新增必需范围：原生.md源码多人协作、.docx/.xlsx/.pptx在线共同编辑、真实编辑者显示与冲突/保存管理，以Microsoft Office文件往返验收。原生 Markdown 与 Office 协作已上线；验收及剩余边界见 ../../evidence/collaboration/OFFICE-ONLINE-2026-10-22.md。详见 [COLLABORATIVE-FILES.md](COLLABORATIVE-FILES.md)。
-
-2026-10-21 第二轮追加：受支持 Mermaid 流程图/基础思维导图拖拽直接修改共享源码；评论/版本提交后实时通知；账号/租户/文档隔离的离线配图；Google/GitHub 社交登录安全完善。最新契约和验收以 [ITERATION-2.md](ITERATION-2.md) 为准，配置见 [OAUTH-SETUP-MEMO.md](OAUTH-SETUP-MEMO.md)。历史未实现描述不覆盖本轮新增能力；任意语法/坐标回写、完整离线应用壳及企业SSO仍不宣称完成。
-
-2026-10-21 图文写作追加：在线文档提供知乎式富文本写作体验，格式工具、图片上传/粘贴/拖入、图片说明及宽度、图片级文档授权和带配图版本恢复；沿用 Tiptap/Yjs。新增模型、兼容发布和 RT01–RT05 验收见 [RICH_TEXT.md](RICH_TEXT.md)。
-
-2026-10-21 最新决定：Mermaid 是白板图表的主要执行标准，源码为权威，支持图形 / 源码 / 分屏视图，面向后续受控 AI Agent 修改。此决定覆盖旧的基础语法交换范围；模型、迁移兼容、安全及 MM01–MM05 见 [MERMAID.md](MERMAID.md)。
-
-2026-10-21 用户追加图解工作区：参考 draw.io / Visio 和 Mermaid，支持流程图、绑定连接线、思维导图及基础源码交换。具体模型、交互和 DG01–DG04 见 [DIAGRAMS.md](DIAGRAMS.md)，不宣称完整格式或语法兼容；仍复用原协作、权限和离线体系。
-
-2026-10-21 07:56 续做范围：实时协作为主线，多租户/资源权限是安全支撑。Toolkit 的成熟能力按缺口采用，避免替换现有组织与认证模型。订阅计费优先复用其他项目（已定位 D:/appspace/billandcharge）；OAuth/SSO 保留为近期后续路线，不作为本轮上线条件。运行门禁与评估证据见 ../../evidence/collaboration/CONTINUATION-2026-10-21.md。
-
-2026-10-21 最新交付主线确认：多人协作文档、在线状态、评论与冲突合并；以 React、WebSocket、Yjs/CRDT 的端到端同步与一致性证据验收。白板保留为扩展，不替代或阻塞该主线；Redis 当前用于 OAuth 临时状态及 Socket.IO 广播，原生文档同步仍为单实例，不宣称已完成 Redis 跨实例正文同步。
-
-2026-10-21 用户扩展范围：协作文档与实时白板都实现。最新范围、对象协议、冲突/权限及 WB01–WB06 验收见 [WHITEBOARD.md](WHITEBOARD.md)，覆盖下文旧的白板后续规划；历史文档验收不能替代白板验收。
-
-本文件是初始设计基线，与同目录 REQUIREMENTS.md 的 BR/AT 对应。2026-10-20 的实际 API、批量提交和已知缩减见 IMPLEMENTATION_NOTES.md；设计指标不是验收成绩。
-
-## D01 架构与选型
-
-延续 apps/web（Next.js）与 apps/api（NestJS）及既有 Prisma/RLS/审计。新增 apps/collab（TypeScript 原生 WebSocket 同步服务）与 packages/collab-protocol（帧定义、schema、版本、错误码）。Web 采用 Tiptap/ProseMirror + Yjs，IndexedDB 保存离线状态；编辑器 extension、Yjs、y-prosemirror 等锁定兼容版本后再实现。首版一个 collab 实例，PostgreSQL 为持久化事实源。
-
-不把 y-websocket 帧塞进 Socket.IO：二者线协议不同。原有 IM Socket.IO 保留；正文用独立 /collab WebSocket 和受测试的 Yjs sync adapter。采用成熟 y-protocols，不自造 CRDT；加入自定义更新 envelope 与 durable ACK，标准 provider 的 synced 不直接等于持久化。
-
-Liveblocks 可减少运维，但本项目需要公开同步/持久化/恢复证据，且已有后端权限基础，所以主线选择自管 Yjs。该选择增加协议与运维成本；不同时维护两套 provider。Redis 非首版正文数据库：P1 仅用于跨实例通知和可丢弃 presence，Pub/Sub 丢消息靠数据库增量重放恢复。
-
-## D02 权威与一致性
-
-- 正文仅由 collab 授权接收 Yjs 更新并写入数据库，REST 不接受全量正文覆盖。
-- 元数据/ACL/评论/命名版本由 NestJS 授权事务写入；同一资源不建立双写路径。
-- 正文最终收敛不意味着满足业务权限或语义正确。并发插入按 CRDT 标识确定顺序；同段改写可能出现用户需整理的内容，产品不承诺理解作者意图。
-- 标题/评论编辑使用 revision + If-Match，冲突返回 409 并保留本地草稿。ACL 与生命周期使用服务端事务。
-- Undo 使用 trackedOrigins 和本地 UndoManager；远端事务不进入本地撤销栈。初始化内容由服务端生成一次，客户端不在每次连接时写 seed。
-
-## D03 数据模型
-
-以下为拟新增模型，所有资源查询带 organizationId，使用现有 withUser/RLS 机制；迁移必须有非 owner 数据库角色测试。关系使用含 organizationId 的复合唯一键/外键，避免把 A 组织 doc 指向 B 项目。
-
-| 模型 | 关键字段/约束 |
+| 目录 | 职责 |
 | --- | --- |
-| CollabDocument | id, organizationId, workspaceId, projectId, title, status ACTIVE/ARCHIVED, revision, aclEpoch, createdBy, createdAt, updatedAt |
-| DocumentGrant | organizationId, documentId, userId, role；unique(documentId,userId)；索引 org/user |
-| DocumentUpdate | organizationId, documentId, seq bigint, updateId UUID, actorId, clientSessionId, bytes bytea, checksum, createdAt；unique(documentId,updateId)，unique(documentId,seq) |
-| DocumentCheckpoint | documentId, organizationId, throughSeq, encodedState bytea, stateVector bytea, schemaVersion, checksum；unique(documentId,throughSeq) |
-| DocumentVersion | id, organizationId, documentId, name, throughSeq, 独立不可变 encodedState, schemaVersion, createdBy, createdAt；不得仅指向将被压缩的增量 |
-| CommentThread | id, organizationId, documentId, anchorStart/End 编码后的 RelativePosition, quote, state OPEN/RESOLVED, revision, createdBy |
-| Comment | id, threadId, organizationId, body plain text, revision, createdBy, createdAt, editedAt |
-| IdempotencyRecord | orgId, actorId, scope, key, requestHash, resultRef；唯一键及有效期；相同 key 不同请求返回 409 |
+| `apps/web/src/app` | Next.js App Router 页面；`(app)` 为主应用路由组，登录/注册/邀请独立 |
+| `apps/web/src/components` | 文档、白板、IM、Office、AI、语音、设置等界面组件 |
+| `apps/web/src/lib`、`store` | HTTP 客户端、协作连接、离线队列、通知订阅、Zustand 状态 |
+| `apps/api/src/modules` | 29 个 NestJS 业务模块：auth、organizations、projects、documents、files、im、agent、voice 等 |
+| `apps/api/src/common` | 守卫、trace_id、异常过滤、脱敏、权限工具 |
+| `apps/api/prisma` | Prisma schema、迁移与 seed |
+| `apps/collab` | 独立 WebSocket 协作服务（连接、房间、批量写入、ACK、广播） |
+| `packages/collab-protocol` | 前后端共享帧定义、错误码、图形/形象目录 |
+| `packages/collab-store` | 协作文档 SQL 读写、更新批次、快照、Office 支持 |
+| `scripts`、`tests/browser` | 本地环境、验收脚本、Playwright 浏览器回归 |
+| `deploy`、`terraform`、`.github/workflows` | 部署、基础设施、CI |
+| `docs/collaboration`、`evidence/collaboration` | 文档与带日期的验收证据 |
 
-seq 是服务端提交序列而非 CRDT 时钟，不能拿它决定正文内容覆盖。Presence 不写历史业务表。复用 OperLog 记录权限/版本/归档/评论状态，不记录每个按键及正文到普通日志。
+## 3. 多租户与安全
 
-## D04 授权与撤销竞态
+### 3.1 请求链
 
-API 签发 60 秒、单次使用的连接 ticket，绑定 user/org/project/doc/role/aclEpoch/session/nonce；签名密钥无开发默认值。浏览器先建立 TLS WS，在 5 秒内发 auth 帧；未授权前不加载正文、不允许 sync。限制未认证连接总量；ticket 不进 URL、访问日志、localStorage。nonce 由数据库原子消费。
+1. `JwtAuthGuard` 全局校验 Bearer Token；公开路由显式标记。
+2. 业务路由使用 `OrgContextGuard`：读取 `x-organization-id`，在 RLS 事务内反查 Membership，加载角色、菜单权限、数据范围。
+3. Service 层通过 `prisma.withOrg` / `withOrgUser` 开事务；事务内先设置组织上下文，再执行业务查询。
+4. 数据库对业务表启用 FORCE RLS；即使应用层漏判，也不能跨组织读写。
+5. `TraceIdMiddleware` 为每个请求生成 trace_id，审计与错误响应共用。
 
-握手、重连、增量写入、同步读取、历史与评论都校验账号/组织/项目/文档状态与有效授权。文档写入事务先按统一顺序锁定账号、membership、project、document、grant 相关行并检查权限；撤销/停用/归档事务取得相同授权行锁并递增相应 epoch。这样定义线性化点：撤销提交之后开始提交的更新不再成功。所有入口须共用锁序，禁止仅靠房间缓存或 30 秒定时复校。
+### 3.2 关键约束
 
-读授权同样在数据读取时检查；已在撤销提交前发送到网络的数据无法收回。单节点撤销主动断开，周期复校只作兜底。P1 跨节点失效通知加 outbox，并继续由 DB 写入检查保证安全。多级权限锁竞争需在 M3 测量，必要时再设计服务端授权栅栏，不提前宣称高吞吐。
+- 所有业务查询必须带服务端验证的 `organization_id`，不信任请求体/查询参数里的 orgId。
+- 组织、成员、项目、文档状态在事务内复查；撤权与写入使用同一锁序。
+- 最后一个有效 Owner 不能移除/降级。
+- 审计记录 actor、资源、前后差异、trace_id；敏感字段脱敏，不记录正文和二进制。
+- 密钥只在服务器环境变量中；前端只拿短期票据，不拿长期供应商密钥。
 
-## D05 协议与 durable ACK
+### 3.3 认证
 
-帧头包含 protocolVersion/type/requestId；更新 envelope 含 updateId、docId、schemaVersion 和 Yjs 二进制 payload。userId/租户不信任客户端。白名单限制客户端可发送的 sync message subtype，Viewer 只能请求服务器 diff，不能通过 sync-step2 绕过写权限。
+- 邮箱注册 + 验证邮件；登录限流（IP+邮箱，5 次/5 分钟）。
+- 密码重置走邮件 token；改密后旧登录态失效。
+- Google / GitHub OAuth 代码已接；是否可用取决于环境是否配置对应 Client ID/Secret。
 
-1. 加载权限 → 加载最近 checkpoint + throughSeq 之后所有更新 → 状态向量协商。
-2. 本地编辑生成更新，先持久化 pending envelope 到 IndexedDB，再发送；不将远端更新重新生成为新的本地 pending。
-3. 服务端对同文档串行排队，检查帧长、速率、schema 兼容及授权；对候选副本 apply/验证，禁止先污染权威内存。
-4. DB 事务写 DocumentUpdate、分配单调 seq；同 updateId 重试先核对 checksum，不重复写。
-5. 事务 commit 后更新权威内存、发送 ACK(updateId,seq) 并向其他成员广播。commit 后进程退出但 ACK 丢失，由重试查询原记录确认。内存应用失败时使房间失效并从 DB 重载，不继续服务旧状态。
-6. 客户端收到 durable ACK 后清 pending；同步完成必须同时满足差量协议完成、所有本地 pending 已 ACK 和未发生拒绝。
+## 4. 数据模型
 
-DB 写失败不广播、不发成功 ACK。网络超时指数退避带抖动（1–30 秒），重连重新拿 ticket 与权限；不能永久复用过期身份。待发送队列 >5 MiB 时暂停编辑并提供草稿导出，避免无限内存增长。
+按职责分组（完整定义见 `apps/api/prisma/schema.prisma`）：
 
-## D06 离线与本地安全
-
-IndexedDB key = 环境/账号/组织/docId/schemaVersion；必须等待本地 hydration 再创建编辑器，避免初始内容重复。缓存包括 Y.Doc、pending update envelope 和必要元数据；y-indexeddb 的 synced 仅表示本地载入。
-
-P0 支持已加载页面掉线、刷新后在网络恢复时继续；浏览器完全离线首次重启应用壳需 Service Worker，列 P1。IndexedDB quota/隐私模式失败时 UI 明确“本地保存失败”，保留内存草稿和导出入口。注销销毁 provider/ydoc 并清账号缓存；组织切换释放连接，不混用 doc 实例。
-
-重连权限撤销：服务端拒绝，停止上传，旧草稿隔离只允许本地导出；用户不能将其重新合并到已失权文档。档案删除与 CRDT epoch 不跨越混合；新副本使用新 docId。
-
-## D07 评论与版本
-
-选区评论保存 Yjs RelativePosition 起止点及 quote，不保存易漂移的字符 index。RelativePosition 基于对应 Y.Doc lineage；解析为空或原文删除则转为未定位评论，quote 仅作上下文且跟随文档 ACL。评论纯文本，链接清洗，字符数限制 5000；提交有幂等键，状态切换使用 revision。评论通过 REST 持久化并用通知事件刷新；漏通知时重新拉取，以 DB 为准。
-
-命名版本请求由 collab 串行屏障处理：读取已提交 throughSeq，生成对应完整 Yjs 状态及可预览内容，保存 schemaVersion。客户端有未 ACK 编辑时禁用创建版本。预览从不可变快照构建独立只读 Y.Doc，不连接原房间。
-
-“恢复”明确为创建副本：从旧版本 materialize 编辑器内容，赋新 docId、重新创建 Y.Doc 与全新 CRDT 标识，ACL 默认恢复人 Owner，不复制评论锚点。不能把旧快照 apply 到当前文档当回滚，也不能把旧 CRDT ID 直接复用成恢复副本。原地恢复留待后续专门 epoch/协作者迁移设计。
-
-## D08 API 与界面映射
-
-复用 /api 前缀及现有认证规范，实施前核对全局 prefix。
-
-| 方法与路径 | 权限/结果 |
+| 分组 | 主要模型 |
 | --- | --- |
-| GET/POST /organizations/:org/projects/:project/documents | 项目有效、显式可见；分页列表/创建初始 owner |
-| GET/PATCH /documents/:id | 可读/Editor；元数据 revision，禁止正文覆盖 |
-| POST /documents/:id/archive | Owner；写审计、关闭写入 |
-| GET/PUT /documents/:id/grants | Owner；最后 owner 检查、epoch、审计 |
-| POST /documents/:id/session-ticket | 可读；返回 ticket、expiry、protocolVersion、WS URL |
-| GET/POST /documents/:id/threads | 可读/Commenter；游标分页/幂等创建 |
-| POST /threads/:id/comments；PATCH /threads/:id | Commenter；追加、解决/重开 |
-| GET/POST /documents/:id/versions | 可读/Editor；分页/命名不可变快照 |
-| GET /versions/:id/preview；POST /versions/:id/restore-copy | 可读/Editor 且可创建项目文档；只读预览/幂等创建新文档 |
+| 身份与组织 | `User`、`UserOAuth`、`Organization`、`Workspace`、`Membership`、`Role`、`Menu`、`Dept`、`Post` |
+| 项目与任务 | `Project`、`Task`、`GroupMember`、`ResourceGrant` |
+| 协作文档 | `CollabDocument`、`CollabGrant`、`CollabUpdate`、`CollabTicket`、`CollabThread`、`CollabReply`、`CollabVersion`、`CollabRestore`、`CollabImage` |
+| 文件与 Office | `File`、`FileShare`、`Outbox` |
+| IM 与通知 | `Conversation`、`ConversationMember`、`Message`、`MessageAttachment`、`Notice`、`NoticeRead` |
+| 计费 | `Plan`、`Subscription`、`Entitlement`、`BillingEvent` |
+| 审计与系统 | `OperLog`、`LoginLog`、`Config`、`DictType`、`DictData` |
 
-404 隐藏无权资源存在性；401 身份过期；409 revision/幂等冲突；413 过大；429 限流；503 依赖失败。WS 错误码与 UI 状态一致，不在 error 中泄露内容和 ticket。web 新增项目 Documents 入口及 /projects/[projectId]/documents/[docId]；客户端 provider 负责生命周期，编辑器仅消费文档状态。
+模型统一带 `organizationId`；关系使用包含组织 ID 的复合键，避免跨组织引用。正文更新以 `CollabUpdate` 为持久化日志，`CollabVersion`/快照保存不可变状态。
 
-## D09 容量、压缩与运维
+## 5. 实时协作
 
-初始限制：单帧 256 KiB（完整同步按协议分块），文档完整编码 5 MiB，20 活跃编辑会话/文档，正文更新 20 帧/秒/会话且有字节预算；awareness 最多 10 Hz、每会话 2 KiB，慢客户端发送缓冲 >1 MiB 时丢弃旧 presence，正文不丢弃，断线后重同步。限制都是起始配置，测量后调整。对解码 CPU/内存设置隔离与预算，异常 Yjs 更新不应阻塞所有房间。
+### 5.1 连接与授权
 
-每 1000 条更新或 5 分钟生成 checkpoint：固定 throughSeq N，事务提交 checkpoint，验证重建后才能清理 <=N 的增量；保留去重记录覆盖离线重试窗口。命名版本独立留存，不依赖增量。P0 不做自动永久删除历史，设置存储上限并提示；保留周期由后续产品决策确定。
+- API 签发短期、单次使用的协作票据，绑定 user/org/project/doc/role/epoch/session/nonce。
+- 浏览器建立 `/collab` WebSocket 后先发 auth 帧；未授权前不加载正文。
+- 握手、重连、增量写入、同步读取、历史和评论都重新校验账号/组织/项目/文档状态与 ACL。
+- 撤销权限时服务端主动断开或冻结；周期复校只作兜底，安全由数据库写入检查保证。
 
-collab 部署到支持长连接的常驻容器；Next.js 可单独托管，禁止假定 serverless request 支持常驻房间。TLS、Origin 白名单、反向代理 WS upgrade/空闲超时/心跳配置明确；liveness 与 readiness 分开。优雅终止先停止新连接、完成已接收写入、关闭会话；紧急退出靠 durable DB 恢复。生产新建独立 DB/对象存储/密钥，旧部署文件仅作参考。
+### 5.2 写入与 ACK
 
-指标：连接数、房间数、更新接收到 commit/ACK 延迟、同步 backlog、拒绝数、重连时间、checkpoint 时间、内存、DB 错误、event-loop lag。日志用 traceId/docId/sessionId，不记录正文和二进制内容。告警与备份恢复演练列为发布门禁。
+1. 客户端本地生成 Yjs 更新，先写入 IndexedDB pending，再发送。
+2. 协作服务按文档串行排队，校验帧长、速率、schema 和权限。
+3. 数据库事务写 `CollabUpdate`，分配单调 seq；同一 `updateId` 重试先核对 checksum。
+4. 事务 commit 后才更新权威内存、发送 durable ACK 并广播。
+5. 客户端收到 ACK 才清除 pending；只有“协议同步完成 + 本地 pending 全部 ACK + 无拒绝”才显示已保存到服务器。
+6. DB 失败不 ACK、不广播；进程重启后从数据库重建。
 
-P1 双节点：DB 为共同日志；Redis publish 携带 docId/seq，订阅者按 seq 补读 DB；定期查高水位修复漏消息。checkpoint 单写者需数据库租约与 fencing。未通过跨节点故障测试之前只发布单节点容量声明。
+### 5.3 离线、评论与版本
 
-## D10 实现与验证顺序
+- IndexedDB key 含环境/账号/组织/docId/schemaVersion；先 hydration 再创建编辑器。
+- 评论锚点使用 Yjs RelativePosition；原文删除后进入未定位列表。
+- 命名版本保存不可变快照；恢复创建新 docId 的副本，不覆盖当前文档。
+- 自动快照按成功编辑每分钟至多一份，可在时间轴浏览。
 
-M0 运行真实现有 scripts，检查 auth/权限/RLS/项目关联，扫描复制品凭据，分离原工程证据。M1 建模型/RLS、ticket、协议、durable persistence、两浏览器编辑；必须先通过 AT01/02/08/09。M2 接入 IndexedDB、评论、版本（AT04–07）。M3 故障注入、热点压测、IME/无障碍、清理监听器（AT03/10/11）。M4 独立部署、TLS/反代/备份恢复、英文 demo。
+### 5.4 已知边界
 
-测试分层：Yjs convergence/Undo/anchor 语义测试；真实 PG 的权限/事务/重建测试；独立浏览器上下文 E2E；网络断开/进程 SIGKILL/ACK 丢失/DB 故障注入。哈希相同不能单独证明业务正确，比较编辑器语义树、用户可见内容及权限副作用。每份报告标明 commit、环境、数据规模、精确命令及 PASSED/BLOCKED/NOT_RUN。
+- 当前为单 collab 实例；跨实例正文同步未验证。
+- 单文档完整状态上限 5MiB，WS 单帧 256KiB。
+- 已下载到离线设备的内容无法在撤权后“收回”，只能阻止继续上传。
 
-## 官方技术依据
+## 6. 内容子系统
 
-- [Yjs updates](https://docs.yjs.dev/api/document-updates)：更新合并及 state vector。
-- [Yjs 离线](https://docs.yjs.dev/getting-started/allowing-offline-editing)：IndexedDB 与离线页面壳的区别。
-- [Yjs RelativePosition](https://docs.yjs.dev/api/relative-positions)：选区锚定。
-- [y-websocket](https://docs.yjs.dev/ecosystem/connection-provider/y-websocket)：独立协议与服务端 provider 参考；本设计 durable ACK 需要额外实现与测试。
+### 6.1 富文本与 Markdown
 
+- Tiptap/ProseMirror + Yjs；标题、列表、任务、引用、链接、图片、LaTeX 公式。
+- 图片上传/粘贴/拖入，每文档累计 20 张/20MB；图片继承文档 ACL。
+- Markdown 以源码协作为主，支持导入 `.md`（≤200KB）与预览。
 
-## Office 二进制协作扩展（2026-10-22）
+### 6.2 Office
 
-Office 引擎为细粒度编辑权威，应用为 ACL/持久版本权威；独立 generation、每客户端 lease UUID、活动 epoch、保存 receipt 与事务栅栏防止旧回调覆盖。禁止 OFFICE 资源进入 Yjs 同步/恢复路径，父项目 READ 限制所有子文档写入。详细设计与拒绝/恢复证据见 OFFICE-INTEGRATION-2026-10-22.md。
+- DOCX/XLSX/PPTX 通过 ONLYOFFICE 在线编辑；API 负责 ACL、文件版本、私有副本、PDF 导出。
+- 引擎是细粒度编辑权威，应用是 ACL/版本权威；保存使用 generation/lease/epoch，防止旧回调覆盖新版本。
+- 权限变更导致会话冻结，可从恢复候选找回未保存内容。
+- 格式边界：复杂对象、宏、部分嵌套结构不宣称完整兼容。
 
+### 6.3 白板与 Mermaid
 
-## Office 线上交付（2026-10-22）
+- 自由画布：矩形、椭圆、便签、箭头、思维主题；拖拽、改字、连线、绑定连接线。
+- 流程图/思维导图模板、自动布局；业务图表模板库覆盖高频场景。
+- Mermaid 图形/源码/分屏三视图，源码为权威；支持导入追加与 SVG/PNG/源码导出。
+- 单白板最多 500 个图元；任意 Mermaid 语法/坐标回写仍有限制。
+- 箭头工具是“拖线”而不是插入箭头图形：从一个图元内部拖到另一个图元，松开生成绑定连接线；空白处点击只提示，不创建图形。
+- 连接点有透明大命中区（约 14px）和可见小圆点；拖动时目标图元显示虚线高亮，落点使用 8–24 世界单位容差。
+- 落点命中读取 Y.Doc 最新状态，而不是 React 渲染快照，保证“刚加完图元立刻连线”也能成功。
+- 白板 AI Agent：从已保存白板读取选区，生成受约束操作，用户确认后单次 Yjs 事务提交并等待 ACK。
 
-生产Office使用既有API域名HTTPS子路径与精确前缀下载映射；后端通过受限无特权SSH账号访问新机回环引擎。前端Markdown列表增加有限网络重试、失败提示与手动重载，组织变更时取消旧重试。
+### 6.4 白板 AI 操作协议
 
+| 操作 | 参数 | 说明 |
+| --- | --- | --- |
+| `add` | `ref`, `type`, `text`, 可选 `x/y/w/h` | 新增矩形/椭圆/菱形/便签/文字/思维主题；缺坐标时按 3 列网格自动布局 |
+| `note` | `ref`, `text`, `x`, `y` | 兼容旧协议的便签新增 |
+| `update` | `ref`, `text` | 修改已有图元文字 |
+| `move` | `ref`, `x`, `y` | 移动已有图元 |
+| `connect` | `from`, `to` | 在两个图元之间创建连接线，可引用本次新增的 `n` 引用 |
 
-### 2026-10-23 注册邀请与个人通知
+单次最多 20 个操作；服务端读取选区、复查权限与版本，前端预览后由用户确认应用。暂不支持删除、改颜色/线型或自由起止点箭头。
 
-新增 INV01–INV06，业务、状态机、数据库权限与邮件交付边界见 [INVITATION-NOTIFICATIONS.md](INVITATION-NOTIFICATIONS.md)。核心协作与资源 ACL 保持既有权威模型；个人通知不依赖先加入目标组织。侧栏一级、次级菜单统一14px。
+## 7. AI 设计
 
+### 7.1 两条能力线
 
-2026-10-29追加首个可操控三维Agent，需求/实现边界见[可动3D首版](PERSONA-MOTION.md)，不替代已有数字人完整验收。
+| 能力 | 入口 | 行为 |
+| --- | --- | --- |
+| 协作助手 | `/assistant`、文档/Office 侧栏 | 摘要、行动项、翻译、写邮件；邮件确认后才发送 |
+| AI 工作助理 | 顶栏“AI 助理”抽屉 | 规则规划 + DeepSeek 模型问答；写操作返回计划，用户确认后调用现有 REST |
+
+### 7.2 受控写入
+
+1. 用户在选中范围（段落/单元格/幻灯片/图元）上发起请求。
+2. 服务端在组织事务与 RLS 上下文中读取可见事实，生成受约束操作。
+3. 生成前后都复查权限；提案绑定资源、基础版本、操作范围、trace_id。
+4. 用户确认后单次提交；幂等键保证网络重试不重复写入。
+5. 目标版本已变化或权限被撤销时进入冲突/失效，不自动覆盖。
+6. 应用记录审计：操作者、模型、基础版本、提交版本、动作摘要。
+
+### 7.3 边界
+
+- 模型只回答，不直接执行写操作；写操作必须经过确认。
+- 未配置 `DEEPSEEK_API_KEY` 时保留规则能力与文本操作，不伪造模型结果。
+- 白板 AI 单次最多 20 个操作；不支持删除、改颜色/线型或生成任意图形库形状。
+- 不记录原始消息正文到普通日志；审计只保留必要摘要。
+
+## 8. 语音与数字人
+
+### 8.1 语音 Provider
+
+`SPEECH_PROVIDER` 显式选择 `azure` / `volcengine` / `elevenlabs`，无自动回退：
+
+- **ElevenLabs**（当前生产）：STT `scribe_v2`，TTS `eleven_multilingual_v2`，中英文 Voice ID 分别配置。
+- **Azure**：global/china 显式端点，cloud/region 不匹配时失败关闭。
+- **豆包**：按资源 ID 与音色配置。
+
+任务模型：`/voice/jobs` 创建 STT/TTS 任务，按组织/用户/项目授权；单次 60 秒、4000 字；每小时 20 次、同时 1 个任务；失败不自动重试。
+
+### 8.2 数字人
+
+- 预设/卡通形象 + 基础口型预览：可用，但为第三方技术样例，不是 20 款定制成品。
+- 私有照片/视频素材草稿：仅本人可见，≤20MB、最多 3 个、7 天过期，不外发、不训练。
+- 真人数字人视频：`AvatarProvider` 目前为未配置实现，创建接口直接 503；不会显示虚假成功或可播放结果。
+- 接入真实供应商时需要补：异步任务/回调、私有存储、授权与撤回、审计、费用与失败恢复。
+
+## 9. IM、通知与邮件
+
+- IM 使用 Socket.IO；Redis 可用时做广播/缓存，无 Redis 时降级单实例。
+- 支持单聊/群聊、已读回执、输入中、图片/文件消息、语音听写。
+- 个人通知不依赖先加入目标组织；通知中心聚合邀请、系统消息与业务提醒。
+- 邮件通过 Resend：注册验证、邀请、项目邮件；合成域名只落日志供测试读取。
+- 多项目回调验签、业务分流、持久化 outbox 与幂等，防止重复投递。
+
+## 10. 搜索、审计与监控
+
+- 全局搜索（`Ctrl/Cmd+K`）按组织与资源权限过滤页面、项目、文档、消息等结果。
+- 审计：`OperLog` 记录 actor、资源、前后差异、trace_id；敏感字段脱敏。
+- 登录日志：记录登录结果与异常，用于限流/风控排查。
+- 监控：在线用户、服务资源、缓存、定时任务、数据库会话；健康检查 `/api/v1/health/ready`。
+
+## 11. 前端设计
+
+- Next.js App Router；主应用路由组 `(app)`；沉浸式文档/Office 编辑页隐藏顶栏。
+- 顶栏保留高频目的地；更多入口在左侧抽屉；右侧 AI 助理抽屉；`Ctrl/Cmd+K` 搜索、`Ctrl/Cmd+J` 助理。
+- Tailwind token 化：`slate/indigo/...` 映射 CSS 变量，支持“编辑风 / 经典浅色”双主题；主题在渲染前由内联脚本写入，避免 hydration 重置。
+- 设置中心：主题、个人资料、语音与数字分身、成员/角色/部门/邀请、审计、通知、系统与监控。
+- 可访问性：语义标题、aria 标签、键盘焦点管理、移动端阅读与基础编辑。
+- 白板与文档工具栏统一使用 `Button`/圆角 token/indigo 激活态；基础图元工具使用 lucide 图标，避免空按钮。
+
+## 12. 部署与运维
+
+| 层 | 方案 |
+| --- | --- |
+| 前端 | Vercel，生产域名 `collabspace.purelamp.uk` |
+| API | 腾讯云轻量服务器，Docker Compose，`collabspace-api-1` |
+| 协作 WS | 独立容器/进程，`/collab` 路径 |
+| 数据库 | PostgreSQL 16，FORCE RLS；不暴露宿主端口 |
+| Redis | IM 广播/缓存，可选降级 |
+| Office | 独立 ONLYOFFICE 引擎，API 受限访问 |
+| 邮件 | Resend + webhook 路由 |
+| 语音 | ElevenLabs（当前生产），密钥仅在服务器 env |
+
+发布流程：构建/打包 → 上传 → 镜像构建 → 健康等待 → 线上验收 → evidence → 提交/标签。回滚保留 previous 镜像；数据库只做 additive 迁移。备份由发布脚本执行 `pg_dump` + uploads 打包，但**正式还原演练尚未做**。
+
+## 13. 测试策略
+
+| 层 | 方式 |
+| --- | --- |
+| API 单测/集成 | `node --test apps/api/tests/*.test.cjs`（含隔离 PostgreSQL 组） |
+| Web 单测 | `node --test apps/web/tests/*.test.cjs` |
+| 协作存储 | `pnpm test:collab`（真实 PG/WS） |
+| 浏览器 E2E | Playwright，`tests/browser/*.spec.cjs`（55 个 spec 文件） |
+| 线上验收 | 真实账号 + 服务器 Chrome；截图/JSON 存 evidence |
+| 发布验证 | health、镜像一致性、RLS 在位、OOM/restarts |
+
+测试数字是资产，不是通过率；报告必须区分 PASSED / BLOCKED / NOT_RUN，并附 commit、环境、命令和数据规模。
+
+## 14. 关键取舍
+
+| 取舍 | 选择 | 原因 |
+| --- | --- | --- |
+| 实时协作 | 自管 Yjs + 独立 WS | 需要公开持久化/恢复证据，已有后端权限基础 |
+| 权威来源 | PostgreSQL | 进程重启、ACK 丢失、审计都需要可重建 |
+| 权限 | 应用守卫 + RLS 双保险 | 单靠应用层或单靠数据库都不够 |
+| 外部 AI/语音 | Provider 显式选择，无自动回退 | 数据地域、合规和费用必须可解释 |
+| 支付 | 沙盒，入口隐藏 | 没有真实商户资质与资金授权 |
+| 会议 | 代码保留，生产关闭 | 媒体稳定性与撤权验收未完成 |
+| 数字人 | 草稿可用，真人生成未接 | 不伪造供应商能力 |
+
+## 15. 相关文档
+
+- [功能归档](FEATURE-ARCHIVE.md)：每个能力的当前状态、证据与限制。
+- [需求分析](REQUIREMENTS.md)：用户、范围、BR、AT。
+- [用户手册](USER-OPERATIONS-MANUAL.md)：使用与运维步骤。
+- [ADR](ADR.md)：架构决策记录。
+- [第三方服务](THIRD-PARTY-SERVICES.md)：供应商、环境变量与回调。
+- [语音供应商选型](SPEECH-PROVIDER-SELECTION.md)：Azure/豆包/ElevenLabs 对比与生产配置。
+- [Agent 与白板设计](AGENT-OFFICE-WHITEBOARD.md)：AI 受控写入白板/Office 的协议与验收。

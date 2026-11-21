@@ -1,206 +1,141 @@
-# CollabSpace — 多人实时协作文档
+# CollabSpace
+
+**多租户协作空间：文档、Office、白板、IM、AI 与语音，在同一条权限与审计链路上。**
+
+生产演示：https://collabspace.purelamp.uk ｜ 演示账号请向作者索取（不在仓库保存密码）
+
+---
+
+## 这是什么
+
+CollabSpace 是一个可运行的 B2B 协作 SaaS 作品集项目。它把项目团队常用的几件事放进同一个组织/工作区/项目结构：
+
+- 多人实时编辑富文本、Markdown、白板与 Office 文件；
+- 白板基础图元、箭头拖线、连接点、AI 生成流程图；
+- 评论、版本、自动快照、断线重连与离线续写；
+- 单聊/群聊、已读、输入中、附件与语音听写；
+- 协作助手与 AI 工作助理，写操作必须“计划 → 确认 → 应用”；
+- 多租户隔离、文档 ACL、最后一个 Owner 保护、审计与监控；
+- 生产部署、健康检查、发布/回滚与可复核的验收证据。
+
+它不是一个“功能堆满首页”的演示，而是一个强调**失败关闭、权限边界和可追溯交付**的工程项目。
+
+## 这个项目展示了什么
+
+| 能力 | 具体体现 |
+| --- | --- |
+| 多租户安全 | 服务端组织上下文 + PostgreSQL FORCE RLS + 资源 ACL + 撤权竞态检查 |
+| 实时协作 | 自管 Yjs + 独立 WebSocket 服务 + durable ACK + 离线 pending + 快照 |
+| 复杂内容 | 富文本/Markdown/Office/白板/Mermaid 共用权限、版本与实时体系 |
+| AI 受控写入 | 规则规划 + DeepSeek；写操作生成计划，确认后单次提交，幂等 + 审计 |
+| 语音 | ElevenLabs Scribe v2 听写 + multilingual v2 合成，失败不自动重试 |
+| 交付工程 | 生产部署、健康检查、发布/回滚、55 个浏览器 spec、374 份 evidence |
+
+## 功能概览
+
+- **项目空间**：组织、工作区、项目、成员、部门、岗位、角色、邀请。
+- **协作内容**：富文本、Markdown、白板/Mermaid、Word/Excel/PowerPoint。
+- **协作能力**：实时编辑、在线成员、评论、命名版本、自动快照、恢复为副本。
+- **消息**：单聊/群聊、已读、输入中、图片/文件、语音听写。
+- **AI**：摘要、行动项、翻译、写邮件、项目问答、受控改文档/白板；白板支持新增图元、改字、移动、连线和自动布局。
+- **治理**：审计、登录日志、公告、系统配置、监控、套餐沙盒。
+- **体验**：顶栏 + 抽屉导航、全局搜索（`Ctrl/Cmd+K`）、AI 助理（`Ctrl/Cmd+J`）、双主题、个人资料。
+
+## 技术栈
+
+- **前端**：Next.js 14 App Router、React 18、TypeScript、Tailwind CSS、Zustand、Tiptap/ProseMirror、Yjs。
+- **后端**：NestJS 10、Prisma、PostgreSQL 16（FORCE RLS）、Redis、Socket.IO。
+- **协作**：独立 Node WebSocket 服务 + Yjs CRDT + 自定义 durable ACK。
+- **Office**：ONLYOFFICE 引擎，API 负责 ACL/版本/PDF/私有副本。
+- **AI/语音/邮件**：DeepSeek、ElevenLabs、Resend。
+- **部署**：Vercel（前端）+ 腾讯云 Docker Compose（API/WS/DB/Redis/Office）。
+
+## 仓库结构
+
+```text
+apps/
+  web/       Next.js 前端（48 个页面）
+  api/       NestJS API（29 个业务模块）
+  collab/    独立 WebSocket 协作服务
+packages/
+  collab-protocol/  共享帧定义、错误码、目录
+  collab-store/     协作文档 SQL、快照、Office 存储
+docs/collaboration/ 需求、设计、功能归档、用户手册、专项设计
+evidence/collaboration/ 带日期的验收证据与截图
+tests/browser/      Playwright 浏览器回归（55 个 spec 文件）
+deploy/ terraform/  部署与基础设施
+```
+
+## 快速开始
+
+```powershell
+pnpm install --frozen-lockfile
+pnpm local:up
+```
+
+默认 Web `43120`、API `43121`、协作 WS `43122`。本地合成账号：
+
+```text
+owner@acme.dev / admin@acme.dev / member@acme.dev
+密码见 .test-runs/collab-local/config.json（仅本地，勿用于生产）
+```
+
+测试：
+
+```text
+pnpm --filter @teamspace/api test
+pnpm --filter @teamspace/web test
+pnpm test:collab
+node node_modules/@playwright/test/cli.js test
+```
+
+## 文档
+
+| 文档 | 内容 |
+| --- | --- |
+| [需求分析](docs/collaboration/REQUIREMENTS.md) | 用户、场景、范围、BR、AT、指标 |
+| [详细设计](docs/collaboration/DESIGN.md) | 架构、模块、数据、安全、实时、AI、语音、部署 |
+| [功能归档](docs/collaboration/FEATURE-ARCHIVE.md) | 已完成功能、状态、证据、限制、待办 |
+| [用户手册](docs/collaboration/USER-OPERATIONS-MANUAL.md) | 上手、核心流程、管理、排障、演示路线 |
+| [开发者导读](docs/collaboration/DEVELOPER-GUIDE.zh-CN.md) | 目录地图、从需求找代码、本地验证 |
+| [ADR](docs/collaboration/ADR.md) | 关键架构决策 |
+| [第三方服务](docs/collaboration/THIRD-PARTY-SERVICES.md) | 供应商、环境变量、回调 |
+| [文档索引](docs/collaboration/README.md) | 全部现行文档与历史归档 |
 
-📖 新读者入口：[用户使用与运维手册](docs/collaboration/USER-OPERATIONS-MANUAL.md)（功能地图、权限模型、发版/备份/回滚、本地开发）。
+## 当前状态
 
-2026-10-30：当前代码已归档、自测并发布；修复项目在线状态及 WS 原生数据库配置漂移，正式快照/权限回归通过。见[当前状态](docs/collaboration/CURRENT-STATUS-2026-10-30.md)与[发布审查记录](evidence/collaboration/REVIEW-RELEASE-2026-10-30.md)。下方旧记录保留作历史追溯。
+- 生产站点：https://collabspace.purelamp.uk
+- 前端部署：`collabspace-1yk6b7f74-purelamp.vercel.app`（已别名）
+- API 镜像：`collabspace-api:api-r20261121-11`
+- 提交：`629f3c9`；标签：`collabspace-20261121-board-ai`
 
-2026-10-29新增本地[快照时间轴](docs/collaboration/SNAPSHOT-TIMELINE.md)：文档、Markdown与白板在成功编辑时每分钟最多保留一份不可变自动快照，支持时间轴浏览、即时保留、历史预览和恢复为副本。生产尚未发布，见[验收记录](evidence/collaboration/SNAPSHOT-TIMELINE-2026-10-29.md)。
+### 已上线
 
-2026-10-29 R3口型：[带声音技术演示](evidence/collaboration/avatar-mouth-r3.webm)、[20款制作清单与配置](docs/collaboration/AVATAR-20-PRODUCTION.md)。已验证本人既有TTS本地基础音素分析、VRM音画/暂停/重播/离开与账号隔离，无新增TTS请求；样例为第三方VRM，20款原创可动模型仍待制作，未生产发布。
+文档/Markdown/白板/Mermaid/Office 协作、白板箭头拖线与 AI 生成流程图、评论、版本、快照、权限、IM、通知、邮件、搜索、AI 助手、ElevenLabs 语音、审计、监控、双主题、个人资料。
 
-2026-10-29 R3：[服务器会中撤权、恢复与真实Socket验收](evidence/collaboration/RTC-VOICE-PERSONA-R3-2026-10-29.md)。成员停用后纯SDK客户端被服务器移除、旧票拒绝；重新鉴权入会与真实提交提示通过。M3核心全流程通过过一次，增强复测仍有媒体发布超时，不能视为稳定性验收完成；未生产发布。
+### 明确边界
 
-2026-10-29：[功能盘点与真实多账号自测](docs/collaboration/FEATURE-INVENTORY-2026-10-29.md)、[执行证据与未通过项](evidence/collaboration/FEATURE-AUDIT-2026-10-29.md)。本地真实应用 ElevenLabs 听写/朗读、账号结果隔离、聊天持久化及形象配置权限通过；LiveKit 多账号媒体稳定性/共享仍有失败，M3与最终原创可动数字人尚未验收。本轮未生产发布。
+- 支付仅沙盒，生产不展示收款入口。
+- 会议代码保留，生产开关关闭（`MEETINGS_ENABLED=false`）。
+- 真人数字人视频供应商未接入，只支持私有素材草稿；不会伪造成功或可播放结果。
+- 实时正文为单 collab 实例，跨实例/跨地域未验证。
+- 单文档 5MiB、WS 单帧 256KiB、白板 500 图元。
+- 白板连接线必须绑定两个图元，暂不支持自由起止点箭头；AI 单次最多 20 个操作，不支持删除/改色/改线型。
+- 语音为录音结束后 REST 识别/合成，不是流式字幕；无自动回退和自动重试。
+- 备份还原演练尚未完成。
 
-2026-10-28：20款静态形象及组织配置、私有素材基础、支付路由与DOCX解析改进已发布；[当前交付与剩余项](docs/collaboration/CURRENT-STATUS-2026-10-28.md)、[发布验收](evidence/collaboration/DEPLOYMENT-PERSONA-2026-10-28.md)。完整3D、真人供应商生成、真实语音和官方沙盒付款仍未完成。
+## 验收与证据
 
-[第三方服务与API Key获取清单](docs/collaboration/THIRD-PARTY-SERVICES.md)：区分现有接口、待开通、候选/海外版，含控制台入口、实际环境变量、回调和配置存放位置。
+- 发布审查：[REVIEW-RELEASE-2026-10-30.md](evidence/collaboration/REVIEW-RELEASE-2026-10-30.md)
+- 全量回归：[FULL-REGRESSION-2026-11-13.md](evidence/collaboration/FULL-REGRESSION-2026-11-13.md)
+- 界面/AI/语音：[UI-REDESIGN-AGENT-2026-11-20.md](evidence/collaboration/UI-REDESIGN-AGENT-2026-11-20.md)
+- ElevenLabs 生产验收：[voice-elevenlabs-online.json](evidence/collaboration/ui-editorial-2026-11-21/voice-elevenlabs-online.json)
+- 白板交互与 AI 改图：[BOARD-AI-INTERACTION-2026-11-21.md](evidence/collaboration/BOARD-AI-INTERACTION-2026-11-21.md)
 
-2026-10-27数字人第一阶段本地开发：[实际验收和剩余项](evidence/collaboration/DIGITAL-HUMAN-2026-10-27.md)。当前为原创静态角色、后台配置及真人私有素材草稿基础，完整3D、20款/捏脸和真实真人生成未完成，未更新线上站点。
+验收口径：PASSED / BLOCKED / NOT_RUN 必须可复核；不以 HTTP 200、模型流返回或广播 hash 代替业务完成。
 
-2026-10-27：[数字人详细设计](docs/collaboration/DIGITAL-HUMAN-DESIGN.md)明确Agent卡通与真人同事照片/视频数字分身两条必交付路线，包含美术、技术、授权、IM/邮件集成及验收；当前为设计基线。
+## 作品集说明
 
-2026-10-26追加：画布蓝色连接点可直接拖到另一图元连线，支持箭头样式/文字、取消、位置保留及多人同步；[契约](docs/collaboration/MERMAID-POSITION.md)、[实际验收](evidence/collaboration/MERMAID-CONNECT-2026-10-26.md)。
+这是个人独立完成的全栈项目，覆盖需求、设计、实现、测试、部署、线上排障和文档。面试演示建议只走一条主线：**多租户安全 → 实时协作 → AI 受控写入**；其余能力作为支撑，不逐页展示。详细脚本见用户手册第 9.7 节。
 
-2026-10-26：Mermaid实际画布拖入/移动、位置保存与局部删除已上线，正式4/4验收通过；[中文演示白板](https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/f4752774-d481-49a8-a5f9-f84c6870de05)、[范围](docs/collaboration/MERMAID-POSITION.md)、[验收发布](evidence/collaboration/MERMAID-POSITION-2026-10-25.md)。复杂结构自由定位仍明确限制，原图不被擅自覆盖。
-
-2026-10-25：IM/助手功能入口按钮化，隐藏未提供功能的占位项；[范围与规范](docs/collaboration/ACTION-UI.md)、[测试与发布](evidence/collaboration/ACTION-UI-2026-10-25.md)。
-
-2026-10-25后续：Azure海内外统一选型、IM话筒听写改版与受限助手工作流，见[听写体验](docs/collaboration/VOICE-DICTATION-UX.md)、[验收与发布](evidence/collaboration/DICTATION-RUNTIME-2026-10-25.md)。Azure/真人服务尚未开通，真实语音与视频不计为通过。
-
-2026-10-25：本轮语音与数字形象的[功能清单和待完成项](docs/collaboration/VOICE-PERSONA-STATUS.md)、[详细自测表](evidence/collaboration/VOICE-SELFTEST-2026-10-25.md)已整理；区分正式/本地成绩、替身、供应商阻塞和未验收项。
-
-2026-10-25：语音消息、3D卡通预览与邮件语音工具已更新到现有正式站点；云识别/合成和真人服务仍未配置。版本、CPU/内存/磁盘、备份与双账号正式验收见[语音与形象上线报告](evidence/collaboration/VOICE-RELEASE-2026-10-25.md)。
-
-2026-10-25：语音与数字形象规划已确定，涵盖IM、邮件及未来Agent/Skill；采用独立模块融入现有体系。需求、技术栈、范围及AT-VP01–08见 [语音与数字形象](docs/collaboration/VOICE-PERSONA.md)。已完成部分本地实现，实际通过项、供应商阻塞与未完成范围见[本地验收报告](evidence/collaboration/VOICE-PERSONA-2026-10-25.md)，不代表完整验收或生产发布。
-
-2026-10-25：协作助手（Word/PDF摘要、行动项、确认后邮件、中英翻译、朗读）、Office文件操作/PDF和本地图片准备已部署；入口 [协作助手](https://collabspace.purelamp.uk/assistant)。实际验收、运行版本、备份及回退见 [发布记录](evidence/collaboration/RELEASE-2026-10-25.md)。
-
-2026-10-24：多项目 Resend 回调验签、业务分流、持久化队列与其他项目适配补丁，见 [邮件回调路由](docs/collaboration/MAIL-WEBHOOK-ROUTING.md)。
-
-2026-10-24：新增富文本文档数学公式模板拖拽、LaTeX 输入与源码修改，P-MATH / BR-MATH / D-MATH / AT-MATH 及客户端升级要求见 [数学公式](docs/collaboration/MATH.md)。
-
-本工程从 F-U01 / TeamSpace 当前文件快照独立复制，私有仓库为 chenhynju/collabspace。已实现项目协作文档、多人编辑、离线草稿、评论、命名版本和文档权限；已上线独立演示环境，实际验收与边界见下方证据。
-
-在线文档支持富文本、正文配图、图片说明及宽度、上传/粘贴/拖入图片，并沿用多人同步和私有版本恢复。见 [图文写作契约](docs/collaboration/RICH_TEXT.md)、[验收与上线记录](evidence/collaboration/RICH-TEXT-2026-10-21.md)；登录后可打开 [图文协作示例](https://collabspace.purelamp.uk/projects/cmvg1shjj001w55oco1ou87o3/documents/30ae9064-e8e2-4ee6-8d24-9de1eb50f2e3)。
-
-白板图表以 Mermaid 源码为主要执行标准，支持图形 / 源码 / 分屏视图，并保留自由画布。官方渲染、共享源码、版本及未来 AI 受控编辑契约见 [Mermaid 设计](docs/collaboration/MERMAID.md)；任意 Mermaid 语法的图形拖动回写尚未完成。
-
-第二轮增加受支持流程图的拖入图元/节点连线、基础思维导图子树拖动、评论/版本实时提示和离线配图。范围与验收见 [第二轮设计](docs/collaboration/ITERATION-2.md)。GitHub/Google 社交登录的供应商配置见 [操作备忘录](docs/collaboration/OAUTH-SETUP-MEMO.md)。
-
-- [需求分析](docs/collaboration/REQUIREMENTS.md)
-- [详细设计](docs/collaboration/DESIGN.md)
-- [开发 Prompt](docs/collaboration/IMPLEMENTATION_PROMPT.md)
-- [复制与验证边界](docs/collaboration/BASELINE.md)
-- [实现取舍与本地运行](docs/collaboration/IMPLEMENTATION_NOTES.md)
-- [English walkthrough](docs/collaboration/README.en.md)
-- [当前实时协作主线与线上验收](evidence/collaboration/REALTIME-2026-10-21.md)
-- [首次文档验收状态](evidence/collaboration/ACCEPTANCE-2026-10-20.md)
-
-2026-10-21：新增侧栏“项目协同 → 实时协作”入口，按项目进入协作文档或实时白板。白板的功能边界、同步/冲突与权限设计见 [WHITEBOARD.md](docs/collaboration/WHITEBOARD.md)。生产验收以对应报告为准，不把历史文档成绩视为白板成绩。
-
-以下为继承的 TeamSpace 文档，部署域名、资源和证据仅供追溯，不代表新工程发布状态。
-
-# F-U01 Multi-Tenant B2B SaaS
-
-**建议产品：TeamSpace：企业项目协作云。** 文档更新：2026-10-07；产品和岗位资料核查：2026-10-06。
-
-本题来源是原始表格中的一句话设计。本文件把它展开为可讨论和实现的产品方案；产品名、具体用户场景、功能、状态和指标均是推导，不代表已完成用户访谈或市场验证。基础需求见 [REQUIREMENTS.md](REQUIREMENTS.md)，工程详细设计见 [DESIGN.md](DESIGN.md)。
-
-## 产品形态与最终用户
-
-**形态：**企业协作 SaaS 控制台与租户管理 API。
-
-**具体使用场景：**一家 50 人咨询公司同时服务多个客户；管理员隔离客户工作区，员工协作交付，财务管理席位。以项目与交付物作为租户能力的具体业务载体。
-
-**用户当前问题：**企业管理员需要为多团队分配空间和权限；成员只应看见所属租户资料。产品的价值由这些任务完成后的业务结果衡量，而不是由使用多少框架衡量。
-
-| 用户角色 | 主要目标 | 可操作边界 |
-| --- | --- | --- |
-| 管理员 | 开通企业并创建客户工作区 | 组织、工作区和项目分别授权，显示当前组织；切换组织清空本地资源缓存 |
-| 管理员 | 邀请员工并限制外部协作者 | 邀请绑定邮箱、组织、角色和过期时间，接受前校验身份；撤回立即失效 |
-| 项目负责人 | 分派任务并审阅交付物 | 项目关联任务和文件版本；客户访客仅见明确共享的交付物 |
-| 企业 IT | 用公司身份登录并撤销成员 | SSO 和目录同步映射本地成员；离职撤销生效于后续请求 |
-| 财务管理员 | 核对席位与套餐权益 | 席位口径明确为有效成员；超限给出原因；权益变更记录来源事件 |
-
-## 相似产品如何帮助推导需求
-
-以下官方产品或生态资料提供功能形态参照；引用仅支持所列功能信号，不说明竞品内部架构，也不把本题设计当作竞品完整规格。
-
-- [WorkOS 企业身份功能](https://workos.com/docs)：组织、角色、SSO、目录同步与审计。
-
-**推导方法：**从用户问题确定任务，再确定页面/API 和业务规则；从规则反推出状态、数据、权限与异常。每项产品需求 P 对应一项基础需求 BR、工程约束 D 和验收 AT，三份文档可按编号核对。产品形态取其中适合单人/小团队交付的范围，未验证的商业假设仍需用户访谈。
-
-## 完整用户旅程
-
-概览：创建组织→创建工作区→邀请成员→授予角色→访问资源→查看审计。
-
-1. **管理员：开通企业并创建客户工作区。** 组织、工作区和项目分别授权，显示当前组织；切换组织清空本地资源缓存。成功反馈是“成员切换组织后无法读取上一组织项目”；无法完成时保留当前业务状态与可解释原因。
-2. **管理员：邀请员工并限制外部协作者。** 邀请绑定邮箱、组织、角色和过期时间，接受前校验身份；撤回立即失效。成功反馈是“过期或被撤销的邀请不能加入”；无法完成时保留当前业务状态与可解释原因。
-3. **项目负责人：分派任务并审阅交付物。** 项目关联任务和文件版本；客户访客仅见明确共享的交付物。成功反馈是“访客猜测内部文件 ID 得到拒绝”；无法完成时保留当前业务状态与可解释原因。
-4. **企业 IT：用公司身份登录并撤销成员。** SSO 和目录同步映射本地成员；离职撤销生效于后续请求。成功反馈是“撤销后已有会话不能继续访问组织”；无法完成时保留当前业务状态与可解释原因。
-5. **财务管理员：核对席位与套餐权益。** 席位口径明确为有效成员；超限给出原因；权益变更记录来源事件。成功反馈是“重复计费事件不会重复增加权益”；无法完成时保留当前业务状态与可解释原因。
-
-## 功能需求与业务规则
-
-以下表格描述完整产品的基础需求，并标明 P0/P1。范围说明把原题落实为具体示例；审批、对账、最终确认等当前路径的正确性环节不因为界面较少而被推迟。
-
-| 需求 ID | 优先级 | 用户 | 要完成的任务 | 产品行为与规则 | 验收结果 |
-| --- | --- | --- | --- | --- | --- |
-| F-U01-P01 | P0 | 管理员 | 开通企业并创建客户工作区 | 组织、工作区和项目分别授权，显示当前组织；切换组织清空本地资源缓存 | 成员切换组织后无法读取上一组织项目 |
-| F-U01-P02 | P0 | 管理员 | 邀请员工并限制外部协作者 | 邀请绑定邮箱、组织、角色和过期时间，接受前校验身份；撤回立即失效 | 过期或被撤销的邀请不能加入 |
-| F-U01-P03 | P0 | 项目负责人 | 分派任务并审阅交付物 | 项目关联任务和文件版本；客户访客仅见明确共享的交付物 | 访客猜测内部文件 ID 得到拒绝 |
-| F-U01-P04 | P1 | 企业 IT | 用公司身份登录并撤销成员 | SSO 和目录同步映射本地成员；离职撤销生效于后续请求 | 撤销后已有会话不能继续访问组织 |
-| F-U01-P05 | P0 | 财务管理员 | 核对席位与套餐权益 | 席位口径明确为有效成员；超限给出原因；权益变更记录来源事件 | 重复计费事件不会重复增加权益 |
-
-## 信息架构与交互状态
-
-首版主要页面/模块：**组织设置、成员邀请、角色矩阵、工作区、审计时间线**。
-
-- 入口展示当前身份、组织或链与可执行动作；资源列表支持搜索、筛选、空状态和无权限状态。
-- 详情页用业务语言解释当前结果、下一步与失败原因；长任务显示持久进度，不用一直加载的 spinner 代替状态。
-- 有费用、写入或资产影响的动作，显示具体对象、金额/参数和生效时间；确认记录绑定实际操作内容。
-- 编辑时保留草稿；网络失败支持恢复；无权操作有明确反馈。权限由后端和必要的合约层决定。
-- 支持键盘操作、表单标签、焦点管理、可辨识错误及移动响应。海外作品集建议提供英文主要流程与英文运行说明，语言文本集中管理。
-
-## 首版与后续范围
-
-**P0：**P0 实现两组织、两工作区、成员邀请、项目交付、权限和套餐沙盒；不实现完整项目管理套件。
-
-**后续：**P1：SAML/SCIM、可配置角色与企业审计导出；P2：独立数据库租户和区域部署
-
-外部依赖用明确契约和模拟器/沙盒完成开发，界面注明当前环境。模拟成功、真实 API 成功、付费完成或链上最终确认分别验收。
-
-## 数据、状态与权限要求
-
-业务状态：**Invitation: pending → accepted / revoked / expired；Membership: active → suspended → removed；Project: draft → active → delivered → archived**。
-
-关键规则：
-
-- 所有业务查询必须带服务端验证的 organization_id，数据库 RLS 为防御层。
-- 不能删除最后一个有效 owner。
-- 审计记录 actor、资源、前后差异和 trace_id，敏感字段脱敏。
-
-核心对象和字段、接口、写入归属、恢复步骤见 [DESIGN.md](DESIGN.md)。数据与文件的删除、脱敏和保留规则在接真实用户前确定；规划阶段不承诺监管资质或现成合规认证。
-
-## 技术栈与远程岗位匹配
-
-首选后端：**NestJS + TypeScript**；主数据库：**PostgreSQL**。完整组件与使用理由如下：
-
-
-
-| 层级 | 建议组件 | 选择理由/边界 |
-| --- | --- | --- |
-| 用户界面 | React + Next.js + TypeScript + Tailwind CSS；shadcn/ui、TanStack Query/Table、React Hook Form + Zod 按界面需要选用 | 共享用户指定前端主线；扩展/平台嵌入采用相应宿主约束 |
-| 主后端 | NestJS + TypeScript | 业务模块、认证 Guard、DTO 校验、REST/OpenAPI、队列与领域服务由 NestJS 管理；Next.js 承担 Web 界面，核心领域规则集中在后端。 |
-| 主数据库 | PostgreSQL | 关系、事务、状态与审计适合本题，默认 Prisma。复杂约束、锁和 RLS 使用显式数据库机制；ORM 不替代业务事务。JSONB 足以承载多数半结构化 payload。 |
-| 服务端 ORM / 数据访问 | Prisma / Drizzle 按 TypeScript 服务端需求择一；Python/Go/Rust 使用对应生态 | TypeScript 服务端默认 Prisma，重 SQL/显式查询可选 Drizzle；Python 使用 SQLAlchemy + Alembic；Go 使用 pgx/sqlc，Rust 使用 sqlx。浏览器不直接持数据库连接。Next.js 只做 UI/BFF 所需数据访问，领域写入归主后端；为多语言明确迁移与实体写入归属。 |
-| 专项生态 | Prisma、PostgreSQL RLS、WorkOS、Stripe Billing | 围绕本题状态、数据和运行需求选；标为 P1/备选的工具不作为首版依赖 |
-| 邮件与通知 | Resend + React Email；SES 为规模化或 AWS 备选；Twilio 仅在短信/语音需要时加入 | 邮件 job、投递事件和业务成功分别记录；退信/失败可追踪 |
-| 鉴权 | WorkOS AuthKit/SSO + 应用授权；本地 Keycloak/OIDC 替身 | 认证供应商只确认身份；资源权限仍由本项目服务端执行 |
-| 支付/套餐 | Stripe Checkout/Billing + Customer Portal，沙盒验签与事件对账 | 不用软件订阅收款代替账本、托管或协议的资产状态 |
-| 可观测与告警 | 结构化 JSON 日志（AsyncLocalStorage 注入 traceId）+ `/health` 存活/就绪探针 + CloudWatch 告警（CPU/5xx/不健康实例/RDS 存储） | 日志可被 CloudWatch/ELK/Loki 直接解析；探针驱动 ALB/Nginx 自动摘流 |
-| 开发与部署 | **Docker 多阶段构建** + **GitHub Actions CI/CD**（lint/build/test + 镜像推送 ECR + ECS 滚动部署）+ **Terraform IaC**（VPC/ECS Fargate/ALB/RDS/ElastiCache/CloudWatch/Route53）+ **Nginx 反代** + **Hetzner VPS 自托管** 备选 | 每条部署路径都有可执行代码；密钥走 GitHub Secrets / AWS Secrets Manager，仓库仅含 `.example` |
-
-主投 Full-Stack/Backend SaaS 或对应专项岗位；J01/J02 展示 React/Node/SQL 和 Next.js/TypeScript 组合。NestJS 是结合用户偏好与模块化需求的选择；本次样本不支持宣称 NestJS 占岗位多数。 样本编号和地区限制见 [岗位与产品来源](../../SOURCES.md)；全局选型规则见 [技术栈策略](../../TECH_STACK.md)。这是有限岗位样本下的选择建议，不是招聘市场份额统计，也不保证在中国可申请所有列出的岗位。
-
-## 非功能目标与产品成功指标
-
-- 首先验证所有 P0 业务规则；错误拒绝、重复处理、状态解释与恢复是质量门槛。
-- 本地性能基线建议在 4 vCPU/16GB、10 个并发、合成数据下测量普通 API p95 ≤ 500ms；不把模型推理、GPU 训练、区块确认等外部时间计入普通 API 目标。测量必须记录数据规模与环境。
-- 长任务入口先持久化任务再返回 ID；进度、取消和错误在刷新后仍可查。超时、并发与预算以配置控制，避免无限重试。
-- 以本题功能表的独立验收结果作为首要质量指标；成功率统计排除被正确拒绝的请求，并单列异常和恢复结果。
-- 产品指标至少包括任务完成率、首次获得价值的时间、人工修正/接管比例和每次成功结果的成本；按本题角色建立基线后再设商业目标。
-
-## 部署与平台工程能力
-
-本仓库自带生产级部署代码，覆盖三条路径，展示「全栈 + 平台工程」复合能力：
-
-| 路径 | 代码位置 | 适用场景 |
-| --- | --- | --- |
-| **AWS ECS Fargate**（主路径） | `terraform/` + `.github/workflows/` | 弹性伸缩、托管数据库与缓存、CloudWatch 监控 |
-| **Hetzner VPS 自托管** | `deploy/hetzner/` + `docker-compose.prod.yml` + `deploy/nginx.conf` | 预算敏感、数据自持、单节点即可跑全套 |
-| **云托管** | `deploy/DEPLOY.md`（Vercel + Render/Railway + Neon + Upstash） | 零运维快速上线 |
-
-**CI/CD（`.github/workflows/`）：**
-- `ci.yml` — PR 触发：lint、build、test、Terraform fmt/validate、Dockerfile hadolint
-- `cd.yml` — 合入 main：构建多阶段镜像 → 推送 ECR → 更新 ECS 任务定义 → 滚动部署（OIDC 免长期密钥）
-- `terraform.yml` — PR 输出 plan 评论、main 分支 apply（S3 remote state + DynamoDB 锁）
-- `deploy-hetzner.yml` — 手动/VPS 路径：SSH 拉代码 + docker compose 部署
-
-**IaC（`terraform/`）：** VPC（公/私有子网 + NAT）、ECS Fargate 集群与服务、ALB（HTTPS + WebSocket Upgrade + 路径分发）、RDS PostgreSQL（私有子网、加密、PITR）、ElastiCache Redis（TLS + AUTH）、IAM 最小权限角色、CloudWatch 日志组 + 告警 + 仪表盘、Route53 + ACM 证书自动校验。
-
-**可观测：** API 输出结构化 JSON 日志（每行一个 JSON，traceId 经 AsyncLocalStorage 注入），`/health/live` 与 `/health/ready` 探针驱动 ALB/Nginx 摘流，CloudWatch 告警覆盖 CPU、5xx、不健康实例、RDS 存储。
-
-密钥一律走 GitHub Secrets / AWS Secrets Manager，仓库仅含 `.env.production.example` 与 `terraform.tfvars.example`。
-
-## 可审查交付
-
-提供一条完整产品演示、合成数据与至少一个拒绝/故障恢复演示。自动化验收覆盖表中的 AT 结果与专项规则，工程约束见 DESIGN。交付报告写明代码、测试、供应商接入、付费/资金与生产环境分别验证到哪里。
-
-AI 助手从 [AGENTS.md](AGENTS.md) 或 [CLAUDE.md](CLAUDE.md) 进入，专项步骤见 [SKILL.md](SKILL.md)。本目录当前是规划资料，不代表该产品已实现。
-
-## 2026-10-19 共用 SaaS 底座扩展
-
-用户新增需求覆盖原 P0 沙盒限制：Stripe 订阅、扁平协作单元与显式资源授权、文件持久化和恢复验收。P11/BR11/D11/AT11 至 P14/BR14/D14/AT14 的规则和追溯见 [共用底座设计](docs/FOUNDATION.md)。实际实现与验证以本次交付证据为准，不将设计当作验收结果。
-
+历史逐日需求、旧状态与交接文档已移入 [docs/collaboration/archive/](docs/collaboration/archive/)，保留追溯，不作为当前验收依据。

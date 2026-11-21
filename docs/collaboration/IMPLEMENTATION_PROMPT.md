@@ -1,12 +1,14 @@
 # 可直接交给开发 Agent 的 Prompt
 
-2026-10-30 已归档当前工作树、自测并发布；以[当前状态](CURRENT-STATUS-2026-10-30.md)及[本轮证据](../../evidence/collaboration/REVIEW-RELEASE-2026-10-30.md)作为续做入口，历史接力和未发布记录保留作追溯。
+> 2026-11-22 注：本文保留历史续做 Prompt 与逐日记录；**当前范围、设计和功能状态以 [需求分析](REQUIREMENTS.md)、[详细设计](DESIGN.md)、[功能归档](FEATURE-ARCHIVE.md) 为准**，不要把下方旧记录当成当前验收结论。
+
+2026-10-30 已归档当前工作树、自测并发布；以[当前状态](archive/CURRENT-STATUS-2026-10-30.md)及[本轮证据](../../evidence/collaboration/REVIEW-RELEASE-2026-10-30.md)作为续做入口，历史接力和未发布记录保留作追溯。
 
 2026-10-29新增快照时间轴：按 [P/BR/D/AT-SNAP](SNAPSHOT-TIMELINE.md) 实现与验证同事务自动采样、游标分页、只读预览及私有副本恢复，不能把按分钟采样称为逐键录制。
 
-2026-10-28会议M1–M3与语音/数字人可用专项：先读[会议设计](MEETINGS.md)、[四轮计划](RTC-VOICE-PERSONA-RELAY.md)、[最新交接](RTC-VOICE-PERSONA-HANDOFF.md)；复用现有20款静态形象，完整可动/真人验收不得由静态稿替代。
+2026-10-28会议M1–M3与语音/数字人可用专项：先读[会议设计](MEETINGS.md)、[四轮计划](archive/RTC-VOICE-PERSONA-RELAY.md)、[最新交接](archive/RTC-VOICE-PERSONA-HANDOFF.md)；复用现有20款静态形象，完整可动/真人验收不得由静态稿替代。
 
-2026-10-28：数字人基础、支付路由和DOCX解析改进已发布；真实范围见[当前交付与剩余项](CURRENT-STATUS-2026-10-28.md)及[发布验收](../../evidence/collaboration/DEPLOYMENT-PERSONA-2026-10-28.md)。完整3D、真人生成、真实语音及官方沙盒付款仍未完成。
+2026-10-28：数字人基础、支付路由和DOCX解析改进已发布；真实范围见[当前交付与剩余项](archive/CURRENT-STATUS-2026-10-28.md)及[发布验收](../../evidence/collaboration/DEPLOYMENT-PERSONA-2026-10-28.md)。完整3D、真人生成、真实语音及官方沙盒付款仍未完成。
 
 2026-10-27第一阶段已本地实现，完整数字人仍未完成且未发布；实际通过/阻塞/未完成见[数字人实施记录](../../evidence/collaboration/DIGITAL-HUMAN-2026-10-27.md)。用户追加后台配置、男10女10预设与捏脸、高相似真人验收，纳入详细设计，不以静态角色或素材草稿替代完整交付。
 
@@ -16,7 +18,7 @@
 
 2026-10-26定位修复已正式发布，线上4/4通过；契约：见[实际画布交互](MERMAID-POSITION.md)。以最新验收报告的发布身份为准，保留官方渲染与源码权限边界。
 
-2026-10-25开发阶段记录（已由10月26日正式验收取代）：实际画布拖入/移动、位置协作注释与模板节点部分删除，见[交接与剩余门槛](MERMAID-POSITION-HANDOFF.md)、[实际验收](../../evidence/collaboration/MERMAID-POSITION-2026-10-25.md)。此前仅自动布局的行为是本轮修复原因，不能把本地通过当作正式发布。
+2026-10-25开发阶段记录（已由10月26日正式验收取代）：实际画布拖入/移动、位置协作注释与模板节点部分删除，见[交接与剩余门槛](archive/MERMAID-POSITION-HANDOFF.md)、[实际验收](../../evidence/collaboration/MERMAID-POSITION-2026-10-25.md)。此前仅自动布局的行为是本轮修复原因，不能把本地通过当作正式发布。
 
 2026-10-25入口整理：操作区域按钮化、未提供功能的占位项移除，P/BR/D/AT-AUI见[功能入口规范](ACTION-UI.md)，范围和实际成绩见[验收记录](../../evidence/collaboration/ACTION-UI-2026-10-25.md)。
 
@@ -25,6 +27,8 @@
 2026-10-25：语音与数字形象规划已确定，涵盖IM、邮件及未来Agent/Skill；采用独立模块融入现有体系。需求、技术栈、范围及AT-VP01–08见 [语音与数字形象](VOICE-PERSONA.md)。已完成部分本地实现，实际通过项、供应商阻塞与未完成范围见[本地验收报告](../../evidence/collaboration/VOICE-PERSONA-2026-10-25.md)，不代表完整验收或生产发布。
 
 2026-10-24 最新授权增加协作助手。按 [ASSISTANT.md](ASSISTANT.md) 实现与验收摘要、行动项、中英互译、朗读和预览确认后的项目邮件。DeepSeek按需且有限额；开发不发真实测试邮件，不自动部署生产。保留共享工作树，实际进展见 ../../evidence/collaboration/ASSISTANT-2026-10-24.md。
+
+2026-11-17：Office 与白板新增 Agent 协作设计，涵盖手工并行编辑、DeepSeek 提案、审阅后写入、语音与提示词润色，见 [AGENT-OFFICE-WHITEBOARD.md](AGENT-OFFICE-WHITEBOARD.md)。
 
 2026-10-24：统一协作空间、空白 Office 创建和入口/权限验收，见 [UNIFIED-WORKSPACE.md](UNIFIED-WORKSPACE.md)。
 
