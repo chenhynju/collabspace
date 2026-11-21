@@ -85,7 +85,7 @@ export class ImController {
         const lastMsg = await tx.message.findFirst({
           where: { conversationId: conv.id },
           orderBy: { createdAt: 'desc' },
-          select: { id: true, type: true, content: true, senderId: true, createdAt: true },
+          select: { id: true, type: true, content: true, senderId: true, createdAt: true, sender: { select: { name: true } } },
         });
 
         results.push({

@@ -27,6 +27,10 @@ export default function ConversationItem({ conversation }: Props) {
         ? '[图片]'
         : '[文件]'
     : '开始聊天';
+  const senderName =
+    conversation.lastMessage?.senderName || conversation.lastMessage?.sender?.name || '';
+  const shownPreview =
+    conversation.type === 'GROUP' && senderName ? `${senderName}：${preview}` : preview;
 
   return (
     <button
@@ -56,7 +60,7 @@ export default function ConversationItem({ conversation }: Props) {
             </span>
           )}
         </div>
-        <div className="text-xs text-slate-500 truncate">{preview}</div>
+        <div className="text-xs text-slate-500 truncate">{shownPreview}</div>
       </div>
     </button>
   );

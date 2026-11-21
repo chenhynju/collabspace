@@ -12,6 +12,8 @@ export function PersonaPanel({active=true}:{active?:boolean}){
  return <EmployeePersona key={`${org}:${user}`} active={active}/>;
 }
 function EmployeePersona({active}:{active:boolean}){
+ const userName=useAuthStore(s=>s.user?.name);
+ const [draftAvatar,setDraftAvatar]=useState('');
  const [open,setOpen]=useState(false),[language,setLanguage]=useState('zh-CN'),[notice,setNotice]=useState(''),[kind,setKind]=useState<'PHOTO'|'VIDEO'>('PHOTO'),[file,setFile]=useState<File|null>(null),[preview,setPreview]=useState(''),[consent,setConsent]=useState(false),[busy,setBusy]=useState(false),[caps,setCaps]=useState<any>(null),[drafts,setDrafts]=useState<Draft[]>([]),[mediaKind,setMediaKind]=useState<'PHOTO'|'VIDEO'>('PHOTO');
  const pending=useRef<string|null>(null),epoch=useRef(0),controller=useRef<AbortController|null>(null);
  const clearPreview=()=>{setPreview('');setFile(null);setConsent(false);pending.current=null;};
@@ -20,9 +22,19 @@ function EmployeePersona({active}:{active:boolean}){
  useEffect(()=>{if(!active){epoch.current++;controller.current?.abort();setOpen(false);clearPreview();setBusy(false);}},[active]); // eslint-disable-line react-hooks/exhaustive-deps
  const load=async(signal:AbortSignal)=>{const [c,p,d]=await Promise.all([api.get('/voice/persona/capabilities',{signal}),api.get('/voice/persona',{signal}),api.get('/voice/persona/drafts',{signal})]);if(signal.aborted)return;setCaps(c.data);setLanguage(p.data.locale);setDrafts(d.data);};
  useEffect(()=>{if(!open||!active)return;const c=new AbortController();void load(c.signal).catch(()=>{if(!c.signal.aborted)setNotice('数字分身服务未就绪；请检查服务版本、迁移或网络。');});return()=>c.abort();},[open,active]); // eslint-disable-line react-hooks/exhaustive-deps
+ useEffect(()=>{
+  if(!open){setDraftAvatar('');return;}
+  const draft=drafts.find(d=>d.state==='DRAFT'&&d.kind==='PHOTO');
+  if(!draft){setDraftAvatar('');return;}
+  let activeRequest=true,url='';
+  const c=new AbortController();
+  api.get(`/voice/persona/drafts/${draft.id}/source`,{responseType:'blob',signal:c.signal}).then(r=>{if(!activeRequest)return;url=URL.createObjectURL(r.data);setDraftAvatar(url);}).catch(()=>{if(activeRequest)setDraftAvatar('');});
+  return ()=>{activeRequest=false;c.abort();if(url)URL.revokeObjectURL(url);};
+ },[open,drafts]);
  const action=async(work:(signal:AbortSignal,n:number)=>Promise<void>)=>{if(busy)return;const c=new AbortController();controller.current=c;const n=++epoch.current;setBusy(true);setNotice('');try{await work(c.signal,n);}catch(e:any){if(!c.signal.aborted&&n===epoch.current)setNotice(typeof e.response?.data?.message==='string'?e.response.data.message:'操作失败，请检查网络后重试。');}finally{if(n===epoch.current)setBusy(false);}};
  const choose=(f:File)=>{clearPreview();if(f.size>20971520){setNotice('素材最大20MB');return;}if(!(kind==='PHOTO'?['image/png','image/jpeg','image/webp']:['video/mp4','video/webm']).includes(f.type)){setNotice('请选择当前类型支持的真实文件');return;}setMediaKind(kind);setFile(f);setPreview(URL.createObjectURL(f));setNotice('仅本地预览，尚未上传或生成数字分身。');};
  return <Disclosure title="我的数字分身" open={open} onOpenChange={v=>{setOpen(v);if(!v){epoch.current++;controller.current?.abort();clearPreview();setBusy(false);}}} unmountOnClose className="rounded-xl border bg-white p-3">{open&&<div className="mt-3 space-y-3 text-sm">
+  <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">{draftAvatar?<img src={draftAvatar} alt="我的数字分身私有素材草稿" className="h-16 w-16 shrink-0 rounded-full object-cover ring-2 ring-white"/>:<span aria-hidden="true" className="grid h-16 w-16 shrink-0 place-items-center rounded-full bg-slate-200 text-lg font-semibold text-slate-500">{(userName??'我').slice(0,1)}</span>}<div className="min-w-0"><p className="text-sm font-medium text-slate-800">{draftAvatar?'我的私有素材草稿':'尚未添加数字分身素材'}</p><p className="mt-0.5 text-xs leading-5 text-slate-500">{draftAvatar?'仅本人可见；这是本人素材，不是AI生成结果，真人或视频生成尚未接入。':'可上传本人照片或视频，仅在本组织私有保存；真人或视频生成尚未接入。'}</p></div></div>
   <p className="text-xs text-slate-500">当前仅保存本人照片或视频的私有素材草稿，不提供真人或视频生成。卡通角色属于 AI Agent，不会代替你的真实身份。</p>
   <div className="flex flex-wrap items-end gap-2"><label>默认语言<select aria-label="形象默认语言" className={inputCls+' mt-1'} value={language} disabled={busy} onChange={e=>{pending.current=null;setLanguage(e.target.value);}}><option value="zh-CN">中文</option><option value="en-US">English</option></select></label><Button variant="secondary" size="sm" disabled={busy} onClick={()=>void action(async(signal,n)=>{await api.put('/voice/persona',{style:'realistic',locale:language},{signal});if(n===epoch.current)setNotice('已保存当前组织的个人语言偏好；不会改变身份或权限。');})}>保存形象偏好</Button></div>
   <fieldset disabled={busy} className="flex gap-3"><legend className="mb-1 font-medium">1. 选择素材路径</legend>{(['PHOTO','VIDEO'] as const).map(k=><label key={k}><input type="radio" name="employee-source-kind" value={k} checked={kind===k} onChange={()=>{setKind(k);clearPreview();}}/> {k==='PHOTO'?'照片素材':'视频素材'}</label>)}</fieldset>

@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useImStore } from '@/store/im';
 import { useAuthStore } from '@/store/auth';
 import { api } from '@/lib/api';
@@ -15,12 +15,32 @@ export default function ChatWindow() {
   const typingUsers = useImStore((s) => s.typingUsers);
   const currentOrgId = useAuthStore((s) => s.currentOrgId);
   const currentUserId = useAuthStore((s) => s.user?.id);
+  const [memberNames, setMemberNames] = useState<string[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   const conv = conversations.find((c) => c.id === currentConversationId);
   const typing = (currentConversationId ? (typingUsers[currentConversationId] ?? []) : []).filter(
     (user) => user.userId !== currentUserId,
   );
+
+  // Group header shows who is in the room; direct chats already show the peer name.
+  useEffect(() => {
+    if (!currentConversationId || conv?.type !== 'GROUP') {
+      setMemberNames([]);
+      return;
+    }
+    const controller = new AbortController();
+    api.get(`/conversations/${currentConversationId}`, { signal: controller.signal })
+      .then((res) => {
+        if (controller.signal.aborted) return;
+        const names = (res.data?.members ?? [])
+          .map((member: any) => member.user?.name)
+          .filter((name: unknown): name is string => typeof name === 'string' && !!name);
+        setMemberNames(names);
+      })
+      .catch(() => { if (!controller.signal.aborted) setMemberNames([]); });
+    return () => controller.abort();
+  }, [currentConversationId, conv?.type]);
 
   useEffect(() => {
     if (!currentConversationId || !currentOrgId) return;
@@ -58,6 +78,13 @@ export default function ChatWindow() {
     <>
       <div className="px-4 py-3 border-b border-slate-200 bg-white">
         <h2 className="font-semibold text-slate-800">{conv.title || '未命名会话'}</h2>
+        {conv.type === 'GROUP' && (
+          <p className="mt-0.5 truncate text-xs text-slate-500" title={memberNames.join('、')}>
+            {memberNames.length
+              ? `群成员：${memberNames.slice(0, 8).join('、')}${memberNames.length > 8 ? ` 等 ${memberNames.length} 人` : ''}`
+              : '正在读取群成员…'}
+          </p>
+        )}
         <div aria-live="polite" className="min-h-5 text-xs text-indigo-600">
           {typing.length ? `${typing.map((user) => user.userName).join('、')} 正在输入…` : ''}
         </div>

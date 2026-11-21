@@ -13,6 +13,8 @@ export interface ConversationItem {
     content: string;
     senderId: string;
     createdAt: string;
+    senderName?: string;
+    sender?: { name: string } | null;
   } | null;
   unreadCount: number;
   myRole: "OWNER" | "MEMBER";
