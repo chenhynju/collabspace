@@ -29,7 +29,7 @@ CollabSpace 是一个可运行的 B2B 协作 SaaS 作品集项目。它把项目
 | 复杂内容 | 富文本/Markdown/Office/白板/Mermaid 共用权限、版本与实时体系 |
 | AI 受控写入 | 规则规划 + DeepSeek；写操作生成计划，确认后单次提交，幂等 + 审计 |
 | 语音 | ElevenLabs Scribe v2 听写 + multilingual v2 合成，失败不自动重试 |
-| 交付工程 | 生产部署、健康检查、发布/回滚、55 个浏览器 spec、374 份 evidence |
+| 交付工程 | 生产部署、健康检查、发布/回滚、55 个浏览器 spec、420+ 份 evidence |
 
 ## 功能概览
 
