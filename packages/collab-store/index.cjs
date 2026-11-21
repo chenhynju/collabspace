@@ -41,28 +41,39 @@ function imageIds(doc) {
     if (node instanceof Y.XmlElement && node.nodeName === "documentImage") {
       const attrs = node.getAttributes();
       try {
-        z.object({assetId:uuid,alt:z.string().max(300),caption:z.string().max(1000),width:z.union([z.literal(50),z.literal(75),z.literal(100)])}).strict().parse(attrs);
-      } catch { fail(400,"INVALID_DOCUMENT_IMAGE"); }
+        z.object({
+          assetId: uuid,
+          alt: z.string().max(300),
+          caption: z.string().max(1000),
+          width: z.union([z.literal(50), z.literal(75), z.literal(100)]),
+        })
+          .strict()
+          .parse(attrs);
+      } catch {
+        fail(400, "INVALID_DOCUMENT_IMAGE");
+      }
       ids.add(attrs.assetId);
     }
     if (node instanceof Y.XmlFragment || node instanceof Y.XmlElement)
       for (const child of node.toArray()) visit(child);
   };
   visit(doc.getXmlFragment("default"));
-  if (ids.size > 20) fail(400,"IMAGE_LIMIT");
+  if (ids.size > 20) fail(400, "IMAGE_LIMIT");
   return [...ids];
 }
 function checkBoard(doc) {
   if ([...doc.share.keys()].some((key) => !["shapes", "mermaid"].includes(key)))
     fail(400, "INVALID_BOARD");
   const shapes = doc.getMap("shapes");
-  for (const shape of shapes.values())
-    if (!(shape instanceof Y.Map)) fail(400, "INVALID_BOARD");
+  for (const shape of shapes.values()) if (!(shape instanceof Y.Map)) fail(400, "INVALID_BOARD");
   try {
     validateBoard(shapes.toJSON());
     const source = doc.getText("mermaid");
-    if (source.length > 32000 || source.toDelta().some(part =>
-      typeof part.insert !== "string" || part.attributes)) throw Error("INVALID_MERMAID_SOURCE");
+    if (
+      source.length > 32000 ||
+      source.toDelta().some((part) => typeof part.insert !== "string" || part.attributes)
+    )
+      throw Error("INVALID_MERMAID_SOURCE");
   } catch {
     fail(400, "INVALID_BOARD");
   }
@@ -70,12 +81,11 @@ function checkBoard(doc) {
 function copyContent(bytes, kind = "DOCUMENT") {
   const old = materialize(bytes),
     fresh = new Y.Doc();
-  if(kind==='MARKDOWN'){
-    fresh.getText('markdown').insert(0,old.getText('markdown').toString());
+  if (kind === "MARKDOWN") {
+    fresh.getText("markdown").insert(0, old.getText("markdown").toString());
   } else if (kind === "BOARD") {
     fresh.getText("mermaid").insert(0, old.getText("mermaid").toString());
-    for (const [id, shape] of old.getMap("shapes"))
-      fresh.getMap("shapes").set(id, shape.clone());
+    for (const [id, shape] of old.getMap("shapes")) fresh.getMap("shapes").set(id, shape.clone());
   } else {
     const root = old.getXmlFragment("default");
     fresh.getXmlFragment("default").insert(
@@ -88,40 +98,72 @@ function copyContent(bytes, kind = "DOCUMENT") {
   fresh.destroy();
   return result;
 }
-function checkMarkdown(doc){
-  if([...doc.share.keys()].some(key=>key!=='markdown'))fail(400,'INVALID_MARKDOWN');
-  const source=doc.getText('markdown');
-  if(source.length>64000||source.toString().includes('\0')||Buffer.byteLength(source.toString(),'utf8')>200000||source.toDelta().some(p=>typeof p.insert!=='string'||p.attributes))fail(400,'INVALID_MARKDOWN');
+function checkMarkdown(doc) {
+  if ([...doc.share.keys()].some((key) => key !== "markdown")) fail(400, "INVALID_MARKDOWN");
+  const source = doc.getText("markdown");
+  if (
+    source.length > 64000 ||
+    source.toString().includes("\0") ||
+    Buffer.byteLength(source.toString(), "utf8") > 200000 ||
+    source.toDelta().some((p) => typeof p.insert !== "string" || p.attributes)
+  )
+    fail(400, "INVALID_MARKDOWN");
 }
 class Store {
-  async checkImages(c,ctx,id,doc) {
-    const ids=imageIds(doc);
+  async checkImages(c, ctx, id, doc) {
+    const ids = imageIds(doc);
     if (!ids.length) return;
-    const result=await c.query("SELECT id FROM collab_image WHERE organization_id=$1 AND document_id=$2 AND id=ANY($3::uuid[])",[ctx.org,id,ids]);
-    if(result.rows.length!==ids.length) fail(400,"INVALID_DOCUMENT_IMAGE");
+    const result = await c.query(
+      "SELECT id FROM collab_image WHERE organization_id=$1 AND document_id=$2 AND id=ANY($3::uuid[])",
+      [ctx.org, id, ids],
+    );
+    if (result.rows.length !== ids.length) fail(400, "INVALID_DOCUMENT_IMAGE");
   }
-  async addImage(ctx,id,bytes) {
-    if (!Buffer.isBuffer(bytes) || !bytes.length || bytes.length>5*1024*1024) fail(413,"IMAGE_TOO_LARGE");
-    const mime=bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))?"image/png":
-      bytes[0]===255 && bytes[1]===216 && bytes[2]===255?"image/jpeg":
-      bytes.toString("ascii",0,4)==="RIFF" && bytes.toString("ascii",8,12)==="WEBP"?"image/webp":null;
-    if(!mime) fail(400,"IMAGE_TYPE_NOT_ALLOWED");
-    return this.tx(ctx,async c=>{
-      const d=await this.access(c,ctx,id,"write");
-      if(d.kind!=="DOCUMENT") fail(400,"DOCUMENT_REQUIRED");
-      const usage=(await c.query("SELECT count(*)::int AS count,coalesce(sum(octet_length(bytes)),0)::int AS size FROM collab_image WHERE organization_id=$1 AND document_id=$2",[ctx.org,id])).rows[0];
-      if(usage.count>=20 || usage.size+bytes.length>20*1024*1024) fail(413,"IMAGE_QUOTA_EXCEEDED");
-      const key=randomUUID();
-      await c.query("INSERT INTO collab_image(organization_id,document_id,id,mime,bytes,created_by) VALUES($1,$2,$3,$4,$5,$6)",[ctx.org,id,key,mime,bytes,ctx.user]);
-      await this.audit(c,ctx,id,"document:image-upload",null,{imageId:key,mime,size:bytes.length});
-      return {id:key,mime,size:bytes.length};
+  async addImage(ctx, id, bytes) {
+    if (!Buffer.isBuffer(bytes) || !bytes.length || bytes.length > 5 * 1024 * 1024)
+      fail(413, "IMAGE_TOO_LARGE");
+    const mime = bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
+      ? "image/png"
+      : bytes[0] === 255 && bytes[1] === 216 && bytes[2] === 255
+        ? "image/jpeg"
+        : bytes.toString("ascii", 0, 4) === "RIFF" && bytes.toString("ascii", 8, 12) === "WEBP"
+          ? "image/webp"
+          : null;
+    if (!mime) fail(400, "IMAGE_TYPE_NOT_ALLOWED");
+    return this.tx(ctx, async (c) => {
+      const d = await this.access(c, ctx, id, "write");
+      if (d.kind !== "DOCUMENT") fail(400, "DOCUMENT_REQUIRED");
+      const usage = (
+        await c.query(
+          "SELECT count(*)::int AS count,coalesce(sum(octet_length(bytes)),0)::int AS size FROM collab_image WHERE organization_id=$1 AND document_id=$2",
+          [ctx.org, id],
+        )
+      ).rows[0];
+      if (usage.count >= 20 || usage.size + bytes.length > 20 * 1024 * 1024)
+        fail(413, "IMAGE_QUOTA_EXCEEDED");
+      const key = randomUUID();
+      await c.query(
+        "INSERT INTO collab_image(organization_id,document_id,id,mime,bytes,created_by) VALUES($1,$2,$3,$4,$5,$6)",
+        [ctx.org, id, key, mime, bytes, ctx.user],
+      );
+      await this.audit(c, ctx, id, "document:image-upload", null, {
+        imageId: key,
+        mime,
+        size: bytes.length,
+      });
+      return { id: key, mime, size: bytes.length };
     });
   }
-  async image(ctx,id,key) {
-    return this.tx(ctx,async c=>{
-      await this.access(c,ctx,id);
-      const result=(await c.query("SELECT mime,bytes FROM collab_image WHERE organization_id=$1 AND document_id=$2 AND id=$3",[ctx.org,id,uuid.parse(key)])).rows[0];
-      if(!result) fail(404,"NOT_FOUND");
+  async image(ctx, id, key) {
+    return this.tx(ctx, async (c) => {
+      await this.access(c, ctx, id);
+      const result = (
+        await c.query(
+          "SELECT mime,bytes FROM collab_image WHERE organization_id=$1 AND document_id=$2 AND id=$3",
+          [ctx.org, id, uuid.parse(key)],
+        )
+      ).rows[0];
+      if (!result) fail(404, "NOT_FOUND");
       return result;
     });
   }
@@ -136,15 +178,28 @@ class Store {
   close() {
     return this.pool.end();
   }
-  async metadataDelivery(ctx,id,deliver) {
-    return this.tx(ctx,async c=>{await this.access(c,ctx,id);deliver();});
+  async metadataDelivery(ctx, id, deliver) {
+    return this.tx(ctx, async (c) => {
+      await this.access(c, ctx, id);
+      deliver();
+    });
   }
   async listenMetadata(callback) {
-    const client=await this.pool.connect();
-    const receive=notification=>{if(notification.channel==='collab_metadata')try{Promise.resolve(callback(JSON.parse(notification.payload))).catch(()=>{});}catch{}};
-    client.on('notification',receive);
+    const client = await this.pool.connect();
+    const receive = (notification) => {
+      if (notification.channel === "collab_metadata")
+        try {
+          Promise.resolve(callback(JSON.parse(notification.payload))).catch(() => {});
+        } catch {}
+    };
+    client.on("notification", receive);
     // A connection loss is handled by the WS owner; no secrets/content in hints.
-    try{await client.query('LISTEN collab_metadata');}catch(e){client.release(true);throw e;}
+    try {
+      await client.query("LISTEN collab_metadata");
+    } catch (e) {
+      client.release(true);
+      throw e;
+    }
     return client;
   }
   async assertRuntime(db = this.pool) {
@@ -175,16 +230,9 @@ class Store {
       [names],
     );
     if (!rows.length || rows.some((r) => r.unsafe || r.owns_table))
-      throw new Error(
-        "Collaboration runtime role must not own tables or bypass RLS",
-      );
-    if (
-      rows.length !== names.length ||
-      rows.some((r) => !r.protected || !r.policy)
-    )
-      throw new Error(
-        "Collaboration schema, forced RLS and tenant policies are required",
-      );
+      throw new Error("Collaboration runtime role must not own tables or bypass RLS");
+    if (rows.length !== names.length || rows.some((r) => !r.protected || !r.policy))
+      throw new Error("Collaboration schema, forced RLS and tenant policies are required");
   }
   async tx(ctx, fn) {
     const c = await this.pool.connect();
@@ -227,14 +275,15 @@ class Store {
       locked.member_status !== "ACTIVE"
     )
       fail(404, "NOT_FOUND");
-    if(ctx.credentialState&&ctx.credentialState!==hash(locked.password_hash||"oauth-only"))fail(401,"SESSION_EXPIRED");
+    if (ctx.credentialState && ctx.credentialState !== hash(locked.password_hash || "oauth-only"))
+      fail(401, "SESSION_EXPIRED");
     const u = { id: locked.id, name: locked.name };
     const p = {
       id: locked.project_id,
       status: locked.project_status,
       owner_id: locked.owner_id,
       visibility: locked.visibility,
-      access: 'WRITE',
+      access: "WRITE",
     };
     if (p.visibility === "RESTRICTED" && p.owner_id !== ctx.user) {
       const admin = await c.query(
@@ -247,25 +296,25 @@ class Store {
           [ctx.org, project, ctx.user],
         );
         if (!allowed.rowCount) fail(404, "NOT_FOUND");
-        if(!allowed.rows.some(g=>['WRITE','MANAGE'].includes(g.access)))p.access='READ';
+        if (!allowed.rows.some((g) => ["WRITE", "MANAGE"].includes(g.access))) p.access = "READ";
       }
     }
     return { u, p };
   }
   async access(c, ctx, id, action = "read") {
     const ref = (
-      await c.query(
-        "SELECT project_id FROM collab_document WHERE organization_id=$1 AND id=$2",
-        [ctx.org, id],
-      )
+      await c.query("SELECT project_id FROM collab_document WHERE organization_id=$1 AND id=$2", [
+        ctx.org,
+        id,
+      ])
     ).rows[0];
     if (!ref) fail(404, "NOT_FOUND");
     const { u, p } = await this.parent(c, ctx, ref.project_id);
     const d = (
-      await c.query(
-        "SELECT * FROM collab_document WHERE organization_id=$1 AND id=$2 FOR UPDATE",
-        [ctx.org, id],
-      )
+      await c.query("SELECT * FROM collab_document WHERE organization_id=$1 AND id=$2 FOR UPDATE", [
+        ctx.org,
+        id,
+      ])
     ).rows[0];
     if (!d) fail(404, "NOT_FOUND");
     const g = (
@@ -275,17 +324,17 @@ class Store {
       )
     ).rows[0];
     if (!g) fail(404, "NOT_FOUND");
-    if(action!=='read'&&p.access==='READ')fail(403,'READ_ONLY');
+    if (action !== "read" && p.access === "READ") fail(403, "READ_ONLY");
     if (action !== "read" && (d.status !== "ACTIVE" || p.status === "ARCHIVED"))
       fail(409, "DOCUMENT_ARCHIVED");
-    if (action === "write" && !["OWNER", "EDITOR"].includes(g.role))
-      fail(403, "READ_ONLY");
+    if (action === "write" && !["OWNER", "EDITOR"].includes(g.role)) fail(403, "READ_ONLY");
     if (action === "comment" && g.role === "VIEWER") fail(403, "READ_ONLY");
     if (action === "owner" && g.role !== "OWNER") fail(403, "OWNER_REQUIRED");
     return {
       ...d,
       role:
-        action === "read" && (d.status !== "ACTIVE" || p.status === "ARCHIVED" || p.access==='READ')
+        action === "read" &&
+        (d.status !== "ACTIVE" || p.status === "ARCHIVED" || p.access === "READ")
           ? "VIEWER"
           : g.role,
       userName: u.name,
@@ -296,8 +345,14 @@ class Store {
     return rest;
   }
   async audit(c, ctx, id, action, before = null, after = null) {
-    if(['document:comment','document:resolve','document:reply','document:version'].includes(action))
-      await c.query("SELECT pg_notify('collab_metadata',$1)",[JSON.stringify({org:ctx.org,docId:id})]);
+    if (
+      ["document:comment", "document:resolve", "document:reply", "document:version"].includes(
+        action,
+      )
+    )
+      await c.query("SELECT pg_notify('collab_metadata',$1)", [
+        JSON.stringify({ org: ctx.org, docId: id }),
+      ]);
     await c.query(
       "INSERT INTO sys_oper_log(id,organization_id,actor_id,title,business_type,action,resource_type,resource_id,trace_id,before_value,after_value) VALUES($1,$2,$3,$4,2,$5,$6,$7,$8,$9::jsonb,$10::jsonb)",
       [
@@ -308,15 +363,15 @@ class Store {
         action,
         "CollabDocument",
         id,
-        randomUUID(),
+        ctx.traceId || randomUUID(),
         JSON.stringify(before),
         JSON.stringify(after),
       ],
     );
   }
   async list(ctx, project, options = {}) {
-    const offset=z.coerce.number().int().min(0).default(0).parse(options.offset);
-    const limit=z.coerce.number().int().min(1).max(100).default(100).parse(options.limit);
+    const offset = z.coerce.number().int().min(0).default(0).parse(options.offset);
+    const limit = z.coerce.number().int().min(1).max(100).default(100).parse(options.limit);
     return this.tx(ctx, async (c) => {
       await this.parent(c, ctx, project);
       return (
@@ -330,46 +385,72 @@ class Store {
            LEFT JOIN sys_user editor ON editor.id=last_edit.actor_id
            LEFT JOIN LATERAL (SELECT after_value FROM sys_oper_log WHERE organization_id=d.organization_id AND resource_id=d.id AND action='office:save' ORDER BY created_at DESC LIMIT 1) saved ON d.kind='OFFICE'
            WHERE d.organization_id=$1 AND d.project_id=$2 AND g.user_id=$3 ORDER BY d.updated_at DESC,d.id LIMIT $4 OFFSET $5`,
-          [ctx.org, project, ctx.user,limit,offset],
+          [ctx.org, project, ctx.user, limit, offset],
         )
       ).rows;
     });
   }
-  async mine(ctx){
-    return this.tx(ctx,async c=>{
-      const candidates=(await c.query("SELECT d.id,d.title,d.kind,d.project_id,d.updated_at,g.role FROM collab_document d JOIN collab_grant g ON g.organization_id=d.organization_id AND g.document_id=d.id AND g.user_id=$2 WHERE d.organization_id=$1 AND d.kind='MARKDOWN' ORDER BY d.updated_at DESC LIMIT 100",[ctx.org,ctx.user])).rows;
-      const visible=[];
-      for(const d of candidates){try{await this.access(c,ctx,d.id);visible.push(d);}catch(e){if(![403,404].includes(e.status))throw e;}}
+  async mine(ctx) {
+    return this.tx(ctx, async (c) => {
+      const candidates = (
+        await c.query(
+          "SELECT d.id,d.title,d.kind,d.project_id,d.updated_at,g.role FROM collab_document d JOIN collab_grant g ON g.organization_id=d.organization_id AND g.document_id=d.id AND g.user_id=$2 WHERE d.organization_id=$1 AND d.kind='MARKDOWN' ORDER BY d.updated_at DESC LIMIT 100",
+          [ctx.org, ctx.user],
+        )
+      ).rows;
+      const visible = [];
+      for (const d of candidates) {
+        try {
+          await this.access(c, ctx, d.id);
+          visible.push(d);
+        } catch (e) {
+          if (![403, 404].includes(e.status)) throw e;
+        }
+      }
       return visible;
     });
   }
   async create(ctx, project, input) {
     const name = title.parse(input.title);
-    const kind = z
-      .enum(["DOCUMENT", "BOARD", "MARKDOWN"])
-      .default("DOCUMENT")
-      .parse(input.kind);
+    const kind = z.enum(["DOCUMENT", "BOARD", "MARKDOWN"]).default("DOCUMENT").parse(input.kind);
     return this.tx(ctx, async (c) => {
       const { p } = await this.parent(c, ctx, project);
-      if(p.access==='READ')fail(403,'READ_ONLY');
+      if (p.access === "READ") fail(403, "READ_ONLY");
       if (p.status === "ARCHIVED") fail(409, "PROJECT_ARCHIVED");
       let state;
-      if(kind==='MARKDOWN'){
-        const source=z.string().max(64000).default('').parse(input.source);
-        const initial=new Y.Doc();try{initial.getText('markdown').insert(0,source);checkMarkdown(initial);state=Buffer.from(Y.encodeStateAsUpdate(initial));}finally{initial.destroy();}
-      }else if(kind==='BOARD'&&input.source!==undefined){
-        const source=z.string().max(32000).parse(input.source);if(source.includes('\0'))fail(400,'INVALID_BOARD');
-        const initial=new Y.Doc();try{
-          initial.getText('mermaid').insert(0,source);
-          if(input.canvas===true){
+      if (kind === "MARKDOWN") {
+        const source = z.string().max(64000).default("").parse(input.source);
+        const initial = new Y.Doc();
+        try {
+          initial.getText("markdown").insert(0, source);
+          checkMarkdown(initial);
+          state = Buffer.from(Y.encodeStateAsUpdate(initial));
+        } finally {
+          initial.destroy();
+        }
+      } else if (kind === "BOARD" && input.source !== undefined) {
+        const source = z.string().max(32000).parse(input.source);
+        if (source.includes("\0")) fail(400, "INVALID_BOARD");
+        const initial = new Y.Doc();
+        try {
+          initial.getText("mermaid").insert(0, source);
+          if (input.canvas === true) {
             let parsed;
-            try{parsed=parseMermaid(source);}catch{fail(422,'MERMAID_CANVAS_UNSUPPORTED');}
-            if(parsed.length>500)fail(422,'BOARD_SHAPE_LIMIT');
-            const shapes=initial.getMap('shapes');
-            for(const {id,...data} of parsed)shapes.set(id,new Y.Map(Object.entries(data)));
+            try {
+              parsed = parseMermaid(source);
+            } catch {
+              fail(422, "MERMAID_CANVAS_UNSUPPORTED");
+            }
+            if (parsed.length > 500) fail(422, "BOARD_SHAPE_LIMIT");
+            const shapes = initial.getMap("shapes");
+            for (const { id, ...data } of parsed)
+              shapes.set(id, new Y.Map(Object.entries(data)));
           }
-          checkBoard(initial);state=Buffer.from(Y.encodeStateAsUpdate(initial));
-        }finally{initial.destroy();}
+          checkBoard(initial);
+          state = Buffer.from(Y.encodeStateAsUpdate(initial));
+        } finally {
+          initial.destroy();
+        }
       }
       return this.insert(c, ctx, project, name, state, kind);
     });
@@ -378,9 +459,7 @@ class Store {
     const id = randomUUID();
     const empty = new Y.Doc();
     if (kind === "DOCUMENT")
-      empty
-        .getXmlFragment("default")
-        .insert(0, [new Y.XmlElement("paragraph")]);
+      empty.getXmlFragment("default").insert(0, [new Y.XmlElement("paragraph")]);
     state = state || Buffer.from(Y.encodeStateAsUpdate(empty));
     empty.destroy();
     const d = (
@@ -389,11 +468,7 @@ class Store {
         [id, ctx.org, project, name, state, ctx.user, kind],
       )
     ).rows[0];
-    await c.query("INSERT INTO collab_grant VALUES($1,$2,$3,'OWNER')", [
-      ctx.org,
-      id,
-      ctx.user,
-    ]);
+    await c.query("INSERT INTO collab_grant VALUES($1,$2,$3,'OWNER')", [ctx.org, id, ctx.user]);
     await this.audit(c, ctx, id, "document:create", null, {
       projectId: project,
       status: "ACTIVE",
@@ -403,6 +478,31 @@ class Store {
   }
   async detail(ctx, id) {
     return this.tx(ctx, async (c) => this.meta(await this.access(c, ctx, id)));
+  }
+  async boardAgentScope(ctx, id, ids) {
+    return this.tx(ctx, async (c) => {
+      const d = await this.access(c, ctx, id, "write");
+      if (d.kind !== "BOARD") fail(400, "BOARD_REQUIRED");
+      const doc = materialize(d.state);
+      try {
+        const shapes = doc.getMap("shapes");
+        return {
+          seq: d.seq,
+          shapes: ids.map((id, index) => {
+            const shape = shapes.get(id)?.toJSON();
+            if (!shape || shape.type === "connector") fail(409, "BOARD_TARGET_CHANGED");
+            return {
+              ref: "s" + (index + 1),
+              type: shape.type,
+              text: shape.text.slice(0, 80),
+              geometry: shape.geometry,
+            };
+          }),
+        };
+      } finally {
+        doc.destroy();
+      }
+    });
   }
   async mermaidAgentScope(ctx, id) {
     return this.tx(ctx, async (c) => {
@@ -421,7 +521,7 @@ class Store {
       revision = z.number().int().positive().parse(input.revision);
     return this.tx(ctx, async (c) => {
       const d = await this.access(c, ctx, id, "write");
-      if (d.kind === 'OFFICE') fail(409, 'OFFICE_METADATA_REQUIRED');
+      if (d.kind === "OFFICE") fail(409, "OFFICE_METADATA_REQUIRED");
       if (d.revision !== revision) fail(409, "REVISION_CONFLICT");
       await c.query(
         "UPDATE collab_document SET title=$1,revision=revision+1,updated_at=now() WHERE id=$2 AND organization_id=$3",
@@ -494,8 +594,7 @@ class Store {
         "SELECT status FROM org_membership WHERE organization_id=$1 AND user_id=$2 FOR SHARE",
         [ctx.org, user],
       );
-      if (role !== "REMOVE" && m.rows[0]?.status !== "ACTIVE")
-        fail(400, "INVALID_MEMBER");
+      if (role !== "REMOVE" && m.rows[0]?.status !== "ACTIVE") fail(400, "INVALID_MEMBER");
       if (role === "REMOVE")
         await c.query(
           "DELETE FROM collab_grant WHERE organization_id=$1 AND document_id=$2 AND user_id=$3",
@@ -524,12 +623,11 @@ class Store {
   async ticket(ctx, id) {
     return this.tx(ctx, async (c) => {
       const d = await this.access(c, ctx, id);
-      if(d.kind==='OFFICE')fail(409,'OFFICE_ENGINE_REQUIRED');
+      if (d.kind === "OFFICE") fail(409, "OFFICE_ENGINE_REQUIRED");
       const secret = randomBytes(32).toString("hex");
-      await c.query(
-        "DELETE FROM collab_ticket WHERE organization_id=$1 AND expires_at<now()",
-        [ctx.org],
-      );
+      await c.query("DELETE FROM collab_ticket WHERE organization_id=$1 AND expires_at<now()", [
+        ctx.org,
+      ]);
       await c.query(
         "INSERT INTO collab_ticket(hash,organization_id,document_id,user_id,expires_at) VALUES($1,$2,$3,$4,now()+interval '60 seconds')",
         [hash(secret), ctx.org, id, ctx.user],
@@ -546,8 +644,7 @@ class Store {
     });
   }
   async consume(ctx, id, secret) {
-    if (typeof secret !== "string" || !/^[a-f0-9]{64}$/.test(secret))
-      fail(401, "INVALID_TICKET");
+    if (typeof secret !== "string" || !/^[a-f0-9]{64}$/.test(secret)) fail(401, "INVALID_TICKET");
     return this.tx(ctx, async (c) => {
       const d = await this.access(c, ctx, id);
       const r = await c.query(
@@ -555,8 +652,14 @@ class Store {
         [hash(secret), ctx.org, id, ctx.user],
       );
       if (!r.rowCount) fail(401, "INVALID_TICKET");
-      const user=(await c.query("SELECT password_hash FROM sys_user WHERE id=$1",[ctx.user])).rows[0];
-      return { role: d.role, name: d.userName, kind:d.kind,credentialState:hash(user.password_hash||"oauth-only") };
+      const user = (await c.query("SELECT password_hash FROM sys_user WHERE id=$1", [ctx.user]))
+        .rows[0];
+      return {
+        role: d.role,
+        name: d.userName,
+        kind: d.kind,
+        credentialState: hash(user.password_hash || "oauth-only"),
+      };
     });
   }
   async sync(ctx, id, vector) {
@@ -597,8 +700,8 @@ class Store {
       try {
         Y.applyUpdate(doc, bytes);
         if (d.kind === "BOARD") checkBoard(doc);
-        else if(d.kind==='MARKDOWN')checkMarkdown(doc);
-        else await this.checkImages(c,ctx,id,doc);
+        else if (d.kind === "MARKDOWN") checkMarkdown(doc);
+        else await this.checkImages(c, ctx, id, doc);
         state = Buffer.from(Y.encodeStateAsUpdate(doc));
         if (state.length > 5 * 1024 * 1024) fail(413, "DOCUMENT_TOO_LARGE");
       } catch (e) {
@@ -652,17 +755,13 @@ class Store {
       } catch (error) {
         return {
           ...item,
-          error:
-            error instanceof StoreError
-              ? error
-              : new StoreError(400, "INVALID_UPDATE"),
+          error: error instanceof StoreError ? error : new StoreError(400, "INVALID_UPDATE"),
         };
       }
     });
     const first = prepared.find((p) => !p.error);
     if (!first) return prepared.map((p) => ({ ok: false, error: p.error }));
-    if (prepared.some((p) => p.ctx.org !== first.ctx.org))
-      fail(400, "MIXED_TENANT_BATCH");
+    if (prepared.some((p) => p.ctx.org !== first.ctx.org)) fail(400, "MIXED_TENANT_BATCH");
     try {
       return await this.tx(first.ctx, async (c) => {
         const permissions = new Map();
@@ -693,10 +792,7 @@ class Store {
           )
         ).rows;
         const receipts = new Map(
-          prior.map((r) => [
-            r.update_id,
-            { seq: r.seq, checksum: r.checksum, committed: true },
-          ]),
+          prior.map((r) => [r.update_id, { seq: r.seq, checksum: r.checksum, committed: true }]),
         );
         const doc = materialize(state.state),
           inserts = [],
@@ -743,8 +839,8 @@ class Store {
           const encoded = Buffer.from(Y.encodeStateAsUpdate(doc));
           if (state.kind === "BOARD") {
             checkBoard(doc);
-          } else if(state.kind==='MARKDOWN')checkMarkdown(doc);
-          else await this.checkImages(c,first.ctx,id,doc);
+          } else if (state.kind === "MARKDOWN") checkMarkdown(doc);
+          else await this.checkImages(c, first.ctx, id, doc);
           if (encoded.length > 5 * 1024 * 1024) fail(413, "DOCUMENT_TOO_LARGE");
           await c.query(
             `INSERT INTO collab_update(organization_id,document_id,update_id,seq,actor_id,checksum,bytes)
@@ -763,11 +859,15 @@ class Store {
             "UPDATE collab_document SET state=$1,seq=$2,updated_at=now() WHERE organization_id=$3 AND id=$4",
             [encoded, seq.toString(), first.ctx.org, id],
           );
-          await this.snapshot(c, { ...first.ctx, user: inserts[inserts.length - 1].actor }, id, encoded, seq.toString());
-          const readers = await this.readers(c, first.ctx, id);
-          return results.map((r) =>
-            r.ok && !r.duplicate ? { ...r, readers } : r,
+          await this.snapshot(
+            c,
+            { ...first.ctx, user: inserts[inserts.length - 1].actor },
+            id,
+            encoded,
+            seq.toString(),
           );
+          const readers = await this.readers(c, first.ctx, id);
+          return results.map((r) => (r.ok && !r.duplicate ? { ...r, readers } : r));
         } finally {
           doc.destroy();
         }
@@ -806,7 +906,10 @@ class Store {
                     WHERE rg.organization_id=$1 AND rg.project_id=p.id AND gm.membership_id=m.id AND cg.archived_at IS NULL))`,
         [ctx.org, id],
       )
-    ).rows.map(({password_hash,...r})=>({...r,credentialState:hash(password_hash||"oauth-only")}));
+    ).rows.map(({ password_hash, ...r }) => ({
+      ...r,
+      credentialState: hash(password_hash || "oauth-only"),
+    }));
   }
   async threads(ctx, id) {
     return this.tx(ctx, async (c) => {
@@ -852,15 +955,7 @@ class Store {
       }
       const r = await c.query(
         "INSERT INTO collab_thread(id,organization_id,document_id,body,quote,anchor,created_by) VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *",
-        [
-          parsed.id,
-          ctx.org,
-          id,
-          parsed.body,
-          parsed.quote,
-          parsed.anchor,
-          ctx.user,
-        ],
+        [parsed.id, ctx.org, id, parsed.body, parsed.quote, parsed.anchor, ctx.user],
       );
       await this.audit(c, ctx, id, "document:comment", null, {
         threadId: parsed.id,
@@ -922,12 +1017,19 @@ class Store {
   // Samples are immutable; duplicate receipts never reach this path.
   async snapshot(c, ctx, id, state, seq) {
     const key = randomUUID();
-    const result = await c.query(`INSERT INTO collab_version(id,organization_id,document_id,name,seq,state,created_by,source)
+    const result = await c.query(
+      `INSERT INTO collab_version(id,organization_id,document_id,name,seq,state,created_by,source)
       SELECT $1,$2,$3,'自动快照',$4,$5,$6,'AUTO'
       WHERE NOT EXISTS(SELECT 1 FROM collab_version WHERE organization_id=$2 AND document_id=$3
         AND source='AUTO' AND created_at > now()-interval '1 minute') RETURNING id`,
-      [key,ctx.org,id,seq,state,ctx.user]);
-    if(result.rowCount) await this.audit(c,ctx,id,'document:version',null,{versionId:key,seq,source:'AUTO'});
+      [key, ctx.org, id, seq, state, ctx.user],
+    );
+    if (result.rowCount)
+      await this.audit(c, ctx, id, "document:version", null, {
+        versionId: key,
+        seq,
+        source: "AUTO",
+      });
   }
   async versions(ctx, id, before) {
     const cursor = before ? uuid.parse(before) : null;
@@ -949,7 +1051,7 @@ class Store {
       name = title.parse(input.name);
     return this.tx(ctx, async (c) => {
       const d = await this.access(c, ctx, id, "write");
-      if(d.kind==='OFFICE')fail(409,'OFFICE_ENGINE_REQUIRED');
+      if (d.kind === "OFFICE") fail(409, "OFFICE_ENGINE_REQUIRED");
       const old = (
         await c.query(
           "SELECT id,name,seq,created_by FROM collab_version WHERE organization_id=$1 AND document_id=$2 AND id=$3",
@@ -957,8 +1059,7 @@ class Store {
         )
       ).rows[0];
       if (old) {
-        if (old.name !== name || old.created_by !== ctx.user)
-          fail(409, "IDEMPOTENCY_CONFLICT");
+        if (old.name !== name || old.created_by !== ctx.user) fail(409, "IDEMPOTENCY_CONFLICT");
         return old;
       }
       await c.query(
@@ -989,19 +1090,15 @@ class Store {
     const key = uuid.parse(input.id);
     return this.tx(ctx, async (c) => {
       const d = await this.access(c, ctx, id, "write");
-      if(d.kind==='OFFICE')fail(409,'OFFICE_ENGINE_REQUIRED');
+      if (d.kind === "OFFICE") fail(409, "OFFICE_ENGINE_REQUIRED");
       const prior = (
-        await c.query(
-          "SELECT * FROM collab_restore WHERE organization_id=$1 AND id=$2",
-          [ctx.org, key],
-        )
+        await c.query("SELECT * FROM collab_restore WHERE organization_id=$1 AND id=$2", [
+          ctx.org,
+          key,
+        ])
       ).rows[0];
       if (prior) {
-        if (
-          prior.document_id !== id ||
-          prior.version_id !== version ||
-          prior.actor_id !== ctx.user
-        )
+        if (prior.document_id !== id || prior.version_id !== version || prior.actor_id !== ctx.user)
           fail(409, "IDEMPOTENCY_CONFLICT");
         return this.meta(await this.access(c, ctx, prior.result_id));
       }
@@ -1020,15 +1117,20 @@ class Store {
         copyContent(v.state, d.kind),
         d.kind,
       );
-      if(d.kind==="DOCUMENT") {
-        const snapshot=materialize(v.state);
+      if (d.kind === "DOCUMENT") {
+        const snapshot = materialize(v.state);
         try {
-          const ids=imageIds(snapshot);
-          if(ids.length) {
-            const copied=await c.query("INSERT INTO collab_image(organization_id,document_id,id,mime,bytes,created_by) SELECT organization_id,$3,id,mime,bytes,$4 FROM collab_image WHERE organization_id=$1 AND document_id=$2 AND id=ANY($5::uuid[])",[ctx.org,id,result.id,ctx.user,ids]);
-            if(copied.rowCount!==ids.length) fail(409,"IMAGE_MISSING");
+          const ids = imageIds(snapshot);
+          if (ids.length) {
+            const copied = await c.query(
+              "INSERT INTO collab_image(organization_id,document_id,id,mime,bytes,created_by) SELECT organization_id,$3,id,mime,bytes,$4 FROM collab_image WHERE organization_id=$1 AND document_id=$2 AND id=ANY($5::uuid[])",
+              [ctx.org, id, result.id, ctx.user, ids],
+            );
+            if (copied.rowCount !== ids.length) fail(409, "IMAGE_MISSING");
           }
-        } finally {snapshot.destroy();}
+        } finally {
+          snapshot.destroy();
+        }
       }
       await c.query("INSERT INTO collab_restore VALUES($1,$2,$3,$4,$5,$6)", [
         key,

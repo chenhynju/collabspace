@@ -21,10 +21,7 @@ import type { Response } from "express";
 import { Store } from "@collabspace/store";
 import { parseMermaid } from "@collabspace/protocol";
 import { OrgContextGuard } from "../../common/guards/org-context.guard";
-import {
-  CurrentOrg,
-  OrgContext,
-} from "../../common/decorators/current-org.decorator";
+import { CurrentOrg, OrgContext } from "../../common/decorators/current-org.decorator";
 import { CurrentUser } from "../../common/decorators/current-user.decorator";
 import { AssistantService } from "../assistant/assistant.service";
 
@@ -39,29 +36,19 @@ export class DocumentsController implements OnModuleDestroy, OnModuleInit {
   onModuleDestroy() {
     return this.store.close();
   }
-  private async run(
-    org: OrgContext,
-    me: { id: string },
-    method: string,
-    ...args: any[]
-  ) {
+  private async run(org: OrgContext, me: { id: string }, method: string, ...args: any[]) {
     try {
-      return await this.store[method](
-        { org: org.organizationId, user: me.id },
-        ...args,
-      );
+      return await this.store[method]({ org: org.organizationId, user: me.id }, ...args);
     } catch (e: any) {
-      if (e.status)
-        throw new HttpException({ code: e.code, message: e.code }, e.status);
+      if (e.status) throw new HttpException({ code: e.code, message: e.code }, e.status);
       if (e.name === "ZodError")
-        throw new HttpException(
-          { code: "INVALID_INPUT", message: "输入格式无效" },
-          400,
-        );
+        throw new HttpException({ code: "INVALID_INPUT", message: "输入格式无效" }, 400);
       throw e;
     }
   }
-  @Get('mine') mine(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string}){return this.run(o,u,'mine');}
+  @Get("mine") mine(@CurrentOrg() o: OrgContext, @CurrentUser() u: { id: string }) {
+    return this.run(o, u, "mine");
+  }
   @Get() list(
     @CurrentOrg() o: OrgContext,
     @CurrentUser() u: { id: string },
@@ -69,13 +56,9 @@ export class DocumentsController implements OnModuleDestroy, OnModuleInit {
     @Query("offset") offset?: string,
     @Query("limit") limit?: string,
   ) {
-    return this.run(o, u, "list", p, {offset,limit});
+    return this.run(o, u, "list", p, { offset, limit });
   }
-  @Post() create(
-    @CurrentOrg() o: OrgContext,
-    @CurrentUser() u: { id: string },
-    @Body() b: any,
-  ) {
+  @Post() create(@CurrentOrg() o: OrgContext, @CurrentUser() u: { id: string }, @Body() b: any) {
     return this.run(o, u, "create", b.projectId, b);
   }
   @Post("agent/draw")
@@ -154,17 +137,28 @@ export class DocumentsController implements OnModuleDestroy, OnModuleInit {
     };
   }
   @Post(":id/images")
-  @UseInterceptors(FileInterceptor("file", {limits:{fileSize:5*1024*1024,files:1}}))
-  imageUpload(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Param("id") id:string,@UploadedFile() file:Express.Multer.File) {
-    return this.run(o,u,"addImage",id,file?.buffer);
+  @UseInterceptors(FileInterceptor("file", { limits: { fileSize: 5 * 1024 * 1024, files: 1 } }))
+  imageUpload(
+    @CurrentOrg() o: OrgContext,
+    @CurrentUser() u: { id: string },
+    @Param("id") id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.run(o, u, "addImage", id, file?.buffer);
   }
   @Get(":id/images/:imageId")
-  async imageRead(@CurrentOrg() o:OrgContext,@CurrentUser() u:{id:string},@Param("id") id:string,@Param("imageId") imageId:string,@Res() res:Response) {
-    const image=await this.run(o,u,"image",id,imageId);
-    res.setHeader("Content-Type",image.mime);
-    res.setHeader("X-Content-Type-Options","nosniff");
-    res.setHeader("Cache-Control","no-store");
-    res.setHeader("Content-Disposition","inline");
+  async imageRead(
+    @CurrentOrg() o: OrgContext,
+    @CurrentUser() u: { id: string },
+    @Param("id") id: string,
+    @Param("imageId") imageId: string,
+    @Res() res: Response,
+  ) {
+    const image = await this.run(o, u, "image", id, imageId);
+    res.setHeader("Content-Type", image.mime);
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Cache-Control", "no-store");
+    res.setHeader("Content-Disposition", "inline");
     res.send(image.bytes);
   }
   @Get(":id") detail(
@@ -173,6 +167,41 @@ export class DocumentsController implements OnModuleDestroy, OnModuleInit {
     @Param("id") id: string,
   ) {
     return this.run(o, u, "detail", id);
+  }
+  @Post(":id/agent/plan")
+  async boardPlan(
+    @CurrentOrg() o: OrgContext,
+    @CurrentUser() u: { id: string },
+    @Param("id") id: string,
+    @Body() b: any,
+  ) {
+    const ids = b?.ids;
+    const instruction = b?.instruction;
+    if (
+      !Array.isArray(ids) ||
+      ids.length > 20 ||
+      new Set(ids).size !== ids.length ||
+      ids.some((key) => typeof key !== "string" || !/^[0-9a-f-]{36}$/i.test(key)) ||
+      typeof instruction !== "string" ||
+      !instruction.trim() ||
+      instruction.length > 700
+    )
+      throw new HttpException("请选择有效的白板范围并填写操作要求", 400);
+    const scope = await this.run(o, u, "boardAgentScope", id, ids);
+    const result = await this.ai.generate(
+      JSON.stringify([o.organizationId, u.id, id, scope.seq]),
+      JSON.stringify({
+        instruction,
+        selected: ids.length === 1 ? "s1" : null,
+        shapes: scope.shapes,
+      }),
+      "plan-whiteboard",
+      `${o.organizationId}:${u.id}`,
+    );
+    const current = await this.run(o, u, "boardAgentScope", id, ids);
+    if (scope.seq !== current.seq) throw new HttpException("白板已变更，请重新生成预览", 409);
+    if (result.incomplete) throw new HttpException("白板提案不完整", 422);
+    return { text: result.text, shapes: scope.shapes };
   }
   @Post(":id/agent/mermaid")
   async mermaidPlan(
@@ -194,8 +223,7 @@ export class DocumentsController implements OnModuleDestroy, OnModuleInit {
     const current = await this.run(o, u, "mermaidAgentScope", id);
     if (scope.seq !== current.seq) throw new HttpException("图表已变更，请重新生成", 409);
     if (result.incomplete) throw new HttpException("图表提案不完整", 422);
-    if (result.truncated)
-      throw new HttpException("图表源码超过 12000 字符，请分段修改后再试", 422);
+    if (result.truncated) throw new HttpException("图表源码超过 12000 字符，请分段修改后再试", 422);
     const text = result.text
       .replace(/^```(?:mermaid)?\s*\n?/i, "")
       .replace(/\n?```\s*$/i, "")

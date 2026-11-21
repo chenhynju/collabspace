@@ -8,6 +8,14 @@ import { Button, inputCls } from "@/components/ui";
 import { type DocumentProvider } from "@/lib/document-provider";
 import { DictationInput } from "@/components/voice/DictationInput";
 
+function messageOf(error: unknown) {
+  const data = (error as { response?: { data?: { message?: string | string[] } } })?.response?.data;
+  const message = data?.message;
+  if (Array.isArray(message)) return message.join("；");
+  if (typeof message === "string" && message.trim()) return message;
+  return "未生成有效提案。请检查模型配置，或等待白板同步后重试。";
+}
+
 export function BoardAgent({ provider, projectId, selected, origin, stopUndo }: {
   provider: DocumentProvider; projectId: string; selected: string; origin: string; stopUndo: () => void;
 }) {
@@ -23,7 +31,16 @@ export function BoardAgent({ provider, projectId, selected, origin, stopUndo }: 
   const shapes = provider.doc.getMap<Y.Map<unknown>>("shapes");
 
   async function generate() {
-    if (request.current || !provider.saved || !provider.writable || !draft.trim()) return;
+    if (request.current) return;
+    if (!provider.writable) {
+      setError("当前为只读，不能生成修改提案。");
+      return;
+    }
+    if (!provider.saved) {
+      setError("白板还在同步，请等待“已保存到服务器”后再生成。");
+      return;
+    }
+    if (!draft.trim()) return;
     const controller = new AbortController();
     request.current = controller;
     setBusy(true);
@@ -42,10 +59,10 @@ export function BoardAgent({ provider, projectId, selected, origin, stopUndo }: 
         return { ref: "s" + (index + 1), type, text: text.slice(0, 80), geometry };
       });
       if (JSON.stringify(data.shapes) !== JSON.stringify(context) ||
-          snapshot !== JSON.stringify(shapes.toJSON())) throw Error("Snapshot changed");
+          snapshot !== JSON.stringify(shapes.toJSON())) throw Error("白板在生成期间发生变化，请重新生成。");
       setPreview({ ...compileBoardPlan(data.text, initial, ids), snapshot });
-    } catch {
-      if (!controller.signal.aborted) setError("未生成有效提案。请检查模型配置，或等待白板同步后重试。");
+    } catch (e) {
+      if (!controller.signal.aborted) setError(messageOf(e));
     } finally {
       if (request.current === controller) request.current = null;
       if (!controller.signal.aborted) setBusy(false);
@@ -63,8 +80,13 @@ export function BoardAgent({ provider, projectId, selected, origin, stopUndo }: 
     provider.doc.transact(() => {
       for (const [id, value] of preview.changes) {
         const existing = shapes.get(id);
-        if (existing) existing.set("geometry", value.geometry);
-        else shapes.set(id, new Y.Map(Object.entries(value)));
+        if (existing) {
+          for (const key of ["type", "geometry", "text", "fill", "binding", "order"] as const) {
+            if (value[key] !== undefined) existing.set(key, value[key]);
+          }
+        } else {
+          shapes.set(id, new Y.Map(Object.entries(value)));
+        }
       }
     }, origin);
     stopUndo();
@@ -74,24 +96,55 @@ export function BoardAgent({ provider, projectId, selected, origin, stopUndo }: 
 
   if (!provider.writable) return null;
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white px-2 py-1.5 shadow-sm">
-      <Button type="button" variant="secondary" aria-expanded={open} onClick={() => setOpen(!open)}>白板 Agent</Button>
+    <div className="rounded-xl border border-slate-200 bg-[var(--paper-raised)] p-2 shadow-sm">
+      <div className="flex flex-wrap items-center gap-2">
+        <Button type="button" size="sm" variant="secondary" aria-expanded={open} onClick={() => setOpen(!open)}>
+          {open ? "收起白板 Agent" : "白板 Agent"}
+        </Button>
+        <span className="text-[11px] text-slate-500">
+          {selected ? "只修改当前选中图元" : "未选中时可在空白处新增图元"} · 生成后先预览
+        </span>
+        {!provider.saved && <span className="text-[11px] text-amber-700">等待白板同步…</span>}
+      </div>
       {open && (
-        <section aria-label="白板 Agent" className="mt-2 space-y-2 rounded-xl bg-slate-50 p-3">
-          <label className="block text-sm">白板修改要求
-            <textarea className={inputCls + " mt-1 w-full"} maxLength={700} value={draft}
-              onChange={(event) => setDraft(event.target.value)} />
+        <section aria-label="白板 Agent" className="mt-2 space-y-2 rounded-lg bg-slate-50 p-3">
+          <label className="block text-xs font-medium text-slate-700">
+            白板修改要求
+            <textarea
+              className={inputCls + " mt-1 w-full"}
+              maxLength={700}
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="例如：把这三个节点整理成“开始 → 处理 → 验收 → 交付”的流程图，并补上连接线。"
+            />
           </label>
           <DictationInput projectId={projectId} onBusyChange={setRecording}
             onTranscript={(text) => setDraft((value) => [value, text].filter(Boolean).join("\n").slice(0, 700))} />
-          <p className="text-[11px] leading-5 text-slate-500">选中图形时只修改该图形；未选中时使用最多 20 个图元。生成后先预览，确认才写入。</p>
-          <Button type="button" disabled={busy || recording || !provider.saved || !draft.trim()} onClick={generate}>生成白板预览</Button>
-          {preview && <div className="space-y-2">
-            <ul className="list-disc pl-5 text-sm">{preview.labels.map((label, i) => <li key={i}>{label}</li>)}</ul>
-            <Button type="button" disabled={!provider.saved} onClick={apply}>确认应用到白板</Button>
-          </div>}
-          {pending && <p role="status">{provider.saved ? "白板修改已保存到服务器" : `等待服务器确认 · ${provider.status}`}</p>}
-          {error && <p role="alert">{error}</p>}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button type="button" size="sm" disabled={busy || recording || !provider.saved || !draft.trim()} onClick={generate}>
+              {busy ? "生成中…" : "生成预览"}
+            </Button>
+            <span className="text-[11px] text-slate-500">支持新增矩形/椭圆/菱形/便签/文字/主题、改字、移动和连线</span>
+          </div>
+          {preview && (
+            <div className="space-y-2 rounded-lg border border-indigo-200 bg-white p-2">
+              <p className="text-xs font-medium text-slate-800">
+                将执行 {preview.changes.size} 项变更
+              </p>
+              <ul className="list-disc space-y-0.5 pl-5 text-xs text-slate-600">
+                {preview.labels.map((label, i) => <li key={i}>{label}</li>)}
+              </ul>
+              <Button type="button" size="sm" disabled={!provider.saved} onClick={apply}>
+                确认应用到白板
+              </Button>
+            </div>
+          )}
+          {pending && (
+            <p role="status" className="text-xs text-slate-600">
+              {provider.saved ? "白板修改已保存到服务器" : `等待服务器确认 · ${provider.status}`}
+            </p>
+          )}
+          {error && <p role="alert" className="text-xs text-red-700">{error}</p>}
         </section>
       )}
     </div>

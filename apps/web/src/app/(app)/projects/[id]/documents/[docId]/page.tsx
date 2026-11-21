@@ -19,6 +19,7 @@ import { DocumentFormula } from "@/components/documents/DocumentFormula";
 import { DocumentImage } from "@/components/documents/DocumentImage";
 import OfflineStorage from "@/components/documents/OfflineStorage";
 import { MarkdownHistory } from "@/components/documents/MarkdownEditor";
+import { Button } from "@/components/ui";
 const MarkdownEditor = dynamic(() => import("@/components/documents/MarkdownEditor"), {
   ssr: false,
 });
@@ -229,19 +230,21 @@ export default function DocumentPage({ params }: { params: { id: string; docId: 
               {uniquePeople.length > 0 && ` · ${uniquePeople.length} 人在线`}
             </span>
             {meta.role === "OWNER" && (
-              <button className="rounded-sm border border-slate-300 bg-white/60 px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-900" onClick={share}>
+              <Button size="sm" variant="secondary" onClick={share}>
                 共享权限
-              </button>
+              </Button>
             )}
-            <button
-              className="rounded-sm border border-slate-300 bg-white/60 px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-slate-900"
+            <Button
+              size="sm"
+              variant="secondary"
               onClick={() => (setPanelOpen(true), setTab("history"))}
             >
               历史版本
-            </button>
+            </Button>
             {provider?.writable && (
-              <button
-                className="text-xs font-medium text-slate-500 hover:text-indigo-700"
+              <Button
+                size="sm"
+                variant="ghost"
                 onClick={() => {
                   const title = window.prompt("文档标题", meta.title);
                   if (title)
@@ -255,7 +258,7 @@ export default function DocumentPage({ params }: { params: { id: string; docId: 
                 }}
               >
                 重命名
-              </button>
+              </Button>
             )}
           </div>
         </div>
@@ -298,21 +301,25 @@ export default function DocumentPage({ params }: { params: { id: string; docId: 
           hidden={meta.kind === "BOARD" && !panelOpen}
           className="w-full shrink-0 border-l border-slate-300 bg-[var(--paper-raised)] p-5 lg:w-[280px]"
         >
-          <nav className="mb-5 flex gap-4 border-b pb-3" aria-label="文档侧栏">
-            <button aria-pressed={tab === "comments"} onClick={() => setTab("comments")}>
-              评论
-            </button>
-            <button
-              aria-pressed={tab === "history"}
-              onClick={() => (setPanelOpen(true), setTab("history"))}
-            >
-              历史
-            </button>
-            {meta.role === "OWNER" && (
-              <button aria-pressed={tab === "share"} onClick={share}>
-                权限
+          <nav className="mb-5 flex gap-1 border-b border-slate-200 pb-2" aria-label="文档侧栏">
+            {[
+              ["comments", "评论"],
+              ["history", "历史"],
+              ...(meta.role === "OWNER" ? [["share", "权限"]] : []),
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                aria-pressed={tab === key}
+                onClick={() => (key === "share" ? share() : (setPanelOpen(true), setTab(key as "comments" | "history")))}
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
+                  tab === key
+                    ? "bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-200"
+                    : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                }`}
+              >
+                {label}
               </button>
-            )}
+            ))}
           </nav>
           {tab === "comments" && (
             <>
