@@ -32,7 +32,7 @@ export default function OAuthCallbackPage() {
   }, [setToken, loadProfile, router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f4efe5] px-6">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--paper)] px-6">
       <div className="w-full max-w-sm border-t-2 border-slate-900 bg-white px-6 py-8 text-center">
         <p className="eyebrow">OAuth</p>
         <p className="display-title mt-3 text-xl text-slate-900">

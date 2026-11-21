@@ -8,6 +8,7 @@
 *.log
 evidence
 docs
+sites
 terraform
 deploy
 backups

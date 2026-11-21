@@ -106,7 +106,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
       {!immersive ? (
-        <header className="sticky top-0 z-40 border-b border-slate-300/80 bg-[#f4efe5]/92 backdrop-blur-md">
+        <header className="sticky top-0 z-40 border-b border-slate-300/80 bg-[color-mix(in_srgb,var(--paper)_92%,transparent)] backdrop-blur-md">
           <div aria-hidden="true" className="h-[3px] bg-indigo-600" />
           <div className="mx-auto flex h-[61px] max-w-[1600px] items-center gap-2 px-3 sm:px-5">
             <button
@@ -129,7 +129,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               aria-label="CollabSpace 首页"
             >
               <span className="grid h-8 w-8 place-items-center rounded-sm bg-slate-900 transition group-hover:bg-indigo-600">
-                <span className="block h-3 w-3 border-2 border-[#f4efe5]" />
+                <span className="block h-3 w-3 border-2 border-[var(--paper)]" />
               </span>
               <span className="hidden items-baseline gap-2 md:flex">
                 <span className="display-title text-[19px] leading-none text-slate-900">
@@ -156,7 +156,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 <ChevronDown size={12} className="shrink-0 text-slate-400" />
               </button>
               {orgMenu ? (
-                <div className="absolute left-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-lg border border-slate-300 bg-[#fffdf7] p-1.5 shadow-xl shadow-slate-900/15">
+                <div className="absolute left-0 top-full z-50 mt-2 w-64 overflow-hidden rounded-lg border border-slate-300 bg-[var(--paper-raised)] p-1.5 shadow-xl shadow-slate-900/15">
                   <p className="px-2.5 py-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-400">
                     当前组织
                   </p>
@@ -274,7 +274,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             aria-expanded={navOpen}
             aria-controls="app-navigation"
             onClick={() => setNavOpen((value) => !value)}
-            className="grid h-11 w-11 place-items-center rounded-lg border border-slate-300 bg-[#fffdf7]/95 text-slate-600 shadow-lg shadow-slate-900/10 backdrop-blur transition hover:border-slate-900 hover:text-slate-900"
+            className="grid h-11 w-11 place-items-center rounded-lg border border-slate-300 bg-[color-mix(in_srgb,var(--paper-raised)_95%,transparent)] text-slate-600 shadow-lg shadow-slate-900/10 backdrop-blur transition hover:border-slate-900 hover:text-slate-900"
           >
             <Menu size={19} />
           </button>

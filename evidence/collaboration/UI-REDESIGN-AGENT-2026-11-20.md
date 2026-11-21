@@ -482,3 +482,52 @@
 - 会议与数字人工作室仍为隐藏/受限入口，未接真实音视频或真人生成供应商。
 - `/favicon.ico` 直接访问仍为 404；页面已通过 `icon.svg` 提供品牌图标，加载过程无资源错误。
 - 本次未改后端 API、权限与数据边界。
+
+## 2026-11-21 补充：双主题、语音与数字分身合并、个人资料
+
+### 1. 双主题切换
+
+- 从 Git 历史恢复“今天中午之前”的默认 Tailwind 主题（`f84b100^`，与 10:15 的 `158f83b` 同一套 slate/indigo 默认色板）。
+- `tailwind.config.js` 的颜色、字体、圆角与阴影改为 CSS 变量；`globals.css` 定义 `editorial`（暖纸/衬线/朱砂）与 `classic`（冷白/无衬线/靛蓝/大圆角）两套 token。
+- 根布局在 `<head>` 中提前读取 `localStorage['collabspace:ui-theme']` 并设置 `data-ui-theme`，避免刷新闪烁；不再由 React 控制该属性，防止 hydration 重置。
+- 设置页新增“界面主题”卡片，提供编辑风 / 经典浅色（12:00 前版本）切换、色板预览与持久化。
+- 经典主题下：背景恢复 `#f7f8fa`，关闭纸面网格与颗粒；主色恢复 indigo，标题恢复无衬线粗体，圆角恢复 8–16px，阴影恢复 Tailwind 默认值。
+
+### 2. 语音与数字分身合并，IM 收纳
+
+- `/settings/persona` 升级为“语音与数字分身”：
+  - 新增语音能力卡：ASR、TTS、Viseme、浏览器朗读四项状态；当前服务商、云区域、60s/4000 字上限；试听系统语音；刷新状态。
+  - 明确显示服务端未配置原因，并说明代码已接 Azure Speech、豆包语音、ElevenLabs（Scribe v2 听写 + multilingual v2 朗读）；Whisper 需新增 OpenAI 适配。
+  - 保留原有私有素材草稿、语言、隐私边界与撤销删除。
+- IM 头部只保留一个“语音与数字分身”入口，跳转设置页。
+- 移除每条消息下方的“朗读消息”折叠面板与输入框下方的“语音选项”面板；改为消息时间旁的悬浮系统朗读按钮（仅桌面悬停/键盘聚焦可见）。
+- 后端语音代码未改，仍为 Azure/豆包/ElevenLabs 显式路由，无自动回退；生产未配置密钥。
+
+### 3. 个人资料与姓名修改
+
+- 新增 `PATCH /users/me`（`UpdateProfileDto`，姓名 1–50 字符、自动 trim），返回更新后的用户。
+- 新增 `/settings/profile`：显示姓名、邮箱只读说明、保存反馈；保存后调用 `loadProfile()` 刷新全局用户信息。
+- 设置页“个人”分组新增“个人资料”；导航抽屉底部新增“个人资料与姓名”。
+- 生产 API 已升级到 `collabspace-api:api-r20261121-09`（`sha256:ade1749c3494b32a538aa8a9822aa57cdca97d9dde200092879782f29c41f2ff`），数据库/Redis health 正常，OOM=false、restarts=0。
+- 生产实测：测试成员 `陆小鹿` → `陆小鹿-改名验证` → 恢复 `陆小鹿`，PATCH 与 GET 均正确。
+
+### 发布与验收
+
+- 前端部署：`3zsLBLT95cbxaw4gpnX9VWk26axL`，已别名到 `https://collabspace.purelamp.uk`，构建 44 页（含 `/settings/profile`）。
+- 生产验收（真实账号）：
+  - 设置页出现主题卡片、个人资料、语音与数字分身；
+  - 切换经典浅色后，`data-ui-theme=classic`、背景 `rgb(247,248,250)`、标题无衬线，跨页与刷新保持；
+  - 切回编辑风后恢复暖纸背景 `rgb(244,239,229)`；
+  - 语音页显示 Azure Speech、服务端未配置、60s/4000 字、试听按钮；
+  - 个人资料页含姓名输入、邮箱、保存按钮；
+  - IM 不再出现“朗读消息 / 语音选项 / 数字分身设置”，仅一个“语音与数字分身”入口，消息悬浮朗读按钮正常；
+  - 生产页面无控制台错误（WebSocket 测试环境除外）。
+
+截图：[编辑风设置](ui-editorial-2026-11-21/theme-settings-editorial.png)、[经典主题概览](ui-editorial-2026-11-21/theme-dashboard-classic.png)、[语音与数字分身](ui-editorial-2026-11-21/theme-voice-persona.png)、[个人资料](ui-editorial-2026-11-21/theme-profile.png)、[IM 收纳后](ui-editorial-2026-11-21/theme-im.png)。
+
+### 边界
+
+- 主题切换是 token 级还原，不是整站组件级回滚；深色导航抽屉与 AI 抽屉在经典主题下仍保留深色表面。
+- 语音 ASR/TTS 代码已完成，但生产缺服务端密钥；当前仅浏览器系统朗读可用。
+- Whisper 尚未接入；现有 ElevenLabs 路由同时支持 Scribe v2 听写与 multilingual v2 朗读。
+- 个人资料只允许修改显示姓名，邮箱与头像不在本次范围。

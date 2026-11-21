@@ -1,15 +1,23 @@
-import './globals.css';
-import 'katex/dist/katex.min.css';
-import type { Metadata } from 'next';
+import "./globals.css";
+import "katex/dist/katex.min.css";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'CollabSpace - 团队实时协作文档',
-  description: '多租户 B2B 企业协作平台',
+  title: "CollabSpace - 团队实时协作文档",
+  description: "多租户 B2B 企业协作平台",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-CN">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var t=localStorage.getItem('collabspace:ui-theme');document.documentElement.dataset.uiTheme=t==='classic'?'classic':'editorial';}catch(e){}})();",
+          }}
+        />
+      </head>
       <body>{children}</body>
     </html>
   );

@@ -5,10 +5,12 @@ import {
   ArrowLeft,
   Film,
   ImagePlus,
+  Mic,
   RefreshCw,
   ShieldCheck,
   Trash2,
   UserRound,
+  Volume2,
 } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import { Badge, Button, Card, Empty } from "@/components/ui";
@@ -29,6 +31,25 @@ type Capabilities = {
   maxBytes?: number;
   retention?: { accessDays?: number; scheduledPurge?: boolean };
   creation?: { configured?: boolean; reason?: string };
+};
+
+type VoiceStatus = {
+  provider?: string;
+  cloud?: string;
+  configured?: boolean;
+  voices?: Record<string, unknown>;
+  preciseVisemes?: boolean;
+  mouthAnalysis?: { enabled?: boolean; configured?: boolean };
+  realistic?: { configured?: boolean; reason?: string };
+  maxSeconds?: number;
+  maxText?: number;
+};
+
+const PROVIDER_LABEL: Record<string, string> = {
+  azure: "Azure Speech",
+  volcengine: "豆包语音",
+  elevenlabs: "ElevenLabs",
+  whisper: "Whisper",
 };
 
 const date = (value: string) => new Date(value).toLocaleDateString("zh-CN");
@@ -55,6 +76,10 @@ function PersonaSession() {
   const [mediaKind, setMediaKind] = useState<"PHOTO" | "VIDEO">("PHOTO");
   const [consent, setConsent] = useState(false);
   const [avatar, setAvatar] = useState("");
+  const [voice, setVoice] = useState<VoiceStatus | null>(null);
+  const [voiceError, setVoiceError] = useState("");
+  const [speaking, setSpeaking] = useState(false);
+  const [speechAvailable, setSpeechAvailable] = useState(false);
   const pending = useRef<string | null>(null);
   const epoch = useRef(0);
   const controller = useRef<AbortController | null>(null);
@@ -65,6 +90,25 @@ function PersonaSession() {
     if (!preview) return;
     return () => URL.revokeObjectURL(preview);
   }, [preview]);
+  useEffect(() => {
+    setSpeechAvailable(typeof window !== "undefined" && "speechSynthesis" in window);
+    if (!org) return;
+    const c = new AbortController();
+    setVoiceError("");
+    api
+      .get("/voice/status", { signal: c.signal })
+      .then((r) => setVoice(r.data))
+      .catch(() => {
+        if (!c.signal.aborted) setVoiceError("语音能力状态读取失败，请稍后重试");
+      });
+    return () => c.abort();
+  }, [org]);
+  useEffect(
+    () => () => {
+      window.speechSynthesis?.cancel();
+    },
+    [],
+  );
   useEffect(
     () => () => {
       epoch.current++;
@@ -248,6 +292,38 @@ function PersonaSession() {
     });
   };
 
+  const speakSample = () => {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(
+      "语音与数字分身设置。这是一段系统朗读试听，不会生成或保存音频。",
+    );
+    utterance.lang = language;
+    utterance.onend = () => setSpeaking(false);
+    utterance.onerror = () => setSpeaking(false);
+    setSpeaking(true);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const refreshVoice = async () => {
+    setVoiceError("");
+    try {
+      const { data } = await api.get("/voice/status");
+      setVoice(data);
+    } catch {
+      setVoiceError("语音能力状态读取失败，请稍后重试");
+    }
+  };
+
+  const providerLabel = voice?.provider    ? PROVIDER_LABEL[voice.provider] ?? voice.provider
+    : "未检测";
+  const serverReady = voice?.configured === true;
+  const visemeLabel = voice?.preciseVisemes
+    ? "精确口型"
+    : voice?.mouthAnalysis?.enabled
+      ? "基础口型"
+      : "未启用";
+
   return (
     <div className="page-enter mx-auto max-w-6xl px-4 py-8 md:px-10 md:py-10">
       <div className="mb-3">
@@ -259,10 +335,105 @@ function PersonaSession() {
         </Link>
       </div>
       <PageHeader
-        eyebrow="Persona"
-        title="我的数字分身"
-        description="本人照片或视频只在本组织私有保存；真人形象与视频生成尚未接入。"
+        eyebrow="Voice & Persona"
+        title="语音与数字分身"
+        description="语音转文字、朗读与本人素材草稿集中在这里；IM 只保留输入与消息本身。"
       />
+
+      <Card className="mt-6 overflow-hidden">
+        <div className="grid lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="p-5 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <p className="eyebrow">Voice</p>
+                <h2 className="display-title mt-1.5 text-xl text-slate-900">语音能力</h2>
+                <p className="mt-1.5 max-w-2xl text-xs leading-5 text-slate-500">
+                  语音消息本身不依赖供应商；听写与朗读需要服务端语音服务，未配置时只提供浏览器降级。
+                </p>
+              </div>
+              <Badge tone={serverReady ? "green" : "amber"}>
+                {serverReady ? "服务端已配置" : "服务端未配置"}
+              </Badge>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden border border-slate-200 bg-slate-200 sm:grid-cols-4">
+              {[
+                { label: "语音转文字", value: serverReady ? "可用" : "未配置", icon: Mic },
+                { label: "文字转语音", value: serverReady ? "可用" : "未配置", icon: Volume2 },
+                { label: "口型 / Viseme", value: visemeLabel, icon: Film },
+                {
+                  label: "浏览器朗读",
+                  value: speechAvailable ? "可用（降级）" : "不可用",
+                  icon: Volume2,
+                },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.label} className="bg-white p-3">
+                    <Icon size={14} className="text-slate-400" />
+                    <p className="mt-2 text-[11px] text-slate-500">{item.label}</p>
+                    <p className="mt-0.5 text-sm font-medium text-slate-800">{item.value}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {!serverReady && (
+              <div className="mt-4 border-l-2 border-amber-600 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-900">
+                代码已接入 Azure Speech、豆包语音与 ElevenLabs TTS；生产尚未配置服务端密钥，因此服务端
+                ASR/TTS 会直接拒绝，不会调用供应商。若要用 Whisper 做听写，需要在服务端新增 OpenAI
+                适配并配置密钥；页面不会接收密钥。
+              </div>
+            )}
+            {voiceError && (
+              <p role="alert" className="mt-3 text-xs text-indigo-700">
+                {voiceError}
+              </p>
+            )}
+          </div>
+
+          <div className="border-t border-slate-200 bg-slate-50/70 p-5 sm:p-6 lg:border-l lg:border-t-0">
+            <p className="eyebrow">Provider</p>
+            <dl className="mt-3 space-y-2 text-xs">
+              <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-2">
+                <dt className="text-slate-500">当前服务商</dt>
+                <dd className="font-medium text-slate-800">{providerLabel}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-2">
+                <dt className="text-slate-500">云区域</dt>
+                <dd className="font-mono text-[11px] text-slate-700">{voice?.cloud ?? "默认"}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-2">
+                <dt className="text-slate-500">单次上限</dt>
+                <dd className="font-mono text-[11px] text-slate-700">
+                  {voice?.maxSeconds ?? 60}s / {voice?.maxText ?? 4000} 字
+                </dd>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-slate-500">浏览器语音</dt>
+                <dd className="font-medium text-slate-800">
+                  {speechAvailable ? "支持" : "不支持"}
+                </dd>
+              </div>
+            </dl>
+            <div className="mt-4 flex flex-col gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={!speechAvailable || speaking}
+                onClick={speakSample}
+              >
+                <Volume2 size={14} />
+                {speaking ? "朗读中…" : "试听系统语音"}
+              </Button>
+              <Button type="button" variant="ghost" size="sm" onClick={() => void refreshVoice()}>
+                <RefreshCw size={14} /> 刷新语音状态
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
 
       {loadError && (
         <p role="alert" className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">

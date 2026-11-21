@@ -1,13 +1,14 @@
-import { Controller, Get } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Body, Controller, Get, Patch } from "@nestjs/common";
+import { PrismaService } from "../../prisma/prisma.service";
+import { CurrentUser } from "../../common/decorators/current-user.decorator";
+import { UpdateProfileDto } from "./dto/update-profile.dto";
 
-@Controller('users')
+@Controller("users")
 export class UsersController {
   constructor(private readonly prisma: PrismaService) {}
 
   /** 当前登录用户资料 + 所属组织（含角色 key） */
-  @Get('me')
+  @Get("me")
   me(@CurrentUser() user: { id: string }) {
     return this.prisma.withUser(user.id, async (tx) => {
       const u = await tx.user.findUnique({
@@ -29,7 +30,7 @@ export class UsersController {
           organization: { select: { id: true, name: true, slug: true, status: true } },
           roles: { include: { role: { select: { key: true, name: true } } } },
         },
-        orderBy: { joinedAt: 'asc' },
+        orderBy: { joinedAt: "asc" },
       });
 
       const organizations = memberships.map((m) => ({
@@ -42,6 +43,19 @@ export class UsersController {
       }));
 
       return { ...u, organizations };
+    });
+  }
+
+  /** 修改当前用户的显示姓名 */
+  @Patch("me")
+  updateMe(@CurrentUser() user: { id: string }, @Body() dto: UpdateProfileDto) {
+    return this.prisma.withUser(user.id, async (tx) => {
+      const updated = await tx.user.update({
+        where: { id: user.id },
+        data: { name: dto.name },
+        select: { id: true, email: true, name: true, avatarUrl: true },
+      });
+      return updated;
     });
   }
 }

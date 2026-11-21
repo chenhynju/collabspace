@@ -208,8 +208,8 @@ export default function DocumentPage({ params }: { params: { id: string; docId: 
   const Surface =
     meta.kind === "BOARD" ? Whiteboard : meta.kind === "MARKDOWN" ? MarkdownEditor : DocumentEditor;
   return (
-    <div className="flex min-h-[100dvh] min-w-0 flex-col bg-[#f4efe5]">
-      <header className="border-b border-slate-300 bg-[#fffdf7] px-5 py-3.5">
+    <div className="flex min-h-[100dvh] min-w-0 flex-col bg-[var(--paper)]">
+      <header className="border-b border-slate-300 bg-[var(--paper-raised)] px-5 py-3.5">
         <Link className="text-xs font-medium text-slate-500 hover:text-indigo-700" href={`/projects/${params.id}/content`}>
           ← 协作空间
         </Link>
@@ -296,7 +296,7 @@ export default function DocumentPage({ params }: { params: { id: string; docId: 
         </main>
         <aside
           hidden={meta.kind === "BOARD" && !panelOpen}
-          className="w-full shrink-0 border-l border-slate-300 bg-[#fffdf7] p-5 lg:w-[280px]"
+          className="w-full shrink-0 border-l border-slate-300 bg-[var(--paper-raised)] p-5 lg:w-[280px]"
         >
           <nav className="mb-5 flex gap-4 border-b pb-3" aria-label="文档侧栏">
             <button aria-pressed={tab === "comments"} onClick={() => setTab("comments")}>

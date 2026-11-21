@@ -2,11 +2,9 @@
 import { useState, useRef, useEffect } from "react";
 import { api } from "@/lib/api";
 import { useImStore } from "@/store/im";
-import { VoiceTools } from "@/components/voice/VoiceTools";
 import { useAuthStore } from "@/store/auth";
-import { Disclosure } from "@/components/disclosure";
 import { DictationInput } from "@/components/voice/DictationInput";
-import { ArrowUp, ImagePlus, Paperclip, Volume2 } from "lucide-react";
+import { ArrowUp, ImagePlus, Paperclip } from "lucide-react";
 import { emitImTyping } from "@/lib/use-im-realtime";
 
 export default function MessageComposer({ conversationId }: { conversationId: string }) {
@@ -26,8 +24,7 @@ export default function MessageComposer({ conversationId }: { conversationId: st
     useImStore.getState().currentConversationId === conversationId;
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
-  const [dictationBusy, setDictationBusy] = useState(false),
-    [legacyBusy, setLegacyBusy] = useState(false);
+  const [dictationBusy, setDictationBusy] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const focusAfterDictation = useRef(false);
   useEffect(() => {
@@ -88,16 +85,9 @@ export default function MessageComposer({ conversationId }: { conversationId: st
   const appendMessage = useImStore((s) => s.appendMessage);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const voiceIntent = useRef<{
-    file: File;
-    hash: string;
-    content: string;
-    requestId: string;
-    attachmentId?: string;
-  } | null>(null);
 
   const sendText = async () => {
-    if (!text.trim() || sendingRef.current || dictationBusy || legacyBusy) return;
+    if (!text.trim() || sendingRef.current || dictationBusy) return;
     sendingRef.current = true;
     setSending(true);
     try {
@@ -151,7 +141,7 @@ export default function MessageComposer({ conversationId }: { conversationId: st
   };
 
   return (
-    <div className="border-t border-slate-300 bg-[#fffdf7] p-3 sm:p-4">
+    <div className="border-t border-slate-300 bg-[var(--paper-raised)] p-3 sm:p-4">
       <div className="rounded-lg border border-slate-300 bg-white p-2 transition focus-within:border-slate-900 focus-within:ring-2 focus-within:ring-indigo-500/10">
         <textarea
           ref={inputRef}
@@ -167,7 +157,7 @@ export default function MessageComposer({ conversationId }: { conversationId: st
         <div className="flex items-start gap-1">
           <button
             onClick={() => imageInputRef.current?.click()}
-            disabled={sending || dictationBusy || legacyBusy}
+            disabled={sending || dictationBusy}
             aria-label="发送图片"
             title="添加图片"
             className="rounded-sm p-2.5 text-slate-500 hover:bg-slate-100 disabled:opacity-40"
@@ -176,7 +166,7 @@ export default function MessageComposer({ conversationId }: { conversationId: st
           </button>
           <button
             onClick={() => fileInputRef.current?.click()}
-            disabled={sending || dictationBusy || legacyBusy}
+            disabled={sending || dictationBusy}
             aria-label="发送文件"
             title="添加文件"
             className="rounded-sm p-2.5 text-slate-500 hover:bg-slate-100 disabled:opacity-40"
@@ -185,7 +175,7 @@ export default function MessageComposer({ conversationId }: { conversationId: st
           </button>
           <DictationInput
             conversationId={conversationId}
-            active={!sending && !legacyBusy}
+            active={!sending}
             onTranscript={acceptTranscript}
             onBusyChange={setDictationBusy}
           />
@@ -193,7 +183,7 @@ export default function MessageComposer({ conversationId }: { conversationId: st
             onClick={sendText}
             aria-label="发送"
             title="发送消息"
-            disabled={sending || dictationBusy || legacyBusy || !text.trim()}
+            disabled={sending || dictationBusy || !text.trim()}
             className="rounded-sm bg-slate-900 p-2.5 text-white transition hover:bg-indigo-600 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
           >
             <ArrowUp size={18} />
@@ -204,70 +194,6 @@ export default function MessageComposer({ conversationId }: { conversationId: st
         <span>语音输入转成文字，检查后再发送</span>
         <span className="hidden sm:inline">Enter 发送 · Shift + Enter 换行</span>
       </div>
-      <Disclosure
-        className="mt-2"
-        title={
-          <>
-            <Volume2 size={14} />
-            语音选项
-          </>
-        }
-      >
-        <div>
-          <VoiceTools
-            scope={{ conversationId }}
-            text={text}
-            active={!dictationBusy && !sending}
-            onBusyChange={setLegacyBusy}
-            onTranscript={acceptTranscript}
-            onSendAudio={async (file) => {
-              if (sendingRef.current) throw Error("消息正在发送");
-              sendingRef.current = true;
-              setSending(true);
-              try {
-                const content = text.trim() || "语音消息";
-                const hash = Array.from(
-                  new Uint8Array(await crypto.subtle.digest("SHA-256", await file.arrayBuffer())),
-                )
-                  .map((v) => v.toString(16).padStart(2, "0"))
-                  .join("");
-                if (!current()) throw Error("会话已切换，已停止发送");
-                if (
-                  !voiceIntent.current ||
-                  voiceIntent.current.content !== content ||
-                  voiceIntent.current.hash !== hash
-                )
-                  voiceIntent.current = { file, hash, content, requestId: crypto.randomUUID() };
-                const intent = voiceIntent.current;
-                if (!intent.attachmentId) {
-                  const form = new FormData();
-                  form.append("file", intent.file);
-                  const attachment = await api.post(
-                    `/conversations/${conversationId}/attachments`,
-                    form,
-                  );
-                  intent.attachmentId = attachment.data.id;
-                }
-                if (!current()) throw Error("会话已切换，已停止发送");
-                const response = await api.post(`/conversations/${conversationId}/messages`, {
-                  type: "FILE",
-                  content: intent.content,
-                  attachmentId: intent.attachmentId,
-                  requestId: intent.requestId,
-                });
-                if (!current()) return;
-                voiceIntent.current = null;
-                appendMessage(response.data);
-                stopTyping();
-                setText("");
-              } finally {
-                sendingRef.current = false;
-                setSending(false);
-              }
-            }}
-          />
-        </div>
-      </Disclosure>
       <input
         ref={imageInputRef}
         type="file"

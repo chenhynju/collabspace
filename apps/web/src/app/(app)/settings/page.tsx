@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Search, Shield, UserCog, UserRound } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
+import ThemeSwitcher from "@/components/settings/ThemeSwitcher";
 import { Card, Empty, Input } from "@/components/ui";
 import { SETTINGS_NAV, canSee } from "@/components/navigation";
 import { useAuthStore } from "@/store/auth";
@@ -52,6 +53,9 @@ export default function SettingsPage() {
         description="成员、权限、审计与系统能力集中在这里；日常协作仍留在项目空间与协作空间。"
       />
 
+      <div className="mb-6">
+        <ThemeSwitcher />
+      </div>
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <div className="relative min-w-56 flex-1">
           <Search
@@ -141,6 +145,25 @@ function PersonalSection() {
         <span className="h-px flex-1 bg-slate-200/70" />
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
+        <Link href="/settings/profile" className="group block">
+          <Card className="flex h-full items-start gap-3 p-4 transition duration-200 hover:border-slate-900 hover:bg-white">
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-sm bg-slate-200 text-slate-600 transition group-hover:bg-indigo-600 group-hover:text-white">
+              <UserRound size={16} />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-slate-800">个人资料</span>
+                <ArrowUpRight
+                  size={13}
+                  className="shrink-0 text-slate-300 transition group-hover:text-indigo-600"
+                />
+              </span>
+              <span className="mt-1 block text-xs leading-5 text-slate-500">
+                修改你在组织内显示的姓名
+              </span>
+            </span>
+          </Card>
+        </Link>
         <Link href="/settings/persona" className="group block">
           <Card className="flex h-full items-start gap-3 p-4 transition duration-200 hover:border-slate-900 hover:bg-white">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-sm bg-slate-200 text-slate-600 transition group-hover:bg-indigo-600 group-hover:text-white">
@@ -148,14 +171,14 @@ function PersonalSection() {
             </span>
             <span className="min-w-0 flex-1">
               <span className="flex items-center justify-between gap-2">
-                <span className="text-sm font-medium text-slate-800">我的数字分身</span>
+                <span className="text-sm font-medium text-slate-800">语音与数字分身</span>
                 <ArrowUpRight
                   size={13}
                   className="shrink-0 text-slate-300 transition group-hover:text-indigo-600"
                 />
               </span>
               <span className="mt-1 block text-xs leading-5 text-slate-500">
-                本人素材草稿、默认语言与隐私边界
+                语音能力状态、本人素材草稿与隐私边界
               </span>
             </span>
           </Card>

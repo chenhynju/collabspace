@@ -179,7 +179,7 @@ export default function GlobalSearch({ open, onClose }: { open: boolean; onClose
         role="dialog"
         aria-modal="true"
         aria-label="全局搜索"
-        className="relative flex max-h-[78vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-slate-300 bg-[#fffdf7] shadow-2xl shadow-slate-950/25"
+        className="relative flex max-h-[78vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-slate-300 bg-[var(--paper-raised)] shadow-2xl shadow-slate-950/25"
       >
         <div className="flex items-center gap-3 border-b border-slate-300 bg-white px-4 py-4">
           {loading ? (

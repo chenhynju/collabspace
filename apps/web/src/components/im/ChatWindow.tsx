@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, UserRound } from "lucide-react";
+import { ArrowLeft, Settings2 } from "lucide-react";
 import { useImStore } from "@/store/im";
 import { useAuthStore } from "@/store/auth";
 import { api } from "@/lib/api";
@@ -80,7 +80,7 @@ export default function ChatWindow() {
 
   if (!conv) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center bg-[#f4efe5] px-6 text-center">
+      <div className="flex flex-1 flex-col items-center justify-center bg-[var(--paper)] px-6 text-center">
         <span className="mb-4 block h-px w-12 bg-indigo-600" />
         <p className="display-title text-2xl text-slate-700">选择一个会话</p>
         <p className="mt-2 max-w-xs text-sm leading-6 text-slate-500">
@@ -92,7 +92,7 @@ export default function ChatWindow() {
 
   return (
     <>
-      <div className="border-b border-slate-300 bg-[#fffdf7] px-4 py-4 sm:px-6">
+      <div className="border-b border-slate-300 bg-[var(--paper-raised)] px-4 py-4 sm:px-6">
         <button
           type="button"
           onClick={() => {
@@ -114,7 +114,7 @@ export default function ChatWindow() {
             href="/settings/persona"
             className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 px-2.5 py-1.5 text-[11px] text-slate-500 transition hover:border-slate-900 hover:text-slate-900"
           >
-            <UserRound size={12} /> 数字分身设置
+            <Settings2 size={12} /> 语音与数字分身
           </Link>
         </div>
         {conv.type === "GROUP" && (
@@ -130,7 +130,7 @@ export default function ChatWindow() {
             : ""}
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto bg-[#f4efe5] px-4 py-6 sm:px-6">
+      <div className="flex-1 overflow-y-auto bg-[var(--paper)] px-4 py-6 sm:px-6">
         {messages.map((msg) => (
           <MessageBubble key={msg.id} message={msg} />
         ))}

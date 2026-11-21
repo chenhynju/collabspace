@@ -26,7 +26,7 @@ export function Button({ variant = "primary", size = "md", className, ...props }
   return (
     <button
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-lg font-medium tracking-tight transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[#f4efe5] disabled:cursor-not-allowed disabled:opacity-60",
+        "inline-flex items-center justify-center gap-2 rounded-lg font-medium tracking-tight transition duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--paper)] disabled:cursor-not-allowed disabled:opacity-60",
         variants[variant],
         sizes[size],
         className,
@@ -188,11 +188,11 @@ export function Modal({
         aria-labelledby={titleId}
         tabIndex={-1}
         className={cn(
-          "relative max-h-[90vh] w-full overflow-y-auto rounded-xl border border-slate-300 bg-[#fffdf7] shadow-2xl",
+          "relative max-h-[90vh] w-full overflow-y-auto rounded-xl border border-slate-300 bg-[var(--paper-raised)] shadow-2xl",
           wide ? "max-w-2xl" : "max-w-md",
         )}
       >
-        <div className="sticky top-0 flex items-center justify-between border-b border-slate-200 bg-[#fffdf7] px-6 py-4">
+        <div className="sticky top-0 flex items-center justify-between border-b border-slate-200 bg-[var(--paper-raised)] px-6 py-4">
           <div>
             <p className="eyebrow">CollabSpace</p>
             <h3 id={titleId} className="display-title mt-1 text-xl text-slate-900">

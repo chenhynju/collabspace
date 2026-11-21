@@ -383,7 +383,7 @@ function ProjectSpace() {
           {visible.map((project, index) => (
             <article
               key={project.id}
-              className="group relative flex flex-col bg-[#fffdf7] p-5 transition hover:bg-white"
+              className="group relative flex flex-col bg-[var(--paper-raised)] p-5 transition hover:bg-white"
             >
               <span className="absolute left-0 top-0 h-[2px] w-0 bg-indigo-600 transition-all duration-300 group-hover:w-full" />
               <div className="flex items-start justify-between gap-2">

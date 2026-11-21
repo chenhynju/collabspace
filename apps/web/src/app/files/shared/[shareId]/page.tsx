@@ -54,11 +54,11 @@ export default function SharedFilePage({ params }: { params: { shareId: string }
   }, [params.shareId]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f4efe5] p-4">
+    <div className="flex min-h-screen items-center justify-center bg-[var(--paper)] p-4">
       <div className="w-full max-w-md">
         <div className="mb-6 flex items-center gap-2.5">
           <span className="grid h-8 w-8 place-items-center rounded-sm bg-slate-900">
-            <span className="block h-3 w-3 border-2 border-[#f4efe5]" />
+            <span className="block h-3 w-3 border-2 border-[var(--paper)]" />
           </span>
           <span className="display-title text-lg text-slate-900">CollabSpace</span>
           <span className="ml-auto text-[9px] font-semibold uppercase tracking-[0.24em] text-slate-400">

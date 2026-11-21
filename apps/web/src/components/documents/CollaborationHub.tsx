@@ -565,7 +565,7 @@ function HubContent({ projectId = "", initialKind = "ALL", initialView = "files"
                   : undefined
               }
               onClick={() => void quickCreate(t.id)}
-              className="group bg-[#fffdf7] p-4 text-left transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-40"
+              className="group bg-[var(--paper-raised)] p-4 text-left transition hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <span className={"inline-flex rounded-sm p-2 " + t.color}>
                 <t.icon size={20} />
@@ -580,7 +580,7 @@ function HubContent({ projectId = "", initialKind = "ALL", initialView = "files"
           ))}
         </section>
         <section
-          className="bg-[#191914] p-5 text-[#f4efe5] sm:p-6"
+          className="bg-[var(--ink)] p-5 text-[var(--paper)] sm:p-6"
           aria-label="AI快捷工具"
         >
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">

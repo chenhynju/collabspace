@@ -35,7 +35,7 @@ function ImContent() {
   return (
     <div className="page-enter flex h-[calc(100vh-64px)]">
       <div
-        className={`w-full shrink-0 flex-col border-r border-slate-300 bg-[#faf7f0] md:flex md:w-[340px] ${
+        className={`w-full shrink-0 flex-col border-r border-slate-300 bg-[var(--paper-sunk)] md:flex md:w-[340px] ${
           currentConversationId ? "hidden" : "flex"
         }`}
       >
@@ -59,7 +59,7 @@ function ImContent() {
         <ConversationList />
       </div>
       <div
-        className={`min-w-0 flex-1 flex-col bg-[#fffdf7] md:flex ${
+        className={`min-w-0 flex-1 flex-col bg-[var(--paper-raised)] md:flex ${
           currentConversationId ? "flex" : "hidden"
         }`}
       >

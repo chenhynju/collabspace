@@ -550,7 +550,7 @@ function AssistantWorkspace({
             href="/settings/persona"
             className="inline-flex items-center gap-1.5 rounded-sm border border-slate-300 bg-white/60 px-3 py-2 text-xs text-slate-600 transition hover:border-slate-900 hover:text-slate-900"
           >
-            <UserRound size={14} /> 我的数字分身（在设置中管理）
+            <UserRound size={14} /> 语音与数字分身（在设置中管理）
           </Link>
           <AgentPersona
             projectId={project}

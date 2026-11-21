@@ -324,7 +324,7 @@ function PresenceBar({
           <span
             key={u.userId}
             title={u.name}
-            className="flex h-7 w-7 items-center justify-center rounded-sm text-xs text-white ring-2 ring-[#f4efe5]"
+            className="flex h-7 w-7 items-center justify-center rounded-sm text-xs text-white ring-2 ring-[var(--paper)]"
             style={{ background: u.color }}
           >
             {u.name.slice(0, 1)}

@@ -13,6 +13,7 @@ import {
   Settings2,
   Sparkles,
   UserCog,
+  UserRound,
   X,
 } from "lucide-react";
 import { api } from "@/lib/api";
@@ -163,7 +164,7 @@ export default function NavDrawer({
         role="dialog"
         aria-modal="true"
         aria-label="工作台菜单"
-        className="absolute inset-y-0 left-0 flex w-[392px] max-w-[94vw] flex-col border-r border-black/40 bg-[#191914] text-[#f4efe5] shadow-[0_24px_80px_-24px_rgba(15,23,42,0.6)] animate-[nav-drawer-in_180ms_cubic-bezier(.2,.8,.2,1)]"
+        className="absolute inset-y-0 left-0 flex w-[392px] max-w-[94vw] flex-col border-r border-black/40 bg-[var(--ink)] text-[var(--paper)] shadow-[0_24px_80px_-24px_rgba(15,23,42,0.6)] animate-[nav-drawer-in_180ms_cubic-bezier(.2,.8,.2,1)]"
       >
         <div className="flex items-start justify-between gap-3 border-b border-white/10 px-5 pb-5 pt-6">
           <div>
@@ -172,7 +173,7 @@ export default function NavDrawer({
                 <Building2 size={16} />
               </span>
               <div>
-                <p className="display-title text-[19px] leading-none text-[#fffdf7]">CollabSpace</p>
+                <p className="display-title text-[19px] leading-none text-[var(--paper-raised)]">CollabSpace</p>
                 <p className="mt-1 text-[11px] uppercase tracking-[0.16em] text-white/40">
                   {org?.name ?? "尚未选择组织"}
                 </p>
@@ -204,7 +205,7 @@ export default function NavDrawer({
               onChange={(event) => setQuery(event.target.value)}
               aria-label="搜索菜单、工作区和项目"
               placeholder="搜索页面、工作区或项目"
-              className="w-full rounded-md border border-white/15 bg-white/5 py-2.5 pl-9 pr-9 text-sm text-[#fffdf7] placeholder:text-white/30 focus:border-indigo-400 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
+              className="w-full rounded-md border border-white/15 bg-white/5 py-2.5 pl-9 pr-9 text-sm text-[var(--paper-raised)] placeholder:text-white/30 focus:border-indigo-400 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
             />
             {query ? (
               <button
@@ -278,7 +279,7 @@ export default function NavDrawer({
                         aria-current={active ? "page" : undefined}
                         className={`group relative flex items-center gap-3 rounded-md py-2.5 pl-3 pr-3 text-sm transition ${
                           active
-                            ? "bg-[#f4efe5] font-medium text-[#191914]"
+                            ? "bg-[var(--paper)] font-medium text-[var(--ink)]"
                             : "text-white/65 hover:bg-white/5 hover:text-white"
                         }`}
                       >
@@ -435,7 +436,7 @@ export default function NavDrawer({
               {(user?.name ?? "?").slice(0, 1)}
             </span>
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-[#fffdf7]">{user?.name}</p>
+              <p className="truncate text-sm font-medium text-[var(--paper-raised)]">{user?.name}</p>
               <p className="truncate text-xs text-white/35">{user?.email}</p>
             </div>
           </div>
@@ -450,6 +451,14 @@ export default function NavDrawer({
               <span className="text-[10px] uppercase tracking-[0.12em] text-white/25">
                 成员、权限、系统
               </span>
+            </Link>
+            <Link
+              href="/settings/profile"
+              onClick={closeOnNavigate}
+              className="flex items-center gap-3 rounded-md px-3 py-2 text-sm text-white/50 transition hover:bg-white/5 hover:text-white"
+            >
+              <UserRound size={15} className="text-white/35" />
+              个人资料与姓名
             </Link>
             <Link
               href="/account/security"

@@ -268,7 +268,7 @@ export default function DashboardPage() {
                   <Link
                     key={type.label}
                     href="/collaboration"
-                    className="group bg-[#fffdf7] px-4 py-5 transition hover:bg-slate-900"
+                    className="group bg-[var(--paper-raised)] px-4 py-5 transition hover:bg-slate-900"
                   >
                     <span className="flex items-center justify-between">
                       <Icon size={18} className="text-slate-500 transition group-hover:text-white" />
@@ -321,7 +321,7 @@ export default function DashboardPage() {
             </div>
           </section>
 
-          <section className="bg-[#191914] p-6 text-[#f4efe5]">
+          <section className="bg-[var(--ink)] p-6 text-[var(--paper)]">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-white/40">

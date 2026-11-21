@@ -363,8 +363,8 @@ export default function OfficePage({ params }: { params: { id: string } }) {
   );
 
   return (
-    <div className="flex h-[100dvh] flex-col overflow-hidden bg-[#f4efe5] text-slate-900">
-      <header className="flex flex-none items-center gap-2 border-b border-slate-300 bg-[#fffdf7]/95 px-2.5 py-2 backdrop-blur-md lg:gap-3 lg:px-4">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-[var(--paper)] text-slate-900">
+      <header className="flex flex-none items-center gap-2 border-b border-slate-300 bg-[color-mix(in_srgb,var(--paper-raised)_95%,transparent)] px-2.5 py-2 backdrop-blur-md lg:gap-3 lg:px-4">
         <Link
           aria-label="返回协作空间"
           href={state?.projectId ? "/projects/" + state.projectId + "/content" : "/collaboration"}
@@ -407,13 +407,13 @@ export default function OfficePage({ params }: { params: { id: string } }) {
                   <span
                     key={user.id}
                     title={user.name}
-                    className="grid size-5 place-items-center rounded-sm bg-indigo-600 text-[9px] font-semibold text-white ring-2 ring-[#fffdf7]"
+                    className="grid size-5 place-items-center rounded-sm bg-indigo-600 text-[9px] font-semibold text-white ring-2 ring-[var(--paper-raised)]"
                   >
                     {String(user.name || "?").slice(0, 1)}
                   </span>
                 ))}
                 {userCount > users.length && (
-                  <span className="grid size-5 place-items-center rounded-sm bg-slate-300 text-[9px] font-semibold text-slate-700 ring-2 ring-[#fffdf7]">
+                  <span className="grid size-5 place-items-center rounded-sm bg-slate-300 text-[9px] font-semibold text-slate-700 ring-2 ring-[var(--paper-raised)]">
                     +{userCount - users.length}
                   </span>
                 )}
@@ -423,7 +423,7 @@ export default function OfficePage({ params }: { params: { id: string } }) {
         </div>
       </header>
 
-      <div className="flex flex-none items-center gap-1 overflow-x-auto border-b border-slate-300 bg-[#fffdf7]/70 px-2 py-1.5 lg:hidden">
+      <div className="flex flex-none items-center gap-1 overflow-x-auto border-b border-slate-300 bg-[color-mix(in_srgb,var(--paper-raised)_70%,transparent)] px-2 py-1.5 lg:hidden">
         {actions}
       </div>
 
@@ -456,7 +456,7 @@ export default function OfficePage({ params }: { params: { id: string } }) {
       <div className="flex min-h-0 flex-1 gap-2 p-2 lg:gap-3 lg:p-3">
         <nav
           aria-label="文件操作"
-          className="hidden w-14 shrink-0 flex-col items-center gap-1 rounded-sm border border-slate-300 bg-[#fffdf7] p-2 lg:flex"
+          className="hidden w-14 shrink-0 flex-col items-center gap-1 rounded-sm border border-slate-300 bg-[var(--paper-raised)] p-2 lg:flex"
         >
           {actions}
         </nav>
