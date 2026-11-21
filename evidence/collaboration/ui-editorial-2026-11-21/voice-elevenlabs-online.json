@@ -1,0 +1,24 @@
+{
+  "checkedAt": "2026-11-21T10:15:09.447Z",
+  "web": "https://collabspace.purelamp.uk",
+  "api": "https://collabspace-api.purelamp.uk/api/v1",
+  "provider": "elevenlabs",
+  "configured": true,
+  "voicesPresent": {
+    "zh": true,
+    "en": true
+  },
+  "tts": {
+    "jobId": "2c7d9677-d080-4485-948c-0f16ef4156ce",
+    "status": "SUCCEEDED",
+    "bytes": 292802,
+    "inputText": "你好，这是 CollabSpace 生产环境 ElevenLabs 语音验收，用于确认文字转语音与语音转文字都可用。"
+  },
+  "stt": {
+    "jobId": "ee68c4a4-2cbc-4cb3-a371-88dd0cd9ec26",
+    "status": "SUCCEEDED",
+    "text": "你好，这是 CollabSpace 生产环境 ElevenLabs 语音演示，用于确认文字转语音与语音转文字都可用。"
+  },
+  "account": "owner@acme.dev",
+  "projectId": "cmwoq6l600095h4snhwyhh5oq"
+}

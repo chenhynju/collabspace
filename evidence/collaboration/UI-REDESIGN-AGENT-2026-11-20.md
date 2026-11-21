@@ -531,3 +531,31 @@
 - 语音 ASR/TTS 代码已完成，但生产缺服务端密钥；当前仅浏览器系统朗读可用。
 - Whisper 尚未接入；现有 ElevenLabs 路由同时支持 Scribe v2 听写与 multilingual v2 朗读。
 - 个人资料只允许修改显示姓名，邮箱与头像不在本次范围。
+
+## 2026-11-21 补充：ElevenLabs 生产启用
+
+### 密钥来源与验证
+
+- Vercel 项目 `purelampsite` 的生产环境变量包含 `ELEVENLABS_API_KEY`、`ELEVENLABS_VOICE_ID_ZH`、`ELEVENLABS_VOICE_ID_EN`；本地 `D:\appspace\portfolio-site\.env.local` 有同组完整值。Vercel CLI 对敏感值只能拉取占位符，因此使用本地同源值。
+- 直连供应商验证：两个 Voice ID 的 `GET /v1/voices/{id}` 均为 200；中文 TTS `POST /v1/text-to-speech/{zh}?output_format=pcm_16000` 返回 200（111,456 字节 PCM）；Scribe v2 `POST /v1/speech-to-text` 返回 200，识别文本为“你好，这是 CollabSpace 语音合成测试。”。
+- 该 key 为受限权限：`GET /v1/user/subscription` 返回 401，但 TTS 与 STT 端点可用；不据此宣称拥有账户管理权限。
+
+### 生产配置
+
+- 服务器 `/opt/collabspace/shared/api-r20261121-09/env-before`（root 600）新增：`SPEECH_PROVIDER=elevenlabs`、`ELEVENLABS_API_KEY`、`ELEVENLABS_VOICE_ID_ZH`、`ELEVENLABS_VOICE_ID_EN`、`ELEVENLABS_STT_MODEL=scribe_v2`、`ELEVENLABS_TTS_MODEL=eleven_multilingual_v2`；修改前已备份为 `env-before.bak-voice-*`。
+- 服务器 `base-compose.yml` 与仓库 `deploy/collabspace/compose.yml` 同步新增上述变量的 `${...:-}` 透传；后续 overlay 发布复制 `base-compose.yml`/`env-before` 时会保留配置。
+- 密钥未写入仓库、前端或浏览器；API 容器重建后 health `database/redis up`，OOM=false、restarts=0。
+
+### 生产端到端验收
+
+- `GET /voice/status` 返回 `provider=elevenlabs`、`cloud=global`、`configured=true`、中英文 Voice 均存在、`maxSeconds=60`、`maxText=4000`。
+- TTS：任务 `2c7d9677-d080-4485-948c-0f16ef4156ce` 状态 `SUCCEEDED`，`/voice/jobs/{id}/audio` 返回 292,802 字节 RIFF WAV，采样率 16000。
+- STT：把上述 WAV 回传 Scribe v2，任务 `ee68c4a4-2cbc-4cb3-a371-88dd0cd9ec26` 状态 `SUCCEEDED`，文本为“你好，这是 CollabSpace 生产环境 ElevenLabs 语音演示，用于确认文字转语音与语音转文字都可用。”。
+- 线上 UI（真实账号 `/settings/persona`）：显示 ElevenLabs、global、服务端已配置、语音转文字与文字转语音均为可用、60s / 4000 字；无“服务端未配置”提示，无控制台错误。
+
+截图与记录：[语音设置线上状态](ui-editorial-2026-11-21/voice-elevenlabs-online.png)、[端到端 JSON](ui-editorial-2026-11-21/voice-elevenlabs-online.json)。
+
+### 边界
+
+- 仍是录音结束后 REST 识别/合成，不是流式字幕；Scribe 识别可能与原文有少量用词差异。
+- 无自动回退与自动重试；额度、限流和可用性由 ElevenLabs 账户决定。Azure 适配保留，切回需改 `SPEECH_PROVIDER` 并重建 API。

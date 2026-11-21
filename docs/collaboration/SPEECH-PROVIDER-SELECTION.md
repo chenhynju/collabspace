@@ -2,6 +2,10 @@
 
 2026-10-25用户最新决策：**国内外统一Azure STT+TTS；OpenAI作为未来海外版可选适配**。用户确认当前没有语音/真人服务账号配置，不创建付费资源。以下供应商比较保留为调研记录，不覆盖此决策。
 
+## 2026-11-21 生产更新
+
+用户授权复用已配置的 ElevenLabs 账号。生产 API 显式设置 `SPEECH_PROVIDER=elevenlabs`，使用 Scribe v2（STT）与 `eleven_multilingual_v2`（TTS），中英文 Voice ID 分别配置；仍无自动回退，失败不重试。密钥仅写入服务器 root 权限 env 文件，不进入仓库和浏览器。生产验收：`/voice/status` 返回 `configured=true`，中文 TTS 生成 16kHz WAV，回传 Scribe v2 得到原文。Azure 适配保留为可切换选项。
+
 ## 已确定的接入方式
 
 - 当前仅启用Azure适配；AZURE_SPEECH_CLOUD=global或china，资源地区/密钥必须属于对应云。实例配置决定音频处理链路，不按页面语言或IP偷偷切换。中国云和全球云账号/资源/端点分别核对，不把使用同一品牌理解为同一资源可跨云调用。
