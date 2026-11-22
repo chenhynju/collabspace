@@ -182,6 +182,8 @@ export default function DocumentPage({ params }: { params: { id: string; docId: 
   const canComment = ["OWNER", "EDITOR", "COMMENTER"].includes(provider?.role || meta?.role);
   const anchorState = (t: any) => {
     if (!t.anchor) return "文档评论";
+    if (typeof t.anchor.start === "string" && t.anchor.start.startsWith("shape:"))
+      return "图元评论";
     if (!provider) return "选区评论";
     try {
       const a = Y.createAbsolutePositionFromRelativePosition(

@@ -61,6 +61,9 @@ test("Mermaid authority: official graph/source views, two editors, viewer, offli
     );
     const p = await c.newPage();
     await p.goto(`${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${d.id}`);
+    const toggle = p.getByRole("switch", { name: "显示模式：源码或图元" });
+    await expect(toggle).toBeVisible({ timeout: 60000 });
+    if ((await toggle.getAttribute("aria-checked")) === "true") await toggle.click();
     await expect(p.getByLabel("协作 Mermaid 源码")).toBeVisible({ timeout: 60000 });
     return p;
   };
@@ -69,6 +72,14 @@ test("Mermaid authority: official graph/source views, two editors, viewer, offli
       timeout: 60000,
     });
   const source = (p) => p.getByLabel("协作 Mermaid 源码");
+  const showGraph = async (p) => {
+    const toggle = p.getByRole("switch", { name: "显示模式：源码或图元" });
+    if ((await toggle.getAttribute("aria-checked")) !== "true") await toggle.click();
+  };
+  const showSource = async (p) => {
+    const toggle = p.getByRole("switch", { name: "显示模式：源码或图元" });
+    if ((await toggle.getAttribute("aria-checked")) === "true") await toggle.click();
+  };
   try {
     const a = await client(owner),
       b = await client(peer),
@@ -84,13 +95,12 @@ test("Mermaid authority: official graph/source views, two editors, viewer, offli
       timeout: 60000,
     });
     await a.getByLabel("新节点名称").fill("拖拽交付");
-    await a.getByRole("button", { name: "图形视图", exact: true }).click();
+    await showGraph(a);
     await a
       .getByRole("button", { name: "处理图元", exact: true })
       .dragTo(a.getByLabel("Mermaid 图形画布", { exact: true }), {
         targetPosition: { x: 250, y: 200 },
       });
-    await a.getByRole("button", { name: "分屏视图", exact: true }).click();
     await expect(source(b)).toHaveValue(/拖拽交付/);
     const newNode = a.getByRole("button", { name: "流程节点 拖拽交付", exact: true });
     await a.getByRole("button", { name: "依次点选连线", exact: true }).click();
@@ -102,6 +112,7 @@ test("Mermaid authority: official graph/source views, two editors, viewer, offli
     );
     await a.screenshot({ path: "evidence/collaboration/round2-drag-flow.png", fullPage: true });
     await expect(v.getByRole("button", { name: "处理图元", exact: true })).toBeDisabled();
+    await showSource(a);
     await source(a).fill("mindmap\n  root((团队))\n    文档\n      评论\n    成员");
     await a
       .getByRole("button", { name: "思维主题 文档", exact: true })
@@ -165,15 +176,17 @@ test("Mermaid authority: official graph/source views, two editors, viewer, offli
     ]);
     expect(download.suggestedFilename()).toBe("collabspace-diagram.mmd");
     expect(require("node:fs").readFileSync(await download.path(), "utf8")).toBe(current);
-    await a.getByRole("button", { name: "图形视图", exact: true }).click();
+    await showGraph(a);
     await expect(source(a)).toHaveCount(0);
     await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator("svg")).toBeVisible();
-    await a.getByRole("button", { name: "源码视图", exact: true }).click();
+    await showSource(a);
     await expect(source(a)).toHaveValue(current);
-    await a.getByRole("button", { name: "分屏视图", exact: true }).click();
+    await showGraph(a);
     await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator("svg")).toBeVisible();
     await a.screenshot({ path: "evidence/collaboration/mermaid-workspace.png", fullPage: true });
     await a.reload();
+    await showSource(a);
+    await showSource(v);
     await expect(source(a)).toHaveValue(current);
     await expect(source(v)).toHaveValue(current);
     await source(a).evaluate((el) => {

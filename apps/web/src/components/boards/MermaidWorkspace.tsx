@@ -37,7 +37,7 @@ export default function MermaidWorkspace({
   const text = provider.doc.getText(format);
   const [canvasSelection, setCanvasSelection] = useState<string[]>([]);
   const [source, setSource] = useState(text.toString());
-  const [view, setView] = useState<"split" | "source" | "graph">("split");
+  const [view, setView] = useState<"source" | "graph">("graph");
   const [imeDraft, setImeDraft] = useState("");
   const [, render] = useState(0);
   const undo = useRef<Y.UndoManager>();
@@ -134,26 +134,30 @@ export default function MermaidWorkspace({
       }
     >
       <div className="flex flex-wrap items-center gap-1.5 border-b border-slate-200 bg-white px-2 py-1.5">
-        <div className="flex rounded-xl bg-slate-100 p-1">
-          {(
-            [
-              ["graph", "图形视图"],
-              ["source", "源码视图"],
-              ["split", "分屏视图"],
-            ] as const
-          ).map(([key, label]) => (
-            <button
-              key={key}
-              aria-pressed={view === key}
-              onClick={() => setView(key)}
-              className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
-                view === key ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+        {!markdown && (
+          <button
+            type="button"
+            role="switch"
+            aria-checked={view === "graph"}
+            aria-label="显示模式：源码或图元"
+            onClick={() => setView((current) => (current === "graph" ? "source" : "graph"))}
+            className="flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs font-medium transition hover:border-indigo-200"
+          >
+            <span className={view === "source" ? "text-slate-900" : "text-slate-400"}>源码</span>
+            <span
+              className={`relative h-5 w-9 rounded-full transition ${
+                view === "graph" ? "bg-indigo-600" : "bg-slate-300"
               }`}
             >
-              {label}
-            </button>
-          ))}
-        </div>
+              <span
+                className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all ${
+                  view === "graph" ? "left-[18px]" : "left-0.5"
+                }`}
+              />
+            </span>
+            <span className={view === "graph" ? "text-slate-900" : "text-slate-400"}>图元</span>
+          </button>
+        )}
         <button
           disabled={!provider.writable || !undo.current?.canUndo()}
           onClick={() => undo.current?.undo()}
@@ -331,9 +335,15 @@ export default function MermaidWorkspace({
         </p>
       ) : null}
       <div
-        className={markdown ? "" : "grid min-w-0 items-start lg:grid-cols-[300px_minmax(0,1fr)]"}
+        className={
+          markdown
+            ? ""
+            : view === "graph"
+              ? "grid min-w-0 items-start lg:grid-cols-[300px_minmax(0,1fr)]"
+              : ""
+        }
       >
-        {!markdown && (
+        {!markdown && view === "graph" && (
           <MermaidComposer
             selectedId={canvasSelection[0] || ""}
             onSelect={(id) => setCanvasSelection([id])}
@@ -346,8 +356,12 @@ export default function MermaidWorkspace({
             }}
           />
         )}
-        <div className="flex min-w-0 flex-col gap-3 bg-[#f5f6fa] p-3 xl:flex-row">
-          {view !== "graph" && (
+        <div
+          className={`flex min-w-0 flex-col gap-3 bg-[#f5f6fa] p-3 ${
+            markdown ? "xl:flex-row" : ""
+          }`}
+        >
+          {(markdown || view === "source") && (
             <textarea
               ref={editor}
               aria-label={markdown ? "协作 Markdown 源码" : "协作 Mermaid 源码"}
@@ -411,7 +425,7 @@ export default function MermaidWorkspace({
               className="min-h-[640px] w-full min-w-0 flex-1 rounded-xl border border-slate-200 bg-white p-4 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-indigo-300"
             />
           )}
-          {view !== "source" &&
+          {(markdown || view === "graph") &&
             (markdown ? (
               <MarkdownPreview source={source} />
             ) : (

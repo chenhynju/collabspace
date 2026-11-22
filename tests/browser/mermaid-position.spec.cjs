@@ -1,49 +1,339 @@
-const {test,expect}=require('@playwright/test'),{randomUUID}=require('node:crypto'),config=require('./config.cjs');
-const local=[config.WEB_URL,config.NEXT_PUBLIC_API_URL].every(v=>['localhost','127.0.0.1'].includes(new URL(v).hostname));
-const online=process.env.MERMAID_POSITION_ONLINE==='1'&&new URL(config.WEB_URL).hostname==='collabspace.purelamp.uk'&&!config.DATABASE_ADMIN_URL;
-test.skip(!local&&!online,'Explicit synthetic acceptance only');
-test.use(process.env.COLLAB_ACCEPTANCE_PROXY?{proxy:{server:process.env.COLLAB_ACCEPTANCE_PROXY}}:{});
-test('actual canvas: drop at coordinates, move, share/reload, partial deletion and viewer refusal',async({browser,request})=>{
- test.setTimeout(420000);const contexts=[],api=config.NEXT_PUBLIC_API_URL;
- const login=async email=>{const r=await request.post(api+'/auth/login',{data:{email,password:config.TEST_PASSWORD}});expect(r.ok()).toBeTruthy();return(await r.json()).accessToken;};
- const owner=await login(config.TEST_OWNER_EMAIL),peer=await login(config.TEST_MEMBER_EMAIL),viewer=await login(config.TEST_ADMIN_EMAIL),headers={Authorization:'Bearer '+owner,'x-organization-id':config.TEST_ORG};
- const r=await request.post(api+'/documents',{headers,data:{projectId:config.TEST_PROJECT,title:'Canvas placement '+randomUUID().slice(0,8),kind:'BOARD'}});expect(r.ok()).toBeTruthy();const doc=await r.json();
- for(const[userId,role]of[[config.TEST_MEMBER,'EDITOR'],[config.TEST_ADMIN,'VIEWER']])expect((await request.put(api+'/documents/'+doc.id+'/grants',{headers,data:{userId,role}})).ok()).toBeTruthy();
- const client=async token=>{const c=await browser.newContext({viewport:{width:1800,height:1100},...(process.env.COLLAB_ACCEPTANCE_PROXY?{proxy:{server:process.env.COLLAB_ACCEPTANCE_PROXY}}:{})});contexts.push(c);await c.addInitScript(({token,org})=>{localStorage.setItem('access_token',token);localStorage.setItem('current_org_id',org);},{token,org:config.TEST_ORG});const p=await c.newPage();await p.goto(`${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${doc.id}`);await expect(p.getByLabel('协作 Mermaid 源码')).toBeVisible({timeout:90000});return p;};
- const source=p=>p.getByLabel('协作 Mermaid 源码'),saved=p=>expect(p.getByRole('status').filter({hasText:'已保存到服务器'})).toBeVisible({timeout:60000});
- try{
-  const a=await client(owner),b=await client(peer),v=await client(viewer);await source(a).fill('flowchart LR\n A[Keep] --> B{Remove} --> C[Retain] --> D[End]');await expect(source(b)).toHaveValue(/B\{Remove\}/);await a.getByRole('button',{name:'图形视图',exact:true}).click();
-  const canvas=a.getByLabel('Mermaid 图形画布',{exact:true});await expect(a.getByRole('button',{name:'画布图元 Keep',exact:true})).toBeVisible({timeout:60000});await a.getByLabel('新节点名称').fill('Placed');await a.getByRole('button',{name:'处理图元',exact:true}).dragTo(canvas,{targetPosition:{x:450,y:350}});await expect(source(b)).toHaveValue(/%% collab-position N\w+ 450 350/);
-  const placed=a.getByRole('button',{name:'画布图元 Placed',exact:true});await expect(placed).toBeVisible();await placed.scrollIntoViewIfNeeded();let box=await placed.boundingBox();await a.mouse.move(box.x+box.width/2,box.y+box.height/2);await a.mouse.down();await a.mouse.move(box.x+box.width/2+65,box.y+box.height/2+55,{steps:8});await a.mouse.up();await expect(source(b)).toHaveValue(/%% collab-position N\w+ 515 405/);await saved(a);await saved(b);
-  await a.reload();await a.getByRole('button',{name:'图形视图',exact:true}).click();await expect(a.getByRole('button',{name:'画布图元 Placed',exact:true})).toBeVisible({timeout:60000});expect(await a.getByRole('button',{name:'画布图元 Placed',exact:true}).evaluate(e=>({left:e.style.left,top:e.style.top}))).toEqual({left:'515px',top:'405px'});
-  // Native pointer capture: drag a visible port onto the actual target, not sidebar commands.
-  const port=a.getByRole('button',{name:'从 Placed 拖动连线',exact:true}),target=a.getByRole('button',{name:'画布图元 Keep',exact:true});
-  const wire=async(destination,escape=false)=>{await port.scrollIntoViewIfNeeded();const pbox=await port.boundingBox(),tbox=await destination.boundingBox();await a.mouse.move(pbox.x+pbox.width/2,pbox.y+pbox.height/2);await a.mouse.down();await a.mouse.move(tbox.x+tbox.width/2,tbox.y+tbox.height/2,{steps:10});if(escape)await a.keyboard.press('Escape');await a.mouse.up();};
-  const beforeWire=await source(b).inputValue();await wire(target,true);await expect(source(b)).toHaveValue(beforeWire);
-  const blank=await canvas.boundingBox(),pb=await port.boundingBox();await a.mouse.move(pb.x+pb.width/2,pb.y+pb.height/2);await a.mouse.down();await a.mouse.move(blank.x+800,blank.y+550,{steps:5});await a.mouse.up();await expect(source(b)).toHaveValue(beforeWire);
-  await wire(placed);await expect(a.getByRole('alert').filter({hasText:'不同的已定义节点'})).toBeVisible();await expect(source(b)).toHaveValue(beforeWire);
-  await a.getByRole('button',{name:'缩小',exact:true}).click();await a.getByRole('button',{name:'缩小',exact:true}).click();
-  await a.getByLabel('画布连线样式',{exact:true}).selectOption('dashed');await a.getByLabel('画布连线文字',{exact:true}).fill('直接拖线');await wire(target);
-  await expect(source(b)).toHaveValue(/N\w+ -\.->\|直接拖线\| A/);const afterWire=await source(b).inputValue();expect(await placed.evaluate(e=>({left:e.style.left,top:e.style.top}))).toEqual({left:'257.5px',top:'202.5px'});await saved(a);await saved(b);
-  await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator('svg')).toContainText('直接拖线');
-  await a.getByRole('button',{name:'撤销源码',exact:true}).click();await expect(source(b)).toHaveValue(beforeWire);await a.getByRole('button',{name:'重做源码',exact:true}).click();await expect(source(b)).toHaveValue(afterWire);
-  await a.getByLabel('画布连线文字',{exact:true}).fill('重复方向');await wire(target);await expect(a.getByRole('alert').filter({hasText:'平行连线'})).toBeVisible();await expect(source(b)).toHaveValue(afterWire);
-  await a.reload();await a.getByRole('button',{name:'图形视图',exact:true}).click();await expect(source(b)).toHaveValue(afterWire);await expect(a.getByRole('button',{name:'从 Placed 拖动连线',exact:true})).toBeVisible({timeout:60000});
-  const connected=a.getByRole('button',{name:'画布图元 Keep',exact:true});await connected.scrollIntoViewIfNeeded();const cb=await connected.boundingBox();await a.mouse.move(cb.x+cb.width/2,cb.y+cb.height/2);await a.mouse.down();await a.mouse.move(cb.x+cb.width/2+50,cb.y+cb.height/2+160,{steps:8});await a.mouse.up();await expect(source(b)).toHaveValue(/%% collab-position A /);await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator('.edgePaths path').first()).toHaveAttribute('d',/^M[\d.,-]+ L[\d.,-]+$/);
-  await a.getByRole('button',{name:'画布图元 Remove',exact:true}).click();await a.getByRole('button',{name:'删除选中图元',exact:true}).click();await expect(source(b)).not.toHaveValue(/B\{Remove\}/);await expect(source(b)).toHaveValue(/C\[Retain\] --> D\[End\]/);await expect(source(b)).toHaveValue(/A\[Keep\]/);
-  await a.getByRole('button',{name:'画布图元 Placed',exact:true}).click();await a.getByRole('button',{name:'画布图元 End',exact:true}).click({modifiers:['Shift']});await a.getByRole('button',{name:'删除选中图元',exact:true}).click();await expect(source(b)).not.toHaveValue(/Placed|D\[End\]|collab-position N/);await expect(source(b)).toHaveValue(/C\[Retain\]/);await saved(a);await saved(b);
-  await expect(v.getByRole('button',{name:'画布图元 Keep',exact:true})).toBeDisabled();await expect(v.getByRole('button',{name:/^从 .* 拖动连线$/})).toHaveCount(0);await expect(source(v)).toHaveAttribute('readonly','');await expect(a.getByLabel('Mermaid 图形预览').getByRole('alert')).toHaveCount(0);await a.screenshot({path:`evidence/collaboration/mermaid-position-${online?'online':'local'}.png`,fullPage:true});
-  const download=a.waitForEvent('download');await a.getByRole('button',{name:'导出 SVG',exact:true}).click();expect((await download).suggestedFilename()).toMatch(/\.svg$/);console.log(JSON.stringify({document:doc.id,status:'PASSED',source:await source(b).inputValue()}));
- }finally{for(const c of contexts)await c.close();}
+const { test, expect } = require("@playwright/test"),
+  { randomUUID } = require("node:crypto"),
+  config = require("./config.cjs");
+const local = [config.WEB_URL, config.NEXT_PUBLIC_API_URL].every((v) =>
+  ["localhost", "127.0.0.1"].includes(new URL(v).hostname),
+);
+const online =
+  process.env.MERMAID_POSITION_ONLINE === "1" &&
+  new URL(config.WEB_URL).hostname === "collabspace.purelamp.uk" &&
+  !config.DATABASE_ADMIN_URL;
+test.skip(!local && !online, "Explicit synthetic acceptance only");
+test.use(
+  process.env.COLLAB_ACCEPTANCE_PROXY
+    ? { proxy: { server: process.env.COLLAB_ACCEPTANCE_PROXY } }
+    : {},
+);
+test("actual canvas: drop at coordinates, move, share/reload, partial deletion and viewer refusal", async ({
+  browser,
+  request,
+}) => {
+  test.setTimeout(420000);
+  const contexts = [],
+    api = config.NEXT_PUBLIC_API_URL;
+  const login = async (email) => {
+    const r = await request.post(api + "/auth/login", {
+      data: { email, password: config.TEST_PASSWORD },
+    });
+    expect(r.ok()).toBeTruthy();
+    return (await r.json()).accessToken;
+  };
+  const owner = await login(config.TEST_OWNER_EMAIL),
+    peer = await login(config.TEST_MEMBER_EMAIL),
+    viewer = await login(config.TEST_ADMIN_EMAIL),
+    headers = { Authorization: "Bearer " + owner, "x-organization-id": config.TEST_ORG };
+  const r = await request.post(api + "/documents", {
+    headers,
+    data: {
+      projectId: config.TEST_PROJECT,
+      title: "Canvas placement " + randomUUID().slice(0, 8),
+      kind: "BOARD",
+    },
+  });
+  expect(r.ok()).toBeTruthy();
+  const doc = await r.json();
+  for (const [userId, role] of [
+    [config.TEST_MEMBER, "EDITOR"],
+    [config.TEST_ADMIN, "VIEWER"],
+  ])
+    expect(
+      (
+        await request.put(api + "/documents/" + doc.id + "/grants", {
+          headers,
+          data: { userId, role },
+        })
+      ).ok(),
+    ).toBeTruthy();
+  const client = async (token) => {
+    const c = await browser.newContext({
+      viewport: { width: 1800, height: 1100 },
+      ...(process.env.COLLAB_ACCEPTANCE_PROXY
+        ? { proxy: { server: process.env.COLLAB_ACCEPTANCE_PROXY } }
+        : {}),
+    });
+    contexts.push(c);
+    await c.addInitScript(
+      ({ token, org }) => {
+        localStorage.setItem("access_token", token);
+        localStorage.setItem("current_org_id", org);
+      },
+      { token, org: config.TEST_ORG },
+    );
+    const p = await c.newPage();
+    await p.goto(`${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${doc.id}`);
+    const toggle = p.getByRole("switch", { name: "显示模式：源码或图元" });
+    await expect(toggle).toBeVisible({ timeout: 90000 });
+    if ((await toggle.getAttribute("aria-checked")) === "true") await toggle.click();
+    await expect(p.getByLabel("协作 Mermaid 源码")).toBeVisible({ timeout: 90000 });
+    return p;
+  };
+  const showGraph = async (p) => {
+    const toggle = p.getByRole("switch", { name: "显示模式：源码或图元" });
+    if ((await toggle.getAttribute("aria-checked")) !== "true") await toggle.click();
+  };
+  const showSource = async (p) => {
+    const toggle = p.getByRole("switch", { name: "显示模式：源码或图元" });
+    if ((await toggle.getAttribute("aria-checked")) === "true") await toggle.click();
+  };
+  const source = (p) => p.getByLabel("协作 Mermaid 源码"),
+    saved = (p) =>
+      expect(p.getByRole("status").filter({ hasText: "已保存到服务器" })).toBeVisible({
+        timeout: 60000,
+      });
+  try {
+    const a = await client(owner),
+      b = await client(peer),
+      v = await client(viewer);
+    await source(a).fill("flowchart LR\n A[Keep] --> B{Remove} --> C[Retain] --> D[End]");
+    await expect(source(b)).toHaveValue(/B\{Remove\}/);
+    await showGraph(a);
+    const canvas = a.getByLabel("Mermaid 图形画布", { exact: true });
+    await expect(a.getByRole("button", { name: "画布图元 Keep", exact: true })).toBeVisible({
+      timeout: 60000,
+    });
+    await a.getByLabel("新节点名称").fill("Placed");
+    await a
+      .getByRole("button", { name: "处理图元", exact: true })
+      .dragTo(canvas, { targetPosition: { x: 450, y: 350 } });
+    await expect(source(b)).toHaveValue(/%% collab-position N\w+ 450 350/);
+    const placed = a.getByRole("button", { name: "画布图元 Placed", exact: true });
+    await expect(placed).toBeVisible();
+    await placed.scrollIntoViewIfNeeded();
+    let box = await placed.boundingBox();
+    await a.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await a.mouse.down();
+    await a.mouse.move(box.x + box.width / 2 + 65, box.y + box.height / 2 + 55, { steps: 8 });
+    await a.mouse.up();
+    await expect(source(b)).toHaveValue(/%% collab-position N\w+ 515 405/);
+    await saved(a);
+    await saved(b);
+    await a.reload();
+    await showGraph(a);
+    await expect(a.getByRole("button", { name: "画布图元 Placed", exact: true })).toBeVisible({
+      timeout: 60000,
+    });
+    expect(
+      await a
+        .getByRole("button", { name: "画布图元 Placed", exact: true })
+        .evaluate((e) => ({ left: e.style.left, top: e.style.top })),
+    ).toEqual({ left: "515px", top: "405px" });
+    // Native pointer capture: drag a visible port onto the actual target, not sidebar commands.
+    const port = a.getByRole("button", { name: "从 Placed 拖动连线", exact: true }),
+      target = a.getByRole("button", { name: "画布图元 Keep", exact: true });
+    const wire = async (destination, escape = false) => {
+      await port.scrollIntoViewIfNeeded();
+      const pbox = await port.boundingBox(),
+        tbox = await destination.boundingBox();
+      await a.mouse.move(pbox.x + pbox.width / 2, pbox.y + pbox.height / 2);
+      await a.mouse.down();
+      await a.mouse.move(tbox.x + tbox.width / 2, tbox.y + tbox.height / 2, { steps: 10 });
+      if (escape) await a.keyboard.press("Escape");
+      await a.mouse.up();
+    };
+    const beforeWire = await source(b).inputValue();
+    await wire(target, true);
+    await expect(source(b)).toHaveValue(beforeWire);
+    const blank = await canvas.boundingBox(),
+      pb = await port.boundingBox();
+    await a.mouse.move(pb.x + pb.width / 2, pb.y + pb.height / 2);
+    await a.mouse.down();
+    await a.mouse.move(blank.x + 800, blank.y + 550, { steps: 5 });
+    await a.mouse.up();
+    await expect(source(b)).toHaveValue(beforeWire);
+    await wire(placed);
+    await expect(a.getByRole("alert").filter({ hasText: "不同的已定义节点" })).toBeVisible();
+    await expect(source(b)).toHaveValue(beforeWire);
+    await a.getByRole("button", { name: "缩小", exact: true }).click();
+    await a.getByRole("button", { name: "缩小", exact: true }).click();
+    await a.getByLabel("画布连线样式", { exact: true }).selectOption("dashed");
+    await a.getByLabel("画布连线文字", { exact: true }).fill("直接拖线");
+    await wire(target);
+    await expect(source(b)).toHaveValue(/N\w+ -\.->\|直接拖线\| A/);
+    const afterWire = await source(b).inputValue();
+    expect(await placed.evaluate((e) => ({ left: e.style.left, top: e.style.top }))).toEqual({
+      left: "257.5px",
+      top: "202.5px",
+    });
+    await saved(a);
+    await saved(b);
+    await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator("svg")).toContainText(
+      "直接拖线",
+    );
+    await a.getByRole("button", { name: "撤销源码", exact: true }).click();
+    await expect(source(b)).toHaveValue(beforeWire);
+    await a.getByRole("button", { name: "重做源码", exact: true }).click();
+    await expect(source(b)).toHaveValue(afterWire);
+    await a.getByLabel("画布连线文字", { exact: true }).fill("重复方向");
+    await wire(target);
+    await expect(a.getByRole("alert").filter({ hasText: "平行连线" })).toBeVisible();
+    await expect(source(b)).toHaveValue(afterWire);
+    await a.reload();
+    await showGraph(a);
+    await expect(source(b)).toHaveValue(afterWire);
+    await expect(a.getByRole("button", { name: "从 Placed 拖动连线", exact: true })).toBeVisible({
+      timeout: 60000,
+    });
+    const connected = a.getByRole("button", { name: "画布图元 Keep", exact: true });
+    await connected.scrollIntoViewIfNeeded();
+    const cb = await connected.boundingBox();
+    await a.mouse.move(cb.x + cb.width / 2, cb.y + cb.height / 2);
+    await a.mouse.down();
+    await a.mouse.move(cb.x + cb.width / 2 + 50, cb.y + cb.height / 2 + 160, { steps: 8 });
+    await a.mouse.up();
+    await expect(source(b)).toHaveValue(/%% collab-position A /);
+    await expect(
+      a.frameLocator('iframe[title="Mermaid 图表"]').locator(".edgePaths path").first(),
+    ).toHaveAttribute("d", /^M[\d.,-]+ L[\d.,-]+$/);
+    await a.getByRole("button", { name: "画布图元 Remove", exact: true }).click();
+    await a.getByRole("button", { name: "删除选中图元", exact: true }).click();
+    await expect(source(b)).not.toHaveValue(/B\{Remove\}/);
+    await expect(source(b)).toHaveValue(/C\[Retain\] --> D\[End\]/);
+    await expect(source(b)).toHaveValue(/A\[Keep\]/);
+    await a.getByRole("button", { name: "画布图元 Placed", exact: true }).click();
+    await a
+      .getByRole("button", { name: "画布图元 End", exact: true })
+      .click({ modifiers: ["Shift"] });
+    await a.getByRole("button", { name: "删除选中图元", exact: true }).click();
+    await expect(source(b)).not.toHaveValue(/Placed|D\[End\]|collab-position N/);
+    await expect(source(b)).toHaveValue(/C\[Retain\]/);
+    await saved(a);
+    await saved(b);
+    await expect(v.getByRole("button", { name: "画布图元 Keep", exact: true })).toBeDisabled();
+    await expect(v.getByRole("button", { name: /^从 .* 拖动连线$/ })).toHaveCount(0);
+    await expect(source(v)).toHaveAttribute("readonly", "");
+    await expect(a.getByLabel("Mermaid 图形预览").getByRole("alert")).toHaveCount(0);
+    await a.screenshot({
+      path: `evidence/collaboration/mermaid-position-${online ? "online" : "local"}.png`,
+      fullPage: true,
+    });
+    const download = a.waitForEvent("download");
+    await a.getByRole("button", { name: "导出 SVG", exact: true }).click();
+    expect((await download).suggestedFilename()).toMatch(/\.svg$/);
+    console.log(
+      JSON.stringify({ document: doc.id, status: "PASSED", source: await source(b).inputValue() }),
+    );
+  } finally {
+    for (const c of contexts) await c.close();
+  }
 });
 
-test('blank canvas at 50 percent: drop, undo/redo, reset layout and guarded complex movement',async({browser,request})=>{
- test.setTimeout(300000);const api=config.NEXT_PUBLIC_API_URL,login=await request.post(api+'/auth/login',{data:{email:config.TEST_OWNER_EMAIL,password:config.TEST_PASSWORD}});expect(login.ok()).toBeTruthy();const token=(await login.json()).accessToken,headers={Authorization:'Bearer '+token,'x-organization-id':config.TEST_ORG};
- const created=await request.post(api+'/documents',{headers,data:{projectId:config.TEST_PROJECT,title:'Zoom and undo '+randomUUID().slice(0,8),kind:'BOARD'}});expect(created.ok()).toBeTruthy();const doc=await created.json(),c=await browser.newContext({viewport:{width:2200,height:1200},...(process.env.COLLAB_ACCEPTANCE_PROXY?{proxy:{server:process.env.COLLAB_ACCEPTANCE_PROXY}}:{})});
- try{await c.addInitScript(({token,org})=>{localStorage.setItem('access_token',token);localStorage.setItem('current_org_id',org);},{token,org:config.TEST_ORG});const p=await c.newPage();await p.goto(`${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${doc.id}`);const source=p.getByLabel('协作 Mermaid 源码');await expect(source).toBeVisible({timeout:90000});const canvas=p.getByLabel('Mermaid 图形画布',{exact:true});await p.getByRole('button',{name:'缩小',exact:true}).click();await p.getByRole('button',{name:'缩小',exact:true}).click();await p.getByLabel('新节点名称').fill('Zoomed');await p.getByRole('button',{name:'处理图元',exact:true}).dragTo(canvas,{targetPosition:{x:200,y:150}});await expect(source).toHaveValue(/collab-position N\w+ 400 300/);const before=await source.inputValue();await p.getByRole('button',{name:'撤销源码',exact:true}).click();await expect(source).toHaveValue('');await p.getByRole('button',{name:'重做源码',exact:true}).click();await expect(source).toHaveValue(before);
-  await p.getByRole('button',{name:'恢复自动布局',exact:true}).click();await expect(source).not.toHaveValue(/collab-position/);await expect(source).toHaveValue(/Zoomed/);
-  const complex='flowchart LR\n A[Loop] --> A';await source.fill(complex);const node=p.getByRole('button',{name:'画布图元 Loop',exact:true});await expect(node).toBeVisible({timeout:60000});await node.scrollIntoViewIfNeeded();const box=await node.boundingBox();await p.mouse.move(box.x+box.width/2,box.y+box.height/2);await p.mouse.down();await p.mouse.move(box.x+box.width/2+40,box.y+box.height/2+40,{steps:5});await p.mouse.up();await expect(p.getByRole('alert').filter({hasText:'自环或平行'})).toBeVisible();await expect(source).toHaveValue(complex);await expect(p.locator('iframe[title="Mermaid 图表"]')).toHaveAttribute('sandbox','');
-  await source.fill('flowchart LR\n A[Start] -->|Forward| B[Finish]\n B -->|Return| A');const start=p.getByRole('button',{name:'画布图元 Start',exact:true});await expect(start).toBeVisible({timeout:60000});await start.scrollIntoViewIfNeeded();const sb=await start.boundingBox();await p.mouse.move(sb.x+sb.width/2,sb.y+sb.height/2);await p.mouse.down();await p.mouse.move(sb.x+sb.width/2+30,sb.y+sb.height/2+70,{steps:5});await p.mouse.up();await expect(source).toHaveValue(/collab-position A /);const svg=p.frameLocator('iframe[title="Mermaid 图表"]').locator('svg');await expect(svg.locator('.edgePaths path').first()).toHaveAttribute('d',/ Q/);await expect(svg.locator('.edgePaths path').last()).toHaveAttribute('d',/ Q/);const labels=await svg.locator('.edgeLabels > .edgeLabel').evaluateAll(es=>es.map(e=>e.getAttribute('transform')));expect(labels.length).toBe(2);expect(labels[0]).not.toBe(labels[1]);await expect(svg).toContainText('Forward');await expect(svg).toContainText('Return');
-  const prefix='flowchart LR\n A[Limit]\n%% ',padded=prefix+'x'.repeat(32000-prefix.length);await source.fill(padded);await expect(p.getByRole('button',{name:'画布图元 Limit',exact:true})).toBeVisible({timeout:60000});await p.getByRole('button',{name:'处理图元',exact:true}).dragTo(canvas,{targetPosition:{x:200,y:200}});await expect(p.getByRole('alert').filter({hasText:'超过32000'})).toBeVisible();expect((await source.inputValue()).length).toBe(32000);expect(require('node:crypto').createHash('sha256').update(await source.inputValue()).digest('hex')).toBe(require('node:crypto').createHash('sha256').update(padded).digest('hex'));
- }finally{await c.close();}
+test("blank canvas at 50 percent: drop, undo/redo, reset layout and guarded complex movement", async ({
+  browser,
+  request,
+}) => {
+  test.setTimeout(300000);
+  const api = config.NEXT_PUBLIC_API_URL,
+    login = await request.post(api + "/auth/login", {
+      data: { email: config.TEST_OWNER_EMAIL, password: config.TEST_PASSWORD },
+    });
+  expect(login.ok()).toBeTruthy();
+  const token = (await login.json()).accessToken,
+    headers = { Authorization: "Bearer " + token, "x-organization-id": config.TEST_ORG };
+  const created = await request.post(api + "/documents", {
+    headers,
+    data: {
+      projectId: config.TEST_PROJECT,
+      title: "Zoom and undo " + randomUUID().slice(0, 8),
+      kind: "BOARD",
+    },
+  });
+  expect(created.ok()).toBeTruthy();
+  const doc = await created.json(),
+    c = await browser.newContext({
+      viewport: { width: 2200, height: 1200 },
+      ...(process.env.COLLAB_ACCEPTANCE_PROXY
+        ? { proxy: { server: process.env.COLLAB_ACCEPTANCE_PROXY } }
+        : {}),
+    });
+  try {
+    await c.addInitScript(
+      ({ token, org }) => {
+        localStorage.setItem("access_token", token);
+        localStorage.setItem("current_org_id", org);
+      },
+      { token, org: config.TEST_ORG },
+    );
+    const p = await c.newPage();
+    await p.goto(`${config.WEB_URL}/projects/${config.TEST_PROJECT}/documents/${doc.id}`);
+    const source = p.getByLabel("协作 Mermaid 源码");
+    await expect(source).toBeVisible({ timeout: 90000 });
+    const canvas = p.getByLabel("Mermaid 图形画布", { exact: true });
+    await p.getByRole("button", { name: "缩小", exact: true }).click();
+    await p.getByRole("button", { name: "缩小", exact: true }).click();
+    await p.getByLabel("新节点名称").fill("Zoomed");
+    await p
+      .getByRole("button", { name: "处理图元", exact: true })
+      .dragTo(canvas, { targetPosition: { x: 200, y: 150 } });
+    await expect(source).toHaveValue(/collab-position N\w+ 400 300/);
+    const before = await source.inputValue();
+    await p.getByRole("button", { name: "撤销源码", exact: true }).click();
+    await expect(source).toHaveValue("");
+    await p.getByRole("button", { name: "重做源码", exact: true }).click();
+    await expect(source).toHaveValue(before);
+    await p.getByRole("button", { name: "恢复自动布局", exact: true }).click();
+    await expect(source).not.toHaveValue(/collab-position/);
+    await expect(source).toHaveValue(/Zoomed/);
+    const complex = "flowchart LR\n A[Loop] --> A";
+    await source.fill(complex);
+    const node = p.getByRole("button", { name: "画布图元 Loop", exact: true });
+    await expect(node).toBeVisible({ timeout: 60000 });
+    await node.scrollIntoViewIfNeeded();
+    const box = await node.boundingBox();
+    await p.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await p.mouse.down();
+    await p.mouse.move(box.x + box.width / 2 + 40, box.y + box.height / 2 + 40, { steps: 5 });
+    await p.mouse.up();
+    await expect(p.getByRole("alert").filter({ hasText: "自环或平行" })).toBeVisible();
+    await expect(source).toHaveValue(complex);
+    await expect(p.locator('iframe[title="Mermaid 图表"]')).toHaveAttribute("sandbox", "");
+    await source.fill("flowchart LR\n A[Start] -->|Forward| B[Finish]\n B -->|Return| A");
+    const start = p.getByRole("button", { name: "画布图元 Start", exact: true });
+    await expect(start).toBeVisible({ timeout: 60000 });
+    await start.scrollIntoViewIfNeeded();
+    const sb = await start.boundingBox();
+    await p.mouse.move(sb.x + sb.width / 2, sb.y + sb.height / 2);
+    await p.mouse.down();
+    await p.mouse.move(sb.x + sb.width / 2 + 30, sb.y + sb.height / 2 + 70, { steps: 5 });
+    await p.mouse.up();
+    await expect(source).toHaveValue(/collab-position A /);
+    const svg = p.frameLocator('iframe[title="Mermaid 图表"]').locator("svg");
+    await expect(svg.locator(".edgePaths path").first()).toHaveAttribute("d", / Q/);
+    await expect(svg.locator(".edgePaths path").last()).toHaveAttribute("d", / Q/);
+    const labels = await svg
+      .locator(".edgeLabels > .edgeLabel")
+      .evaluateAll((es) => es.map((e) => e.getAttribute("transform")));
+    expect(labels.length).toBe(2);
+    expect(labels[0]).not.toBe(labels[1]);
+    await expect(svg).toContainText("Forward");
+    await expect(svg).toContainText("Return");
+    const prefix = "flowchart LR\n A[Limit]\n%% ",
+      padded = prefix + "x".repeat(32000 - prefix.length);
+    await source.fill(padded);
+    await expect(p.getByRole("button", { name: "画布图元 Limit", exact: true })).toBeVisible({
+      timeout: 60000,
+    });
+    await p
+      .getByRole("button", { name: "处理图元", exact: true })
+      .dragTo(canvas, { targetPosition: { x: 200, y: 200 } });
+    await expect(p.getByRole("alert").filter({ hasText: "超过32000" })).toBeVisible();
+    expect((await source.inputValue()).length).toBe(32000);
+    expect(
+      require("node:crypto")
+        .createHash("sha256")
+        .update(await source.inputValue())
+        .digest("hex"),
+    ).toBe(require("node:crypto").createHash("sha256").update(padded).digest("hex"));
+  } finally {
+    await c.close();
+  }
 });

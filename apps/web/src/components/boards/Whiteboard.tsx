@@ -4,6 +4,7 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpRight,
+  CheckCircle2,
   ChevronsDown,
   ChevronsUp,
   Circle,
@@ -12,6 +13,8 @@ import {
   GitBranch,
   Hand,
   LayoutGrid,
+  MapPin,
+  MessageSquare,
   MousePointer2,
   Redo2,
   Shapes,
@@ -22,6 +25,7 @@ import {
   Undo2,
 } from "lucide-react";
 import * as Y from "yjs";
+import { api } from "@/lib/api";
 import {
   type BoardShape,
   boardShape,
@@ -40,6 +44,22 @@ import MermaidWorkspace, { MermaidPreview } from "./MermaidWorkspace";
 import { Button } from "@/components/ui";
 
 type Item = BoardShape & { id: string };
+type BoardThread = {
+  id: string;
+  body: string;
+  quote?: string;
+  anchor?: { start?: string; end?: string } | null;
+  resolved: boolean;
+  revision: number;
+  createdBy?: string;
+  createdAt?: string;
+  replies?: { id: string; body: string; createdBy?: string; createdAt?: string }[];
+};
+const shapeAnchor = (id: string) => ({ start: `shape:${id}`, end: `shape:${id}` });
+const threadShapeId = (thread: BoardThread) =>
+  typeof thread.anchor?.start === "string" && thread.anchor.start.startsWith("shape:")
+    ? thread.anchor.start.slice(6)
+    : "";
 const tools = [
   ["select", "选择 / 移动"],
   ["pan", "平移画布"],
@@ -101,6 +121,7 @@ export function BoardDrawing({
   items,
   selected,
   selectedIds,
+  dimIds,
   marker,
   onSelect,
   onEdit,
@@ -108,6 +129,7 @@ export function BoardDrawing({
   items: Item[];
   selected?: string;
   selectedIds?: Set<string>;
+  dimIds?: Set<string>;
   marker: string;
   onSelect?: (e: React.PointerEvent<SVGGElement>, item: Item) => void;
   onEdit?: (item: Item) => void;
@@ -198,6 +220,7 @@ export function BoardDrawing({
             role="button"
             aria-label={`${item.type}: ${item.text || "未命名图形"}`}
             tabIndex={onSelect ? 0 : undefined}
+            opacity={dimIds?.has(item.id) ? 0.3 : 1}
             onPointerDown={(e) => onSelect?.(e, item)}
             onDoubleClick={() => onEdit?.(item)}
           >
@@ -401,6 +424,15 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
   const [snap, setSnap] = useState(false);
   const [smart, setSmart] = useState(true);
   const [guides, setGuides] = useState<{ v: number[]; h: number[] }>({ v: [], h: [] });
+  const [threads, setThreads] = useState<BoardThread[]>([]);
+  const [review, setReview] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [commentDraft, setCommentDraft] = useState("");
+  const [commentError, setCommentError] = useState("");
+  const [commentBusy, setCommentBusy] = useState(false);
+  const [activeThread, setActiveThread] = useState("");
+  const [replyTo, setReplyTo] = useState("");
+  const [replyDraft, setReplyDraft] = useState("");
   const [shapePanel, setShapePanel] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false),
     [source, setSource] = useState(
@@ -462,6 +494,31 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       undo.current?.destroy();
     };
   }, [provider, shapes]);
+  const loadThreads = async () => {
+    try {
+      const { data } = await api.get(`/documents/${provider.docId}/threads`);
+      setThreads(Array.isArray(data) ? data : []);
+      setCommentError("");
+    } catch {
+      setCommentError("评论加载失败，请检查权限或稍后重试。");
+    }
+  };
+  useEffect(() => {
+    void loadThreads();
+    let revision = provider.metadataRevision;
+    const unsubscribe = provider.subscribe(() => {
+      if (provider.metadataRevision !== revision) {
+        revision = provider.metadataRevision;
+        void loadThreads();
+      }
+    });
+    const timer = setInterval(loadThreads, 30000);
+    return () => {
+      clearInterval(timer);
+      unsubscribe?.();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [provider]);
   const point = (e: { clientX: number; clientY: number }) => {
     const p = svg.current!.createSVGPoint();
     p.x = e.clientX;
@@ -679,6 +736,107 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     }, origin);
     undo.current?.stopCapturing();
     setItems(read(provider.doc));
+  };
+  const canComment = ["OWNER", "EDITOR", "COMMENTER"].includes(provider.role);
+  const shapeThreads = new Map<string, BoardThread[]>();
+  for (const thread of threads) {
+    const shapeId = threadShapeId(thread);
+    if (!shapeId) continue;
+    const list = shapeThreads.get(shapeId) || [];
+    list.push(thread);
+    shapeThreads.set(shapeId, list);
+  }
+  const sortedThreads = [...threads].sort(
+    (a, b) =>
+      Number(a.resolved) - Number(b.resolved) ||
+      String(b.createdAt).localeCompare(String(a.createdAt)),
+  );
+  const unresolvedThreads = threads.filter((t) => !t.resolved);
+  const selectedShape = items.find((s) => s.id === selected && s.type !== "connector");
+  const commentedShapeIds = new Set(unresolvedThreads.map(threadShapeId).filter(Boolean));
+  const dimIds =
+    review && unresolvedThreads.length
+      ? new Set(
+          items
+            .filter((s) => s.type !== "connector" && !commentedShapeIds.has(s.id))
+            .map((s) => s.id),
+        )
+      : undefined;
+  const commentAction = async (fn: () => Promise<unknown>) => {
+    if (commentBusy) return;
+    setCommentBusy(true);
+    try {
+      await fn();
+      await loadThreads();
+      setCommentError("");
+    } catch (e: any) {
+      setCommentError(e?.response?.data?.message || "评论操作失败，请重试。");
+    } finally {
+      setCommentBusy(false);
+    }
+  };
+  const addThread = () => {
+    const shape = selectedShape;
+    const body = commentDraft.trim();
+    if (!canComment || !shape || !body) return;
+    void commentAction(async () => {
+      await api.post(`/documents/${provider.docId}/threads`, {
+        id: crypto.randomUUID(),
+        body,
+        quote: (shape.text || shape.type).slice(0, 1000),
+        anchor: shapeAnchor(shape.id),
+      });
+      setCommentDraft("");
+    });
+  };
+  const toggleResolve = (thread: BoardThread) =>
+    void commentAction(() =>
+      api.patch(`/documents/${provider.docId}/threads/${thread.id}`, {
+        resolved: !thread.resolved,
+        revision: thread.revision,
+      }),
+    );
+  const sendReply = (thread: BoardThread) => {
+    const body = replyDraft.trim();
+    if (!body) return;
+    void commentAction(async () => {
+      await api.post(`/documents/${provider.docId}/threads/${thread.id}/replies`, {
+        id: crypto.randomUUID(),
+        body,
+      });
+      setReplyDraft("");
+      setReplyTo("");
+    });
+  };
+  const jumpThread = (thread: BoardThread) => {
+    const shapeId = threadShapeId(thread);
+    const shape = items.find((s) => s.id === shapeId);
+    if (!shape) return;
+    setTool("select");
+    setSelected(shapeId);
+    setSelectedIds(new Set([shapeId]));
+    setView((current) => {
+      const zoom = Math.max(0.05, Math.min(3, current.zoom));
+      return {
+        ...current,
+        x: shape.geometry.x + shape.geometry.w / 2 - 600 / zoom,
+        y: shape.geometry.y + shape.geometry.h / 2 - 400 / zoom,
+      };
+    });
+    setActiveThread(thread.id);
+    setCommentsOpen(true);
+    setCommentError("");
+  };
+  const nextOpenThread = () => {
+    const open = threads.filter(
+      (t) => !t.resolved && items.some((s) => s.id === threadShapeId(t)),
+    );
+    if (!open.length) {
+      setCommentError("暂无待处理的图元评论。");
+      return;
+    }
+    const index = open.findIndex((t) => t.id === activeThread);
+    jumpThread(open[(index + 1) % open.length]);
   };
   const branch = (sibling = false) => {
     if (!active || active.type !== "mind") return;
@@ -1115,6 +1273,31 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           onClick={layout}
         >
           自动布局导图
+        </Button>
+        <span className="h-6 w-px bg-slate-200" />
+        <Button
+          size="sm"
+          variant={commentsOpen ? "secondary" : "ghost"}
+          aria-label="打开图元评论"
+          aria-pressed={commentsOpen}
+          onClick={() => {
+            if (review) setReview(false);
+            setCommentsOpen((v) => !v);
+          }}
+        >
+          <MessageSquare size={14} /> 评论{unresolvedThreads.length ? ` (${unresolvedThreads.length})` : ""}
+        </Button>
+        <Button
+          size="sm"
+          variant={review ? "secondary" : "ghost"}
+          aria-label="评审模式"
+          aria-pressed={review}
+          onClick={() => {
+            setReview((v) => !v);
+            setCommentsOpen(true);
+          }}
+        >
+          <CheckCircle2 size={14} /> 评审模式
         </Button>
         <span className="h-6 w-px bg-slate-200" />
         <Button
@@ -1637,6 +1820,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           items={items}
           selected={selected}
           selectedIds={selectedIds}
+          dimIds={dimIds}
           marker={marker}
           onSelect={select}
           onEdit={
@@ -1792,6 +1976,50 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
             <circle cx={connecting.x} cy={connecting.y} r={4 / view.zoom} fill="#6366f1" />
           </g>
         )}
+        {items
+          .filter((shape) => shape.type !== "connector")
+          .map((shape) => {
+            const list = shapeThreads.get(shape.id) || [];
+            const open = list.filter((t) => !t.resolved);
+            const shown = review ? list : open;
+            if (!shown.length) return null;
+            return (
+              <g
+                key={`comment-${shape.id}`}
+                data-testid="board-comment-pin"
+                data-shape-id={shape.id}
+                role="button"
+                aria-label={`图元评论：${open.length || list.length} 条`}
+                transform={`translate(${shape.geometry.x + shape.geometry.w},${shape.geometry.y})`}
+                style={{ cursor: "pointer" }}
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  setTool("select");
+                  setSelected(shape.id);
+                  setSelectedIds(new Set([shape.id]));
+                  setCommentsOpen(true);
+                  setActiveThread((list.find((t) => !t.resolved) || list[0]).id);
+                }}
+              >
+                <circle
+                  r={10 / view.zoom}
+                  fill={open.length ? "#f59e0b" : "#94a3b8"}
+                  stroke="#ffffff"
+                  strokeWidth={1.5 / view.zoom}
+                />
+                <text
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={10 / view.zoom}
+                  fontWeight={700}
+                  fill="#ffffff"
+                >
+                  {open.length || list.length}
+                </text>
+              </g>
+            );
+          })}
         {members
           .filter((m) => m.cursor)
           .map((m) => (
@@ -1808,7 +2036,195 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
             </g>
           ))}
       </svg>
-      {active && selectedIds.size === 1 && (
+      {(commentsOpen || review) && (
+        <aside
+          aria-label="图元评论"
+          className="absolute inset-y-3 right-3 z-30 flex w-80 flex-col overflow-hidden rounded-xl border border-slate-200 bg-[var(--paper-raised)] shadow-xl backdrop-blur"
+        >
+          <div className="flex items-center justify-between gap-2 border-b border-slate-200 px-3 py-2">
+            <div>
+              <p className="text-xs font-semibold text-slate-800">
+                {review ? "评审模式" : "图元评论"}
+              </p>
+              <p className="text-[11px] text-slate-500">
+                {unresolvedThreads.length} 待处理 · {threads.length} 总计
+              </p>
+            </div>
+            <button
+              type="button"
+              aria-label="关闭评论面板"
+              className="rounded-md px-1 text-lg leading-none text-slate-400 hover:bg-slate-100"
+              onClick={() => {
+                setCommentsOpen(false);
+                setReview(false);
+              }}
+            >
+              ×
+            </button>
+          </div>
+          {review && (
+            <div className="border-b border-slate-200 p-3">
+              <p className="text-[11px] leading-5 text-slate-500">
+                未评论图元已弱化；可逐条定位待处理评论。
+              </p>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="mt-2"
+                disabled={commentBusy}
+                onClick={nextOpenThread}
+              >
+                <MapPin size={13} /> 下一处待处理
+              </Button>
+            </div>
+          )}
+          <div className="min-h-0 flex-1 overflow-y-auto p-3">
+            {canComment && selectedShape && (
+              <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50/70 p-2">
+                <p className="text-[11px] font-medium text-amber-900">
+                  评论选中图元：{selectedShape.text || selectedShape.type}
+                </p>
+                <textarea
+                  aria-label="图元评论内容"
+                  maxLength={5000}
+                  value={commentDraft}
+                  onChange={(e) => setCommentDraft(e.target.value)}
+                  placeholder="写下需要对齐的细节或待确认的问题…"
+                  className="mt-1 w-full rounded-lg border border-amber-200 bg-white p-2 text-sm"
+                />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="mt-1"
+                  disabled={commentBusy || !commentDraft.trim()}
+                  onClick={addThread}
+                >
+                  发表评论
+                </Button>
+              </div>
+            )}
+            {canComment && !selectedShape && (
+              <p className="mb-3 rounded-lg bg-slate-50 p-2 text-[11px] leading-5 text-slate-500">
+                选择一个图元后即可发表评论；也可以点击图元右上角的评论徽标。
+              </p>
+            )}
+            {!canComment && (
+              <p className="mb-3 rounded-lg bg-slate-50 p-2 text-[11px] leading-5 text-slate-500">
+                当前角色只能查看评论，不能新增或解决。
+              </p>
+            )}
+            {commentError && (
+              <p role="alert" className="mb-3 text-xs leading-5 text-red-700">
+                {commentError}
+              </p>
+            )}
+            {!sortedThreads.length && (
+              <p className="py-6 text-sm text-slate-400">
+                尚无评论。选中一个图元，写下需要对齐的细节。
+              </p>
+            )}
+            <div className="space-y-3">
+              {sortedThreads.map((thread) => {
+                const shape = items.find((s) => s.id === threadShapeId(thread));
+                return (
+                  <article
+                    key={thread.id}
+                    data-testid="board-comment-thread"
+                    className={`rounded-lg border p-2 text-sm ${
+                      activeThread === thread.id
+                        ? "border-amber-300 bg-amber-50/40"
+                        : "border-slate-200 bg-white"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-[11px] font-medium text-slate-500">
+                        {thread.resolved ? "已解决" : "待处理"}
+                        {shape ? "" : " · 图元已删除"}
+                      </p>
+                      {shape && (
+                        <button
+                          type="button"
+                          className="text-[11px] text-indigo-700 hover:underline"
+                          onClick={() => jumpThread(thread)}
+                        >
+                          定位
+                        </button>
+                      )}
+                    </div>
+                    <blockquote className="mt-1 border-l-2 border-slate-200 pl-2 text-xs text-slate-500">
+                      {shape?.text || thread.quote || "未命名图元"}
+                    </blockquote>
+                    <p className="mt-1 whitespace-pre-wrap text-slate-800">{thread.body}</p>
+                    {thread.replies?.map((reply) => (
+                      <p
+                        key={reply.id}
+                        className="mt-2 border-t border-slate-100 pt-2 text-xs text-slate-600"
+                      >
+                        ↳ {reply.body}
+                      </p>
+                    ))}
+                    {canComment && (
+                      <div className="mt-2 flex flex-wrap gap-3 text-xs">
+                        <button
+                          type="button"
+                          className="text-indigo-700 hover:underline disabled:opacity-40"
+                          disabled={commentBusy}
+                          onClick={() => toggleResolve(thread)}
+                        >
+                          {thread.resolved ? "重新打开" : "标记解决"}
+                        </button>
+                        <button
+                          type="button"
+                          className="text-indigo-700 hover:underline disabled:opacity-40"
+                          disabled={commentBusy}
+                          onClick={() => {
+                            setReplyTo(thread.id);
+                            setReplyDraft("");
+                          }}
+                        >
+                          回复
+                        </button>
+                      </div>
+                    )}
+                    {replyTo === thread.id && (
+                      <div className="mt-2">
+                        <textarea
+                          aria-label="回复评论"
+                          maxLength={5000}
+                          value={replyDraft}
+                          onChange={(e) => setReplyDraft(e.target.value)}
+                          className="w-full rounded-lg border border-slate-200 p-2 text-xs"
+                        />
+                        <div className="mt-1 flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            disabled={commentBusy || !replyDraft.trim()}
+                            onClick={() => sendReply(thread)}
+                          >
+                            发送回复
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setReplyTo("");
+                              setReplyDraft("");
+                            }}
+                          >
+                            取消
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </aside>
+      )}
+      {active && selectedIds.size === 1 && !commentsOpen && !review && (
         <aside
           aria-label="图形属性"
           className="absolute inset-y-3 right-3 z-20 w-72 overflow-y-auto rounded-xl border border-slate-200 bg-[var(--paper-raised)] p-3 shadow-xl backdrop-blur"
