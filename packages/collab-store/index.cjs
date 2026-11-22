@@ -62,10 +62,49 @@ function imageIds(doc) {
   return [...ids];
 }
 function checkBoard(doc) {
-  if ([...doc.share.keys()].some((key) => !["shapes", "mermaid"].includes(key)))
+  if (
+    [...doc.share.keys()].some((key) => !["shapes", "mermaid", "boardMeta"].includes(key))
+  )
     fail(400, "INVALID_BOARD");
   const shapes = doc.getMap("shapes");
   for (const shape of shapes.values()) if (!(shape instanceof Y.Map)) fail(400, "INVALID_BOARD");
+  const meta = doc.getMap("boardMeta");
+  for (const [key, value] of meta) {
+    if (key === "layers") {
+      if (typeof value !== "string" || value.length > 8000) fail(400, "INVALID_BOARD");
+      try {
+        const layers = JSON.parse(value);
+        if (
+          !Array.isArray(layers) ||
+          layers.length > 20 ||
+          layers.some(
+            (layer) =>
+              !layer ||
+              typeof layer.id !== "string" ||
+              layer.id.length > 80 ||
+              typeof layer.name !== "string" ||
+              layer.name.length > 80 ||
+              typeof layer.visible !== "boolean" ||
+              typeof layer.locked !== "boolean",
+          )
+        )
+          throw Error("INVALID_LAYERS");
+      } catch {
+        fail(400, "INVALID_BOARD");
+      }
+      continue;
+    }
+    const match = /^(group|locked|rotation|frame|layer):([0-9a-f-]{36})$/.exec(key);
+    if (!match) fail(400, "INVALID_BOARD");
+    if (match[1] === "locked" || match[1] === "frame") {
+      if (typeof value !== "boolean") fail(400, "INVALID_BOARD");
+    } else if (match[1] === "rotation") {
+      if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 359)
+        fail(400, "INVALID_BOARD");
+    } else if (typeof value !== "string" || value.length > 80) {
+      fail(400, "INVALID_BOARD");
+    }
+  }
   try {
     validateBoard(shapes.toJSON());
     const source = doc.getText("mermaid");
@@ -86,6 +125,8 @@ function copyContent(bytes, kind = "DOCUMENT") {
   } else if (kind === "BOARD") {
     fresh.getText("mermaid").insert(0, old.getText("mermaid").toString());
     for (const [id, shape] of old.getMap("shapes")) fresh.getMap("shapes").set(id, shape.clone());
+    for (const [key, value] of old.getMap("boardMeta"))
+      fresh.getMap("boardMeta").set(key, value);
   } else {
     const root = old.getXmlFragment("default");
     fresh.getXmlFragment("default").insert(
@@ -962,6 +1003,7 @@ class Store {
         anchored: !!parsed.anchor,
         resolved: false,
       });
+      await this.notifyMentions(c, ctx, id, parsed.id, parsed.body, parsed.anchor);
       return r.rows[0];
     });
   }
@@ -1000,6 +1042,13 @@ class Store {
           threadId: thread,
           replyId: key,
         });
+        const root = (
+          await c.query(
+            "SELECT anchor FROM collab_thread WHERE organization_id=$1 AND document_id=$2 AND id=$3",
+            [ctx.org, id, uuid.parse(thread)],
+          )
+        ).rows[0];
+        await this.notifyMentions(c, ctx, id, thread, body, root?.anchor);
         return r.rows[0];
       }
       const old = (
@@ -1012,6 +1061,166 @@ class Store {
         fail(409, "IDEMPOTENCY_CONFLICT");
       return old;
     });
+  }
+  async mentionable(ctx, id) {
+    return this.tx(ctx, async (c) => {
+      await this.access(c, ctx, id, "read");
+      return (
+        await c.query(
+          "SELECT g.user_id AS id,u.name,g.role FROM collab_grant g JOIN sys_user u ON u.id=g.user_id WHERE g.organization_id=$1 AND g.document_id=$2 AND u.status='NORMAL' ORDER BY u.name",
+          [ctx.org, id],
+        )
+      ).rows;
+    });
+  }
+  async notifyMentions(c, ctx, id, threadId, body, anchor) {
+    const names = [
+      ...new Set(
+        [...String(body).matchAll(/@([^\s@，。,.!?;:：；、()（）\[\]【】]+)/g)].map((m) =>
+          m[1].trim(),
+        ),
+      ),
+    ].filter((name) => name.length >= 1 && name.length <= 40);
+    if (!names.length) return;
+    const doc = (
+      await c.query(
+        "SELECT project_id,title FROM collab_document WHERE organization_id=$1 AND id=$2",
+        [ctx.org, id],
+      )
+    ).rows[0];
+    if (!doc) return;
+    const actor = (await c.query("SELECT name FROM sys_user WHERE id=$1", [ctx.user])).rows[0]
+      ?.name;
+    const recipients = (
+      await c.query(
+        "SELECT DISTINCT g.user_id,u.name FROM collab_grant g JOIN sys_user u ON u.id=g.user_id WHERE g.organization_id=$1 AND g.document_id=$2 AND u.status='NORMAL' AND u.name = ANY($3::text[])",
+        [ctx.org, id, names],
+      )
+    ).rows.filter((row) => row.user_id !== ctx.user);
+    if (!recipients.length) return;
+    const shapeId =
+      anchor && typeof anchor.start === "string" && anchor.start.startsWith("shape:")
+        ? anchor.start.slice(6).slice(0, 80)
+        : null;
+    const link =
+      `/projects/${doc.project_id}/documents/${id}?thread=${encodeURIComponent(String(threadId))}` +
+      (shapeId && /^[0-9a-f-]{36}$/.test(shapeId) ? `&shape=${shapeId}` : "");
+    const title = `${actor || "成员"} 在《${String(doc.title).slice(0, 80)}》中提到了你`;
+    const snippet = String(body).replace(/\s+/g, " ").slice(0, 180);
+    for (const recipient of recipients) {
+      await c.query(
+        "INSERT INTO collab_board_notification(id,organization_id,recipient_id,actor_id,document_id,thread_id,shape_id,kind,title,body,link) VALUES($1,$2,$3,$4,$5,$6,$7,'MENTION',$8,$9,$10)",
+        [
+          randomUUID(),
+          ctx.org,
+          recipient.user_id,
+          ctx.user,
+          id,
+          uuid.parse(String(threadId)),
+          shapeId,
+          title.slice(0, 200),
+          snippet,
+          link,
+        ],
+      );
+    }
+  }
+  async createShare(ctx, id, input) {
+    const parsed = z
+      .object({
+        snapshot: z.union([z.string().max(2_000_000), z.record(z.any()), z.array(z.any())]),
+        kind: z.enum(["BOARD", "MARKDOWN", "DOCUMENT"]),
+        title: title.optional(),
+        expiresInDays: z.number().int().min(1).max(30).nullable().optional(),
+      })
+      .strict()
+      .parse(input);
+    return this.tx(ctx, async (c) => {
+      const doc = await this.access(c, ctx, id, "write");
+      const snapshot = JSON.stringify(parsed.snapshot);
+      if (Buffer.byteLength(snapshot) > 2_000_000) fail(413, "SNAPSHOT_TOO_LARGE");
+      const token = randomBytes(24).toString("base64url");
+      const expiresAt = parsed.expiresInDays
+        ? new Date(Date.now() + parsed.expiresInDays * 86400000)
+        : null;
+      const row = (
+        await c.query(
+          "INSERT INTO collab_share(token,organization_id,document_id,created_by,title,kind,snapshot,expires_at) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,$8) RETURNING token,title,kind,expires_at,created_at",
+          [
+            token,
+            ctx.org,
+            id,
+            ctx.user,
+            parsed.title || doc.title,
+            parsed.kind,
+            snapshot,
+            expiresAt,
+          ],
+        )
+      ).rows[0];
+      await this.audit(c, ctx, id, "document:share", null, {
+        token,
+        kind: parsed.kind,
+        expiresAt,
+      });
+      return row;
+    });
+  }
+  async shares(ctx, id) {
+    return this.tx(ctx, async (c) => {
+      await this.access(c, ctx, id, "write");
+      return (
+        await c.query(
+          "SELECT token,title,kind,expires_at,revoked_at,created_at FROM collab_share WHERE organization_id=$1 AND document_id=$2 ORDER BY created_at DESC LIMIT 30",
+          [ctx.org, id],
+        )
+      ).rows;
+    });
+  }
+  async revokeShare(ctx, id, token) {
+    return this.tx(ctx, async (c) => {
+      await this.access(c, ctx, id, "write");
+      const row = (
+        await c.query(
+          "UPDATE collab_share SET revoked_at=COALESCE(revoked_at,now()) WHERE organization_id=$1 AND document_id=$2 AND token=$3 RETURNING token,revoked_at",
+          [ctx.org, id, z.string().min(16).max(120).parse(token)],
+        )
+      ).rows[0];
+      if (!row) fail(404, "SHARE_NOT_FOUND");
+      await this.audit(c, ctx, id, "document:unshare", null, { token: row.token });
+      return row;
+    });
+  }
+  async publicShare(token) {
+    const key = z.string().min(16).max(120).parse(token);
+    const c = await this.pool.connect();
+    try {
+      await c.query("BEGIN; SET LOCAL statement_timeout='10s'");
+      await c.query("SELECT set_config('app.share_public','on',true)");
+      const row = (
+        await c.query(
+          "SELECT title,kind,snapshot,expires_at,revoked_at,created_at FROM collab_share WHERE token=$1",
+          [key],
+        )
+      ).rows[0];
+      await c.query("COMMIT");
+      if (!row) fail(404, "SHARE_NOT_FOUND");
+      if (row.revoked_at) fail(410, "SHARE_REVOKED");
+      if (row.expires_at && new Date(row.expires_at).getTime() < Date.now())
+        fail(410, "SHARE_EXPIRED");
+      return {
+        title: row.title,
+        kind: row.kind,
+        snapshot: row.snapshot,
+        expiresAt: row.expires_at,
+        createdAt: row.created_at,
+      };
+    } catch (e) {
+      await c.query("ROLLBACK").catch(() => {});
+      throw e;
+    } finally {
+      c.release();
+    }
   }
   // Called only while the authorized document row is locked, in the edit transaction.
   // Samples are immutable; duplicate receipts never reach this path.

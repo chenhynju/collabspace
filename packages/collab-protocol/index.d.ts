@@ -29,7 +29,34 @@ export type BoardShape = {
     | "database"
     | "server"
     | "cloud"
-    | "actor";
+    | "actor"
+    | "umlClass"
+    | "umlInterface"
+    | "umlComponent"
+    | "umlPackage"
+    | "umlUseCase"
+    | "umlLifeline"
+    | "erdEntity"
+    | "erdRelationship"
+    | "router"
+    | "switch"
+    | "firewall"
+    | "loadBalancer"
+    | "internet"
+    | "aws"
+    | "azure"
+    | "gcp"
+    | "cloudStorage"
+    | "cloudQueue"
+    | "k8sPod"
+    | "k8sService"
+    | "k8sDeployment"
+    | "k8sIngress"
+    | "bpmnStart"
+    | "bpmnEnd"
+    | "bpmnTask"
+    | "bpmnGateway"
+    | "bpmnSubprocess";
   geometry: { x: number; y: number; w: number; h: number };
   text: string;
   fill: "#fef3c7" | "#dbeafe" | "#dcfce7" | "#fce7f3" | "#ffffff";
@@ -43,6 +70,7 @@ export const shapeCatalog: readonly {
   type: BoardShape["type"];
   label: string;
   group: string;
+  keywords?: string;
 }[];
 export function validateBoard(shapes: Record<string, unknown>): void;
 export function connectorPath(

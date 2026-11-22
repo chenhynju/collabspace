@@ -25,6 +25,7 @@ import { HealthModule } from "./modules/health/health.module";
 import { TraceIdMiddleware } from "./common/middleware/trace-id.middleware";
 import { JwtAuthGuard } from "./common/guards/jwt-auth.guard";
 import { DocumentsController } from "./modules/documents/documents.controller";
+import { SharesController } from "./modules/documents/shares.controller";
 import { GroupsModule } from "./modules/groups/groups.module";
 import { AssistantModule } from "./modules/assistant/assistant.module";
 import { AgentModule } from "./modules/agent/agent.module";
@@ -62,7 +63,7 @@ import { SearchController } from "./modules/search/search.controller";
     MonitorModule,
     HealthModule,
   ],
-  controllers: [DocumentsController, SearchController],
+  controllers: [DocumentsController, SharesController, SearchController],
   providers: [{ provide: APP_GUARD, useClass: JwtAuthGuard }],
 })
 export class AppModule implements NestModule {

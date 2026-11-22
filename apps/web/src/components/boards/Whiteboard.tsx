@@ -4,28 +4,47 @@ import {
   ArrowDown,
   ArrowUp,
   ArrowUpRight,
+  Ban,
   CheckCircle2,
   ChevronsDown,
   ChevronsUp,
   Circle,
+  Copy,
   Diamond,
   Download,
+  Eye,
+  EyeOff,
+  FileDown,
+  FileImage,
+  Frame,
   GitBranch,
+  Group,
   Hand,
+  Layers,
   LayoutGrid,
+  Link2,
+  Lock,
   MapPin,
   MessageSquare,
   MousePointer2,
   Redo2,
+  Search,
+  Share2,
   Shapes,
   Spline,
   Square,
   StickyNote,
   Type,
   Undo2,
+  Ungroup,
+  Unlock,
+  Upload,
 } from "lucide-react";
 import * as Y from "yjs";
 import { api } from "@/lib/api";
+import { exportBoard, exportBounds, type ExportShape } from "@/lib/board-export";
+import { layoutFlow } from "@/lib/flow-layout";
+import { downloadText, exportDrawio, parseDrawio } from "@/lib/drawio";
 import {
   type BoardShape,
   boardShape,
@@ -43,7 +62,37 @@ import { BoardAgent } from "./BoardAgent";
 import MermaidWorkspace, { MermaidPreview } from "./MermaidWorkspace";
 import { Button } from "@/components/ui";
 
-type Item = BoardShape & { id: string };
+type Item = BoardShape & {
+  id: string;
+  group?: string;
+  locked?: boolean;
+  rotation?: number;
+  frame?: boolean;
+  layer?: string;
+};
+type BoardLayer = { id: string; name: string; visible: boolean; locked: boolean };
+const defaultLayers: BoardLayer[] = [
+  { id: "default", name: "默认图层", visible: true, locked: false },
+];
+function readLayers(doc: Y.Doc): BoardLayer[] {
+  try {
+    const raw = doc.getMap<unknown>("boardMeta").get("layers");
+    if (typeof raw !== "string") return defaultLayers;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || !parsed.length) return defaultLayers;
+    const layers = parsed.filter(
+      (layer): layer is BoardLayer =>
+        !!layer &&
+        typeof layer.id === "string" &&
+        typeof layer.name === "string" &&
+        typeof layer.visible === "boolean" &&
+        typeof layer.locked === "boolean",
+    );
+    return layers.length ? layers : defaultLayers;
+  } catch {
+    return defaultLayers;
+  }
+}
 type BoardThread = {
   id: string;
   body: string;
@@ -77,10 +126,25 @@ const origin = "collabspace:whiteboard:local";
 const colorFor = (id: string) =>
   `hsl(${[...id].reduce((n, c) => n + c.charCodeAt(0), 0) % 360} 65% 42%)`;
 function read(doc: Y.Doc): Item[] {
+  const meta = doc.getMap<unknown>("boardMeta");
   return [...doc.getMap<Y.Map<unknown>>("shapes")]
     .flatMap(([id, m]) => {
       const parsed = boardShape.safeParse(m instanceof Y.Map ? m.toJSON() : null);
-      return parsed.success ? [{ ...parsed.data, id } as Item] : [];
+      if (!parsed.success) return [];
+      const group = meta.get(`group:${id}`),
+        layer = meta.get(`layer:${id}`),
+        rotation = Number(meta.get(`rotation:${id}`) || 0);
+      return [
+        {
+          ...parsed.data,
+          id,
+          group: typeof group === "string" ? group : undefined,
+          locked: Boolean(meta.get(`locked:${id}`)),
+          rotation: Number.isFinite(rotation) ? Math.max(0, Math.min(359, rotation)) : 0,
+          frame: Boolean(meta.get(`frame:${id}`)),
+          layer: typeof layer === "string" ? layer : "default",
+        } as Item,
+      ];
     })
     .sort(
       (a, b) =>
@@ -101,6 +165,13 @@ function findLinkTarget(items: Item[], x: number, y: number, exclude: string, to
         y >= item.geometry.y - tolerance &&
         y <= item.geometry.y + item.geometry.h + tolerance,
     );
+}
+function rotatePoint(cx: number, cy: number, x: number, y: number, degrees: number) {
+  const angle = (degrees * Math.PI) / 180;
+  return {
+    x: cx + (x - cx) * Math.cos(angle) - (y - cy) * Math.sin(angle),
+    y: cy + (x - cx) * Math.sin(angle) + (y - cy) * Math.cos(angle),
+  };
 }
 function fitItems(items: Item[]) {
   const nodes = items.filter((s) => s.type !== "connector" || s.points);
@@ -134,12 +205,37 @@ export function BoardDrawing({
   onSelect?: (e: React.PointerEvent<SVGGElement>, item: Item) => void;
   onEdit?: (item: Item) => void;
 }) {
+  const frames = items.filter((s) => s.frame && s.type !== "connector");
+  const ordered = [...items].sort((a, b) => Number(b.frame) - Number(a.frame));
+  const frameFor = (item: Item) =>
+    item.type === "connector" || item.frame
+      ? undefined
+      : frames.find((frame) => {
+          const cx = item.geometry.x + item.geometry.w / 2,
+            cy = item.geometry.y + item.geometry.h / 2;
+          return (
+            cx > frame.geometry.x &&
+            cx < frame.geometry.x + frame.geometry.w &&
+            cy > frame.geometry.y &&
+            cy < frame.geometry.y + frame.geometry.h
+          );
+        });
   return (
     <>
       <defs>
         <marker id={marker} markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
           <path d="M0,0 L0,6 L9,3 z" fill="#334155" />
         </marker>
+        {frames.map((frame) => (
+          <clipPath key={`clip-${frame.id}`} id={`${marker}-frame-${frame.id}`}>
+            <rect
+              x={frame.geometry.x}
+              y={frame.geometry.y}
+              width={frame.geometry.w}
+              height={frame.geometry.h}
+            />
+          </clipPath>
+        ))}
       </defs>
       {items
         .filter((s) => s.type === "mind" && s.parent)
@@ -157,9 +253,10 @@ export function BoardDrawing({
             />
           ) : null;
         })}
-      {items.map((item) => {
+      {ordered.map((item) => {
         const { x, y, w, h } = item.geometry;
         const isSelected = selected === item.id || selectedIds?.has(item.id);
+        const clip = frameFor(item);
         if (item.type === "connector") {
           const a = items.find((s) => s.id === item.binding?.from),
             b = items.find((s) => s.id === item.binding?.to),
@@ -221,10 +318,36 @@ export function BoardDrawing({
             aria-label={`${item.type}: ${item.text || "未命名图形"}`}
             tabIndex={onSelect ? 0 : undefined}
             opacity={dimIds?.has(item.id) ? 0.3 : 1}
+            clipPath={clip ? `url(#${marker}-frame-${clip.id})` : undefined}
+            transform={
+              item.rotation
+                ? `rotate(${item.rotation} ${x + w / 2} ${y + h / 2})`
+                : undefined
+            }
             onPointerDown={(e) => onSelect?.(e, item)}
             onDoubleClick={() => onEdit?.(item)}
           >
-            {shapeCatalog.some((s) => s.type === item.type) ? (
+            {item.frame ? (
+              <>
+                <rect x={x} y={y} width={w} height={h} rx={10} fill="#ffffff" stroke="#94a3b8" />
+                <path
+                  d={`M ${x} ${y + Math.min(30, h)} H ${x + w}`}
+                  stroke="#cbd5e1"
+                  fill="none"
+                />
+                <rect
+                  x={x}
+                  y={y}
+                  width={w}
+                  height={Math.min(30, h)}
+                  rx={10}
+                  fill="#f1f5f9"
+                />
+                <text x={x + 10} y={y + Math.min(20, h / 2)} fontSize="13" fontWeight={600} fill="#334155">
+                  {item.text || "Frame"}
+                </text>
+              </>
+            ) : shapeCatalog.some((s) => s.type === item.type) ? (
               <>
                 <rect x={x} y={y} width={w} height={h} fill="transparent" />
                 <svg x={x} y={y} width={w} height={h} overflow="visible">
@@ -270,8 +393,9 @@ export function BoardDrawing({
                 stroke={item.type === "text" ? "none" : "#64748b"}
               />
             )}
-            <foreignObject
-              x={x + (["diamond", "triangle", "parallelogram"].includes(item.type) ? w * 0.23 : 10)}
+            {!item.frame && (
+              <foreignObject
+                x={x + (["diamond", "triangle", "parallelogram"].includes(item.type) ? w * 0.23 : 10)}
               y={
                 y +
                 (item.type === "actor"
@@ -323,6 +447,7 @@ export function BoardDrawing({
                 {item.text}
               </div>
             </foreignObject>
+            )}
             {isSelected && (
               <rect
                 x={x - 3}
@@ -433,6 +558,27 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
   const [activeThread, setActiveThread] = useState("");
   const [replyTo, setReplyTo] = useState("");
   const [replyDraft, setReplyDraft] = useState("");
+  const [layersOpen, setLayersOpen] = useState(false);
+  const [activeLayer, setActiveLayer] = useState("default");
+  const [shapeSearch, setShapeSearch] = useState("");
+  const [exportOpen, setExportOpen] = useState(false);
+  const [exportFormat, setExportFormat] = useState<"png" | "pdf">("png");
+  const [exportScale, setExportScale] = useState<1 | 2>(2);
+  const [exportSelected, setExportSelected] = useState(false);
+  const [exportBusy, setExportBusy] = useState(false);
+  const [exportError, setExportError] = useState("");
+  const [layoutOpen, setLayoutOpen] = useState(false);
+  const [importError, setImportError] = useState("");
+  const [importBusy, setImportBusy] = useState(false);
+  const [mentionables, setMentionables] = useState<
+    { id: string; name: string; role: string }[]
+  >([]);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareExpiry, setShareExpiry] = useState<"0" | "1" | "7" | "30">("7");
+  const [shareLinks, setShareLinks] = useState<any[]>([]);
+  const [shareBusy, setShareBusy] = useState(false);
+  const [shareError, setShareError] = useState("");
+  const [shareCopied, setShareCopied] = useState("");
   const [shapePanel, setShapePanel] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false),
     [source, setSource] = useState(
@@ -455,7 +601,16 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
   const sentAt = useRef(0),
     didFit = useRef(false),
     marker = useId().replace(/:/g, "");
+  const rotateDrag = useRef<{
+    id: string;
+    center: { x: number; y: number };
+    startAngle: number;
+    startRotation: number;
+    latest?: number;
+  } | null>(null);
+  const deepLink = useRef(false);
   const shapes = provider.doc.getMap<Y.Map<unknown>>("shapes");
+  const meta = provider.doc.getMap<unknown>("boardMeta");
   const active = items.find((s) => s.id === selected);
   const linkSource = connecting ? items.find((s) => s.id === connecting.from) : undefined;
   const linkTolerance = Math.max(8, Math.min(24, 18 / view.zoom));
@@ -481,19 +636,21 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       setMembers(provider.members);
       render((n) => n + 1);
     };
-    undo.current = new Y.UndoManager(shapes, {
+    undo.current = new Y.UndoManager([shapes, meta], {
       trackedOrigins: new Set([origin]),
       captureTimeout: 500,
     });
     const dispose = provider.subscribe(update);
     shapes.observeDeep(update);
+    meta.observeDeep(update);
     update();
     return () => {
       dispose();
       shapes.unobserveDeep(update);
+      meta.unobserveDeep(update);
       undo.current?.destroy();
     };
-  }, [provider, shapes]);
+  }, [provider, shapes, meta]);
   const loadThreads = async () => {
     try {
       const { data } = await api.get(`/documents/${provider.docId}/threads`);
@@ -519,6 +676,21 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [provider]);
+  useEffect(() => {
+    if (!commentsOpen && !review) return;
+    let active = true;
+    api
+      .get(`/documents/${provider.docId}/mentionable`)
+      .then(({ data }) => {
+        if (active) setMentionables(Array.isArray(data) ? data : []);
+      })
+      .catch(() => {
+        if (active) setMentionables([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [commentsOpen, review, provider.docId]);
   const point = (e: { clientX: number; clientY: number }) => {
     const p = svg.current!.createSVGPoint();
     p.x = e.clientX;
@@ -547,6 +719,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     type: BoardShape["type"],
     p: { x: number; y: number },
     extra: Partial<BoardShape> = {},
+    metaFor?: (id: string) => Record<string, unknown>,
   ) => {
     if (!provider.writable) return;
     if (shapes.size >= 500) {
@@ -567,7 +740,11 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       ...extra,
     };
     for (const [key, value] of Object.entries(data)) shape.set(key, value);
-    provider.doc.transact(() => shapes.set(id, shape), origin);
+    provider.doc.transact(() => {
+      shapes.set(id, shape);
+      meta.set(`layer:${id}`, activeLayer);
+      for (const [key, value] of Object.entries(metaFor?.(id) || {})) meta.set(key, value);
+    }, origin);
     undo.current?.stopCapturing();
     setError("");
     setSelectedIds(new Set([id]));
@@ -584,7 +761,146 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       fill: "#ffffff",
     });
   };
-  const selectedNodes = () => items.filter((s) => selectedIds.has(s.id) && s.type !== "connector");
+  const layers = readLayers(provider.doc);
+  const layerMap = new Map(layers.map((layer) => [layer.id, layer]));
+  const layerOf = (item: Item) => layerMap.get(item.layer || "default") || defaultLayers[0];
+  const layerRank = (item: Item) => {
+    const index = layers.findIndex((layer) => layer.id === (item.layer || "default"));
+    return index < 0 ? 0 : index;
+  };
+  const itemLocked = (item: Item) => Boolean(item.locked) || layerOf(item).locked;
+  const activeLocked = active ? itemLocked(active) : false;
+  const selectedNodes = () =>
+    items.filter(
+      (s) => selectedIds.has(s.id) && s.type !== "connector" && !itemLocked(s),
+    );
+  const displayItems = [...items]
+    .filter((item) => layerOf(item).visible)
+    .sort(
+      (a, b) =>
+        (a.type === "connector" ? 1 : 0) - (b.type === "connector" ? 1 : 0) ||
+        layerRank(a) - layerRank(b) ||
+        a.order - b.order,
+    );
+  const exportArea = exportBounds(
+    displayItems as ExportShape[],
+    exportSelected && selectedIds.size > 0,
+    selectedIds,
+  );
+  const writeMeta = (entries: [string, unknown][]) => {
+    if (!provider.writable || !entries.length) return;
+    undo.current?.stopCapturing();
+    provider.doc.transact(() => {
+      for (const [key, value] of entries) {
+        if (value === undefined) meta.delete(key);
+        else meta.set(key, value);
+      }
+    }, origin);
+    undo.current?.stopCapturing();
+    setItems(read(provider.doc));
+  };
+  const writeLayers = (next: BoardLayer[]) =>
+    writeMeta([["layers", JSON.stringify(next)]]);
+  const addLayer = () => {
+    if (!provider.writable) return;
+    const layer: BoardLayer = {
+      id: crypto.randomUUID(),
+      name: `图层 ${layers.length + 1}`,
+      visible: true,
+      locked: false,
+    };
+    writeLayers([...layers, layer]);
+    setActiveLayer(layer.id);
+  };
+  const updateLayer = (id: string, patch: Partial<BoardLayer>) =>
+    writeLayers(layers.map((layer) => (layer.id === id ? { ...layer, ...patch } : layer)));
+  const moveLayer = (id: string, direction: 1 | -1) => {
+    const index = layers.findIndex((layer) => layer.id === id);
+    const next = index + direction;
+    if (index < 0 || next < 0 || next >= layers.length) return;
+    const copy = [...layers];
+    [copy[index], copy[next]] = [copy[next], copy[index]];
+    writeLayers(copy);
+  };
+  const assignToLayer = () => {
+    const nodes = selectedNodes();
+    if (!nodes.length || !provider.writable) return;
+    writeMeta(nodes.map((item) => [`layer:${item.id}`, activeLayer]));
+  };
+  const groupSelection = () => {
+    const nodes = selectedNodes().filter((item) => !itemLocked(item));
+    if (nodes.length < 2 || !provider.writable) {
+      setError("请选择至少两个未锁定图元后再分组。");
+      return;
+    }
+    const groupId = crypto.randomUUID();
+    writeMeta(nodes.map((item) => [`group:${item.id}`, groupId]));
+  };
+  const ungroupSelection = () => {
+    const groups = new Set(selectedNodes().map((item) => item.group).filter(Boolean));
+    if (!groups.size) return;
+    const ids = items
+      .filter((item) => item.group && groups.has(item.group))
+      .map((item) => item.id);
+    writeMeta(ids.map((id) => [`group:${id}`, undefined]));
+  };
+  const lockSelection = (locked: boolean) => {
+    const ids = selectedIds.size ? [...selectedIds] : selected ? [selected] : [];
+    const nodes = items.filter((item) => ids.includes(item.id) && item.type !== "connector");
+    if (!nodes.length) return;
+    writeMeta(nodes.map((item) => [`locked:${item.id}`, locked]));
+  };
+  const createFrame = () => {
+    if (!provider.writable) return;
+    const p = {
+      x: view.x + 600 / view.zoom - 260,
+      y: view.y + 400 / view.zoom - 170,
+    };
+    create(
+      "rect",
+      p,
+      {
+        text: "Frame",
+        geometry: { x: p.x, y: p.y, w: 520, h: 340 },
+      },
+      (id) => ({ [`frame:${id}`]: true }),
+    );
+  };
+  const applyFlowLayout = (style: "elbow" | "curve") => {
+    if (!provider.writable) return;
+    try {
+      const { geometries, connectorStyles } = layoutFlow(displayItems, style);
+      undo.current?.stopCapturing();
+      provider.doc.transact(() => {
+        for (const [id, geometry] of Object.entries(geometries))
+          shapes.get(id)?.set("geometry", geometry);
+        for (const [id, connectorStyle] of Object.entries(connectorStyles)) {
+          const shape = shapes.get(id);
+          const binding = shape?.get("binding") as BoardShape["binding"];
+          if (binding) shape?.set("binding", { ...binding, style: connectorStyle });
+        }
+      }, origin);
+      undo.current?.stopCapturing();
+      setItems(read(provider.doc));
+      setView(fitItems(read(provider.doc)));
+      setLayoutOpen(false);
+      setError("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "自动布局失败。");
+    }
+  };
+  const frameContents = (frame: Item) =>
+    items.filter((item) => {
+      if (item.id === frame.id || item.type === "connector" || item.frame) return false;
+      const cx = item.geometry.x + item.geometry.w / 2,
+        cy = item.geometry.y + item.geometry.h / 2;
+      return (
+        cx > frame.geometry.x &&
+        cx < frame.geometry.x + frame.geometry.w &&
+        cy > frame.geometry.y &&
+        cy < frame.geometry.y + frame.geometry.h
+      );
+    });
   const clearGuides = () =>
     setGuides((current) => (current.v.length || current.h.length ? { v: [], h: [] } : current));
   const snapToGuides = (
@@ -713,7 +1029,9 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     const nodes = items
       .filter((s) => s.type !== "connector")
       .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id));
-    const picked = new Set(nodes.filter((s) => ids.has(s.id)).map((s) => s.id));
+    const picked = new Set(
+      nodes.filter((s) => ids.has(s.id) && !itemLocked(s)).map((s) => s.id),
+    );
     if (!picked.size) return;
     const sequence = nodes.map((s) => s.id);
     if (mode === "front" || mode === "back") {
@@ -789,6 +1107,10 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       setCommentDraft("");
     });
   };
+  const appendMention = (name: string) =>
+    setCommentDraft((draft) => `${draft}${draft && !/\s$/.test(draft) ? " " : ""}@${name} `);
+  const appendReplyMention = (name: string) =>
+    setReplyDraft((draft) => `${draft}${draft && !/\s$/.test(draft) ? " " : ""}@${name} `);
   const toggleResolve = (thread: BoardThread) =>
     void commentAction(() =>
       api.patch(`/documents/${provider.docId}/threads/${thread.id}`, {
@@ -837,6 +1159,99 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
     }
     const index = open.findIndex((t) => t.id === activeThread);
     jumpThread(open[(index + 1) % open.length]);
+  };
+  useEffect(() => {
+    // Notification deep links: open the comment panel, focus the thread/shape.
+    if (deepLink.current) return;
+    const params = new URLSearchParams(window.location.search);
+    const threadId = params.get("thread");
+    const shapeId = params.get("shape");
+    if (!threadId && !shapeId) {
+      deepLink.current = true;
+      return;
+    }
+    const thread =
+      (threadId && threads.find((t) => t.id === threadId)) ||
+      (shapeId && threads.find((t) => threadShapeId(t) === shapeId)) ||
+      undefined;
+    if (thread) {
+      deepLink.current = true;
+      jumpThread(thread);
+      return;
+    }
+    const shape = shapeId ? items.find((s) => s.id === shapeId) : undefined;
+    if (shape) {
+      deepLink.current = true;
+      setTool("select");
+      setSelected(shape.id);
+      setSelectedIds(new Set([shape.id]));
+      setView((current) => {
+        const zoom = Math.max(0.05, Math.min(3, current.zoom));
+        return {
+          ...current,
+          x: shape.geometry.x + shape.geometry.w / 2 - 600 / zoom,
+          y: shape.geometry.y + shape.geometry.h / 2 - 400 / zoom,
+        };
+      });
+      setCommentsOpen(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threads, items]);
+  const shareUrl = (token: string) => `${window.location.origin}/share/${token}`;
+  const loadShares = async () => {
+    try {
+      const { data } = await api.get(`/documents/${provider.docId}/shares`);
+      setShareLinks(Array.isArray(data) ? data : []);
+      setShareError("");
+    } catch {
+      setShareError("分享列表加载失败，请稍后重试。");
+    }
+  };
+  const openShare = () => {
+    setShareOpen(true);
+    setShareError("");
+    void loadShares();
+  };
+  const createShareLink = async () => {
+    if (shareBusy) return;
+    setShareBusy(true);
+    setShareError("");
+    try {
+      const mermaid = provider.doc.getText("mermaid").toString();
+      const snapshot = displayItems.length
+        ? { view: "canvas", items: displayItems }
+        : { view: "mermaid", source: mermaid };
+      const { data } = await api.post(`/documents/${provider.docId}/shares`, {
+        kind: "BOARD",
+        snapshot,
+        expiresInDays: shareExpiry === "0" ? null : Number(shareExpiry),
+      });
+      setShareLinks((links) => [data, ...links]);
+      try {
+        await navigator.clipboard.writeText(shareUrl(data.token));
+        setShareCopied(data.token);
+        setTimeout(() => setShareCopied(""), 4000);
+      } catch {
+        setShareCopied("");
+      }
+    } catch (e: any) {
+      setShareError(e?.response?.data?.message || "创建分享链接失败，请稍后重试。");
+    } finally {
+      setShareBusy(false);
+    }
+  };
+  const revokeShareLink = async (token: string) => {
+    if (shareBusy) return;
+    setShareBusy(true);
+    setShareError("");
+    try {
+      await api.post(`/documents/${provider.docId}/shares/${token}/revoke`);
+      await loadShares();
+    } catch {
+      setShareError("撤销失败，请稍后重试。");
+    } finally {
+      setShareBusy(false);
+    }
   };
   const branch = (sibling = false) => {
     if (!active || active.type !== "mind") return;
@@ -1006,12 +1421,49 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
       setSelected(next.has(item.id) ? item.id : [...next][0] || "");
       return;
     }
+    if (itemLocked(item)) {
+      setSelectedIds(new Set([item.id]));
+      setSelected(item.id);
+      return;
+    }
+    if (item.group) {
+      const members = items.filter(
+        (s) => s.group === item.group && s.type !== "connector" && layerOf(s).visible,
+      );
+      setSelectedIds(new Set(members.map((s) => s.id)));
+      setSelected(item.id);
+      if (!provider.writable) return;
+      const movable = members.filter((s) => !itemLocked(s));
+      if (movable.length) {
+        groupDrag.current = {
+          start: point(e),
+          geometries: Object.fromEntries(movable.map((s) => [s.id, s.geometry])),
+        };
+        svg.current?.setPointerCapture(e.pointerId);
+      }
+      return;
+    }
+    if (item.frame) {
+      const children = frameContents(item).filter((s) => !itemLocked(s));
+      setSelectedIds(new Set([item.id, ...children.map((s) => s.id)]));
+      setSelected(item.id);
+      if (!provider.writable) return;
+      groupDrag.current = {
+        start: point(e),
+        geometries: Object.fromEntries(
+          [item, ...children].map((s) => [s.id, s.geometry]),
+        ),
+      };
+      svg.current?.setPointerCapture(e.pointerId);
+      return;
+    }
     if (!selectedIds.has(item.id)) {
       setSelectedIds(new Set([item.id]));
       setSelected(item.id);
     }
     if (!provider.writable) return;
     if (item.type === "connector") return;
+    if (itemLocked(item)) return;
     if (selectedIds.has(item.id) && selectedIds.size > 1) {
       const geometries = Object.fromEntries(
         items
@@ -1035,6 +1487,16 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
   const move = (e: React.PointerEvent<SVGSVGElement>) => {
     const p = point(e),
       d = drag.current;
+    const rotation = rotateDrag.current;
+    if (rotation) {
+      const angle = (Math.atan2(p.y - rotation.center.y, p.x - rotation.center.x) * 180) / Math.PI;
+      const degrees = ((rotation.startRotation + angle - rotation.startAngle) % 360 + 360) % 360;
+      rotation.latest = Math.round(degrees * 10) / 10;
+      setItems((current) =>
+        current.map((s) => (s.id === rotation.id ? { ...s, rotation: rotation.latest } : s)),
+      );
+      return;
+    }
     if (arrowStart.current) {
       setArrowDraft({
         x1: arrowStart.current.x,
@@ -1128,6 +1590,13 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
   };
   const finish = (e?: React.PointerEvent<SVGSVGElement>) => {
     clearGuides();
+    const rotation = rotateDrag.current;
+    if (rotation) {
+      rotateDrag.current = null;
+      if (rotation.latest !== undefined)
+        writeMeta([[`rotation:${rotation.id}`, rotation.latest]]);
+      return;
+    }
     const marqueeOrigin = marqueeStart.current;
     if (marqueeOrigin) {
       marqueeStart.current = null;
@@ -1210,7 +1679,12 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
   };
   const startConnect = (e: React.PointerEvent<SVGCircleElement>, item: Item) => beginLink(e, item);
   const remove = () => {
-    const ids = selectedIds.size ? [...selectedIds] : selected ? [selected] : [];
+    const ids = (selectedIds.size ? [...selectedIds] : selected ? [selected] : []).filter(
+      (id) => {
+        const item = items.find((s) => s.id === id);
+        return !item || !itemLocked(item);
+      },
+    );
     if (!provider.writable || !ids.length) return;
     const targets = new Set(ids);
     undo.current?.stopCapturing();
@@ -1273,6 +1747,60 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           onClick={layout}
         >
           自动布局导图
+        </Button>
+        <span className="h-6 w-px bg-slate-200" />
+        <Button
+          size="sm"
+          variant={layersOpen ? "secondary" : "ghost"}
+          disabled={!provider.writable}
+          onClick={() => {
+            setLayersOpen((v) => !v);
+            setShapePanel(false);
+          }}
+        >
+          <Layers size={14} /> 图层
+        </Button>
+        <Button size="sm" variant="ghost" disabled={!provider.writable} onClick={createFrame}>
+          <Frame size={14} /> Frame
+        </Button>
+        <div className="relative">
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={!provider.writable}
+            onClick={() => setLayoutOpen((v) => !v)}
+          >
+            <GitBranch size={14} /> 布局流程
+          </Button>
+          {layoutOpen && (
+            <div className="absolute left-0 top-9 z-40 w-40 rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+              <button
+                type="button"
+                className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-700 hover:bg-indigo-50"
+                onClick={() => applyFlowLayout("elbow")}
+              >
+                正交布局
+              </button>
+              <button
+                type="button"
+                className="block w-full rounded-lg px-3 py-2 text-left text-xs text-slate-700 hover:bg-indigo-50"
+                onClick={() => applyFlowLayout("curve")}
+              >
+                曲线布局
+              </button>
+            </div>
+          )}
+        </div>
+        <Button size="sm" variant="ghost" onClick={() => setExportOpen(true)}>
+          <FileImage size={14} /> 导出图片
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          disabled={!["OWNER", "EDITOR"].includes(provider.role)}
+          onClick={openShare}
+        >
+          <Share2 size={14} /> 分享
         </Button>
         <span className="h-6 w-px bg-slate-200" />
         <Button
@@ -1343,7 +1871,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
         >
           ＋
         </Button>
-        <Button size="sm" variant="ghost" onClick={() => setView(fitItems(items))}>
+        <Button size="sm" variant="ghost" onClick={() => setView(fitItems(displayItems))}>
           <LayoutGrid size={14} /> 适应全部
         </Button>
         <span className="ml-auto flex items-center gap-1">
@@ -1587,6 +2115,39 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           <Button size="sm" variant="ghost" disabled={!provider.writable} onClick={() => changeOrder("back")}>
             置底
           </Button>
+          <span className="h-5 w-px bg-indigo-200" />
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={!provider.writable || selectedNodes().length < 2}
+            onClick={groupSelection}
+          >
+            <Group size={13} /> 分组
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={!provider.writable}
+            onClick={ungroupSelection}
+          >
+            <Ungroup size={13} /> 取消分组
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={!provider.writable}
+            onClick={() => lockSelection(true)}
+          >
+            <Lock size={13} /> 锁定
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={!provider.writable}
+            onClick={() => lockSelection(false)}
+          >
+            <Unlock size={13} /> 解锁
+          </Button>
           <Button size="sm" variant="ghost" disabled={!provider.writable} onClick={duplicateSelection}>
             复制所选
           </Button>
@@ -1656,7 +2217,10 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
             aria-label="更多图元"
             title="更多图元"
             aria-expanded={shapePanel}
-            onClick={() => setShapePanel((value) => !value)}
+            onClick={() => {
+              setShapePanel((value) => !value);
+              setLayersOpen(false);
+            }}
             className={`grid size-10 shrink-0 place-items-center rounded-xl transition ${
               shapePanel
                 ? "bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-200"
@@ -1668,7 +2232,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
         </nav>
         <div className="relative min-w-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           {shapePanel && (
-            <div className="absolute left-3 top-3 z-20 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+            <div className="absolute left-3 top-3 z-20 flex max-h-[70%] w-72 flex-col rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
               <div className="flex items-center justify-between px-1 pb-1.5">
                 <p className="text-xs font-semibold text-slate-700">更多图元</p>
                 <button
@@ -1680,8 +2244,31 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
                   ×
                 </button>
               </div>
-              <div className="grid grid-cols-4 gap-1">
-                {shapeCatalog.map((s) => (
+              <label className="relative mb-2 block">
+                <Search
+                  size={13}
+                  className="pointer-events-none absolute left-2 top-2.5 text-slate-400"
+                />
+                <input
+                  aria-label="搜索图元"
+                  value={shapeSearch}
+                  onChange={(e) => setShapeSearch(e.target.value)}
+                  placeholder="搜索 UML、ERD、K8s、BPMN…"
+                  className="w-full rounded-lg border border-slate-200 py-1.5 pl-7 pr-2 text-xs"
+                />
+              </label>
+              <div className="grid min-h-0 grid-cols-4 gap-1 overflow-y-auto">
+                {shapeCatalog
+                  .filter((s) => {
+                    const query = shapeSearch.trim().toLowerCase();
+                    return (
+                      !query ||
+                      (s.label + " " + s.type + " " + (s.keywords || "") + " " + s.group)
+                        .toLowerCase()
+                        .includes(query)
+                    );
+                  })
+                  .map((s) => (
                   <button
                     key={s.type}
                     draggable={provider.writable}
@@ -1710,6 +2297,114 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+          {layersOpen && (
+            <div className="absolute left-3 top-3 z-20 w-64 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+              <div className="flex items-center justify-between px-1 pb-1.5">
+                <p className="text-xs font-semibold text-slate-700">图层</p>
+                <button
+                  type="button"
+                  aria-label="关闭图层面板"
+                  onClick={() => setLayersOpen(false)}
+                  className="rounded-md px-1 text-sm text-slate-400 hover:bg-slate-100"
+                >
+                  ×
+                </button>
+              </div>
+              <Button
+                size="sm"
+                variant="secondary"
+                className="w-full"
+                disabled={!provider.writable}
+                onClick={addLayer}
+              >
+                + 新建图层
+              </Button>
+              <div className="mt-2 space-y-1">
+                {[...layers].reverse().map((layer) => {
+                  const count = items.filter(
+                    (item) => (item.layer || "default") === layer.id,
+                  ).length;
+                  return (
+                    <div
+                      key={layer.id}
+                      className={`flex items-center gap-1 rounded-lg border px-1.5 py-1 ${
+                        activeLayer === layer.id
+                          ? "border-indigo-200 bg-indigo-50/70"
+                          : "border-transparent hover:bg-slate-50"
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        className="min-w-0 flex-1 truncate text-left text-xs text-slate-700"
+                        onClick={() => setActiveLayer(layer.id)}
+                        title={layer.name}
+                      >
+                        {layer.name}
+                        <span className="ml-1 text-[10px] text-slate-400">{count}</span>
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`${layer.visible ? "隐藏" : "显示"} ${layer.name}`}
+                        disabled={!provider.writable}
+                        onClick={() => {
+                          if (layer.visible && selected) {
+                            const activeItem = items.find((item) => item.id === selected);
+                            if (activeItem && (activeItem.layer || "default") === layer.id) {
+                              setSelected("");
+                              setSelectedIds(new Set());
+                            }
+                          }
+                          updateLayer(layer.id, { visible: !layer.visible });
+                        }}
+                        className="rounded p-1 text-slate-500 hover:bg-white disabled:opacity-40"
+                      >
+                        {layer.visible ? <Eye size={13} /> : <EyeOff size={13} />}
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`${layer.locked ? "解锁" : "锁定"} ${layer.name}`}
+                        disabled={!provider.writable}
+                        onClick={() => updateLayer(layer.id, { locked: !layer.locked })}
+                        className="rounded p-1 text-slate-500 hover:bg-white disabled:opacity-40"
+                      >
+                        {layer.locked ? <Lock size={13} /> : <Unlock size={13} />}
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`上移 ${layer.name}`}
+                        disabled={!provider.writable}
+                        onClick={() => moveLayer(layer.id, 1)}
+                        className="rounded p-1 text-slate-500 hover:bg-white disabled:opacity-40"
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`下移 ${layer.name}`}
+                        disabled={!provider.writable}
+                        onClick={() => moveLayer(layer.id, -1)}
+                        className="rounded p-1 text-slate-500 hover:bg-white disabled:opacity-40"
+                      >
+                        ↓
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="mt-2 w-full"
+                disabled={!provider.writable || !selectedNodes().length}
+                onClick={assignToLayer}
+              >
+                移入当前图层
+              </Button>
+              <p className="mt-1 px-1 text-[10px] leading-4 text-slate-400">
+                面板顶部为最上层；隐藏或锁定图层会影响其中所有图元。
+              </p>
             </div>
           )}
       <svg
@@ -1750,6 +2445,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
             marqueeStart.current = null;
             setMarquee(null);
             groupDrag.current = null;
+            rotateDrag.current = null;
             clearGuides();
           }
         }}
@@ -1783,6 +2479,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           marqueeStart.current = null;
           setMarquee(null);
           groupDrag.current = null;
+          rotateDrag.current = null;
           clearGuides();
           setItems(read(provider.doc));
         }}
@@ -1797,6 +2494,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           setMarquee(null);
           groupDrag.current = null;
           drag.current = undefined;
+          rotateDrag.current = null;
           clearGuides();
         }}
         onPointerLeave={() => {
@@ -1817,7 +2515,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           pointerEvents="none"
         />
         <BoardDrawing
-          items={items}
+          items={displayItems}
           selected={selected}
           selectedIds={selectedIds}
           dimIds={dimIds}
@@ -1862,56 +2560,122 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
             ))}
           </g>
         )}
-        {active && selectedIds.size === 1 && active.type !== "connector" && provider.writable && (
+        {active && selectedIds.size === 1 && active.type !== "connector" && provider.writable && !itemLocked(active) && (
           <>
             {[
               ["top", active.geometry.x + active.geometry.w / 2, active.geometry.y],
               ["right", active.geometry.x + active.geometry.w, active.geometry.y + active.geometry.h / 2],
               ["bottom", active.geometry.x + active.geometry.w / 2, active.geometry.y + active.geometry.h],
               ["left", active.geometry.x, active.geometry.y + active.geometry.h / 2],
-            ].map(([side, cx, cy]) => (
-              <g key={String(side)}>
-                <circle
-                  data-testid="board-connect-hit"
-                  cx={Number(cx)}
-                  cy={Number(cy)}
-                  r={14 / view.zoom}
-                  fill="transparent"
-                  style={{ cursor: "crosshair" }}
-                  onPointerDown={(e) => startConnect(e, active)}
-                />
-                <circle
-                  data-testid="board-connect-handle"
-                  aria-label={`拖动连接：${active.text || "图形"}`}
-                  cx={Number(cx)}
-                  cy={Number(cy)}
-                  r={7 / view.zoom}
-                  fill="#ffffff"
-                  stroke="#4f46e5"
-                  strokeWidth={1.6 / view.zoom}
-                  pointerEvents="none"
-                />
-              </g>
-            ))}
-            <circle
-              data-testid="board-resize"
-              cx={active.geometry.x + active.geometry.w}
-              cy={active.geometry.y + active.geometry.h}
-              r={7 / view.zoom}
-              fill="#2563eb"
-              onPointerDown={(e) => {
-                e.stopPropagation();
-                undo.current?.stopCapturing();
-                drag.current = {
-                  id: active.id,
-                  mode: "resize",
-                  start: point(e),
-                  geometry: active.geometry,
-                  view,
-                };
-                svg.current?.setPointerCapture(e.pointerId);
-              }}
-            />
+            ].map(([side, cx, cy]) => {
+              const centerX = active.geometry.x + active.geometry.w / 2,
+                centerY = active.geometry.y + active.geometry.h / 2,
+                point = rotatePoint(
+                  centerX,
+                  centerY,
+                  Number(cx),
+                  Number(cy),
+                  active.rotation || 0,
+                );
+              return (
+                <g key={String(side)}>
+                  <circle
+                    data-testid="board-connect-hit"
+                    cx={point.x}
+                    cy={point.y}
+                    r={14 / view.zoom}
+                    fill="transparent"
+                    style={{ cursor: "crosshair" }}
+                    onPointerDown={(e) => startConnect(e, active)}
+                  />
+                  <circle
+                    data-testid="board-connect-handle"
+                    aria-label={`拖动连接：${active.text || "图形"}`}
+                    cx={point.x}
+                    cy={point.y}
+                    r={7 / view.zoom}
+                    fill="#ffffff"
+                    stroke="#4f46e5"
+                    strokeWidth={1.6 / view.zoom}
+                    pointerEvents="none"
+                  />
+                </g>
+              );
+            })}
+            {(() => {
+              const centerX = active.geometry.x + active.geometry.w / 2,
+                centerY = active.geometry.y + active.geometry.h / 2,
+                top = rotatePoint(
+                  centerX,
+                  centerY,
+                  centerX,
+                  active.geometry.y,
+                  active.rotation || 0,
+                ),
+                handle = rotatePoint(
+                  centerX,
+                  centerY,
+                  centerX,
+                  active.geometry.y - 30 / view.zoom,
+                  active.rotation || 0,
+                );
+              return (
+                <g>
+                  <line
+                    x1={top.x}
+                    y1={top.y}
+                    x2={handle.x}
+                    y2={handle.y}
+                    stroke="#4f46e5"
+                    strokeWidth={1.5 / view.zoom}
+                    pointerEvents="none"
+                  />
+                  <circle
+                    data-testid="board-rotate"
+                    aria-label="旋转图元"
+                    cx={handle.x}
+                    cy={handle.y}
+                    r={8 / view.zoom}
+                    fill="#ffffff"
+                    stroke="#4f46e5"
+                    strokeWidth={1.8 / view.zoom}
+                    style={{ cursor: "grab" }}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      const p = point(e);
+                      rotateDrag.current = {
+                        id: active.id,
+                        center: { x: centerX, y: centerY },
+                        startAngle: (Math.atan2(p.y - centerY, p.x - centerX) * 180) / Math.PI,
+                        startRotation: active.rotation || 0,
+                      };
+                      svg.current?.setPointerCapture(e.pointerId);
+                    }}
+                  />
+                </g>
+              );
+            })()}
+            {!active.rotation && (
+              <circle
+                data-testid="board-resize"
+                cx={active.geometry.x + active.geometry.w}
+                cy={active.geometry.y + active.geometry.h}
+                r={7 / view.zoom}
+                fill="#2563eb"
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                  undo.current?.stopCapturing();
+                  drag.current = {
+                    id: active.id,
+                    mode: "resize",
+                    start: point(e),
+                    geometry: active.geometry,
+                    view,
+                  };
+                  svg.current?.setPointerCapture(e.pointerId);
+                }}
+              />
+            )}
           </>
         )}
         {marquee && (
@@ -1976,7 +2740,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
             <circle cx={connecting.x} cy={connecting.y} r={4 / view.zoom} fill="#6366f1" />
           </g>
         )}
-        {items
+        {displayItems
           .filter((shape) => shape.type !== "connector")
           .map((shape) => {
             const list = shapeThreads.get(shape.id) || [];
@@ -2036,6 +2800,314 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
             </g>
           ))}
       </svg>
+      {shareOpen && (
+        <div
+          role="dialog"
+          aria-label="公开只读分享"
+          className="absolute left-1/2 top-4 z-40 w-[24rem] max-w-[calc(100%-1.5rem)] -translate-x-1/2 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl"
+        >
+          <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-2">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">公开只读分享</h2>
+              <p className="mt-0.5 text-[11px] leading-5 text-slate-500">
+                链接使用独立只读快照，不暴露组织内其他内容；可随时撤销。
+              </p>
+            </div>
+            <button
+              type="button"
+              aria-label="关闭分享面板"
+              className="rounded-md px-1 text-lg leading-none text-slate-400 hover:bg-slate-100"
+              onClick={() => setShareOpen(false)}
+            >
+              ×
+            </button>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
+            <label htmlFor="share-expiry" className="text-slate-600">
+              有效期
+            </label>
+            <select
+              id="share-expiry"
+              value={shareExpiry}
+              onChange={(e) => setShareExpiry(e.target.value as "0" | "1" | "7" | "30")}
+              className="rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+            >
+              <option value="1">1 天</option>
+              <option value="7">7 天</option>
+              <option value="30">30 天</option>
+              <option value="0">永久（可撤销）</option>
+            </select>
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={shareBusy}
+              onClick={createShareLink}
+            >
+              <Link2 size={13} /> {shareBusy ? "创建中…" : "创建链接"}
+            </Button>
+          </div>
+          {shareCopied && (
+            <p className="mt-2 rounded-lg bg-emerald-50 px-2 py-1.5 text-[11px] text-emerald-800">
+              链接已复制，可发送给外部查看者。
+            </p>
+          )}
+          {shareError && (
+            <p role="alert" className="mt-2 text-xs text-red-700">
+              {shareError}
+            </p>
+          )}
+          <div className="mt-3 max-h-60 space-y-2 overflow-y-auto">
+            {!shareLinks.length && (
+              <p className="py-4 text-center text-xs text-slate-400">还没有公开链接。</p>
+            )}
+            {shareLinks.map((link) => {
+              const revoked = Boolean(link.revoked_at);
+              const expired =
+                Boolean(link.expires_at) && new Date(link.expires_at).getTime() < Date.now();
+              return (
+                <div key={link.token} className="rounded-lg border border-slate-200 p-2 text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-mono text-[11px] text-slate-500">
+                      {shareUrl(link.token)}
+                    </span>
+                    <span
+                      className={`shrink-0 text-[10px] ${
+                        revoked
+                          ? "text-red-600"
+                          : expired
+                            ? "text-amber-600"
+                            : "text-emerald-700"
+                      }`}
+                    >
+                      {revoked
+                        ? "已撤销"
+                        : expired
+                          ? "已过期"
+                          : link.expires_at
+                            ? `${new Date(link.expires_at).toLocaleDateString("zh-CN")} 到期`
+                            : "永久"}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px]">
+                    <button
+                      type="button"
+                      className="inline-flex items-center gap-1 text-indigo-700 hover:underline"
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(shareUrl(link.token));
+                          setShareCopied(link.token);
+                          setTimeout(() => setShareCopied(""), 4000);
+                        } catch {
+                          setShareError("复制失败，请手动选择链接复制。");
+                        }
+                      }}
+                    >
+                      <Copy size={12} /> 复制
+                    </button>
+                    <a
+                      href={shareUrl(link.token)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-indigo-700 hover:underline"
+                    >
+                      预览
+                    </a>
+                    {!revoked && (
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 text-red-700 hover:underline"
+                        disabled={shareBusy}
+                        onClick={() => revokeShareLink(link.token)}
+                      >
+                        <Ban size={12} /> 撤销
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {exportOpen && (
+        <div
+          role="dialog"
+          aria-label="导出白板"
+          className="absolute left-1/2 top-4 z-40 w-[22rem] -translate-x-1/2 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xl"
+        >
+          <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+            <h2 className="text-sm font-semibold text-slate-900">导出与导入</h2>
+            <button
+              type="button"
+              aria-label="关闭导出面板"
+              className="rounded-md px-1 text-lg leading-none text-slate-400 hover:bg-slate-100"
+              onClick={() => setExportOpen(false)}
+            >
+              ×
+            </button>
+          </div>
+          <div className="mt-3 flex gap-1 rounded-xl bg-slate-100 p-1">
+            {(["png", "pdf"] as const).map((format) => (
+              <button
+                key={format}
+                type="button"
+                aria-pressed={exportFormat === format}
+                onClick={() => setExportFormat(format)}
+                className={`flex-1 rounded-lg px-3 py-1.5 text-xs font-medium transition ${
+                  exportFormat === format
+                    ? "bg-white text-slate-900 shadow-sm"
+                    : "text-slate-500"
+                }`}
+              >
+                {format.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <div className="mt-3 flex gap-2 text-xs">
+            <button
+              type="button"
+              aria-pressed={!exportSelected}
+              onClick={() => setExportSelected(false)}
+              className={`flex-1 rounded-lg border px-3 py-2 ${
+                !exportSelected
+                  ? "border-indigo-300 bg-indigo-50 text-indigo-800"
+                  : "border-slate-200 text-slate-600"
+              }`}
+            >
+              全部可见内容
+            </button>
+            <button
+              type="button"
+              aria-pressed={exportSelected}
+              disabled={!selectedIds.size}
+              onClick={() => setExportSelected(true)}
+              className={`flex-1 rounded-lg border px-3 py-2 disabled:opacity-40 ${
+                exportSelected
+                  ? "border-indigo-300 bg-indigo-50 text-indigo-800"
+                  : "border-slate-200 text-slate-600"
+              }`}
+            >
+              选中区域
+            </button>
+          </div>
+          <label className="mt-3 inline-flex items-center gap-2 text-xs text-slate-600">
+            <input
+              type="checkbox"
+              checked={exportScale === 2}
+              onChange={(e) => setExportScale(e.target.checked ? 2 : 1)}
+            />
+            2x 高清
+          </label>
+          <p className="mt-2 rounded-lg bg-slate-50 px-2 py-1.5 text-[11px] text-slate-500">
+            {exportArea
+              ? `${Math.round(exportArea.w * exportScale)} × ${Math.round(
+                  exportArea.h * exportScale,
+                )} px`
+              : "当前没有可导出的内容"}
+          </p>
+          {exportError && (
+            <p role="alert" className="mt-2 text-xs text-red-700">
+              {exportError}
+            </p>
+          )}
+          <div className="mt-3 flex gap-2">
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={exportBusy || !exportArea}
+              onClick={async () => {
+                setExportBusy(true);
+                setExportError("");
+                try {
+                  await exportBoard(displayItems as ExportShape[], selectedIds, {
+                    format: exportFormat,
+                    scale: exportScale,
+                    selectedOnly: exportSelected && selectedIds.size > 0,
+                    fileName: "collabspace-board",
+                  });
+                } catch (e) {
+                  setExportError(e instanceof Error ? e.message : "导出失败。");
+                } finally {
+                  setExportBusy(false);
+                }
+              }}
+            >
+              <FileImage size={14} /> {exportBusy ? "导出中…" : `导出 ${exportFormat.toUpperCase()}`}
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setExportOpen(false)}
+            >
+              取消
+            </Button>
+          </div>
+          <div className="mt-4 border-t border-slate-200 pt-3">
+            <p className="text-xs font-semibold text-slate-700">draw.io 互导</p>
+            <p className="mt-1 text-[11px] leading-5 text-slate-500">
+              导入保留图形、文字与连接线；导出 `.drawio` 可在 draw.io / diagrams.net 打开。
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs text-slate-600 hover:border-indigo-200 hover:bg-indigo-50/50">
+                <Upload size={13} /> 导入 .drawio
+                <input
+                  aria-label="导入 draw.io 文件"
+                  type="file"
+                  accept=".drawio,.xml,application/xml,text/xml"
+                  className="sr-only"
+                  disabled={!provider.writable || importBusy}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    if (!file) return;
+                    setImportBusy(true);
+                    setImportError("");
+                    try {
+                      if (file.size > 4_000_000) throw Error("文件超过 4MB，请先在 draw.io 精简。");
+                      const imported = parseDrawio(await file.text());
+                      if (shapes.size + imported.length > 500)
+                        throw Error("导入后超过 500 个图元，请先清理画布。");
+                      undo.current?.stopCapturing();
+                      provider.doc.transact(() => {
+                        for (const { id, ...data } of imported) {
+                          shapes.set(id, new Y.Map(Object.entries(data)));
+                          meta.set(`layer:${id}`, activeLayer);
+                        }
+                      }, origin);
+                      undo.current?.stopCapturing();
+                      setItems(read(provider.doc));
+                      setView(fitItems(read(provider.doc)));
+                      setExportOpen(false);
+                    } catch (error) {
+                      setImportError(error instanceof Error ? error.message : "导入失败。");
+                    } finally {
+                      setImportBusy(false);
+                    }
+                  }}
+                />
+              </label>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() =>
+                  downloadText(
+                    exportDrawio(displayItems),
+                    "collabspace-board.drawio",
+                    "application/xml",
+                  )
+                }
+              >
+                <FileDown size={13} /> 导出 .drawio
+              </Button>
+            </div>
+            {importError && (
+              <p role="alert" className="mt-2 text-xs text-red-700">
+                {importError}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
       {(commentsOpen || review) && (
         <aside
           aria-label="图元评论"
@@ -2092,6 +3164,21 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
                   placeholder="写下需要对齐的细节或待确认的问题…"
                   className="mt-1 w-full rounded-lg border border-amber-200 bg-white p-2 text-sm"
                 />
+                {mentionables.length > 0 && (
+                  <div className="mt-1 flex flex-wrap items-center gap-1">
+                    <span className="text-[10px] text-slate-500">提及：</span>
+                    {mentionables.slice(0, 8).map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => appendMention(m.name)}
+                        className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[11px] text-amber-900 hover:bg-amber-100"
+                      >
+                        @{m.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <Button
                   size="sm"
                   variant="secondary"
@@ -2195,6 +3282,21 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
                           onChange={(e) => setReplyDraft(e.target.value)}
                           className="w-full rounded-lg border border-slate-200 p-2 text-xs"
                         />
+                        {mentionables.length > 0 && (
+                          <div className="mt-1 flex flex-wrap items-center gap-1">
+                            <span className="text-[10px] text-slate-500">提及：</span>
+                            {mentionables.slice(0, 8).map((m) => (
+                              <button
+                                key={m.id}
+                                type="button"
+                                onClick={() => appendReplyMention(m.name)}
+                                className="rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] text-indigo-800 hover:bg-indigo-50"
+                              >
+                                @{m.name}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                         <div className="mt-1 flex gap-2">
                           <Button
                             size="sm"
@@ -2235,6 +3337,26 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
               {active.type}
             </span>
           </div>
+          {activeLocked && (
+            <div className="mb-2 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2 text-[11px] leading-5 text-amber-900">
+              <Lock size={13} className="mt-0.5 shrink-0" />
+              <span className="flex-1">
+                该图元已锁定，不能拖动或修改几何；仍可评论。
+                <button
+                  type="button"
+                  className="ml-1 font-medium underline"
+                  onClick={() => lockSelection(false)}
+                >
+                  解锁
+                </button>
+              </span>
+            </div>
+          )}
+          {active.frame && (
+            <p className="mb-2 rounded-lg bg-indigo-50 p-2 text-[11px] leading-5 text-indigo-800">
+              Frame：移动 Frame 会带走框内图元；超出边界的部分会被裁切。
+            </p>
+          )}
           {!active.binding && (
             <>
               {active.type !== "mind" && (
@@ -2243,7 +3365,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
                   <select
                     aria-label="图形类型"
                     value={active.type}
-                    disabled={!provider.writable}
+                    disabled={!provider.writable || activeLocked}
                     onChange={(e) =>
                       change(active.id, {
                         type: e.target.value as BoardShape["type"],
@@ -2282,7 +3404,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
                       defaultValue={Math.round(active.geometry[key])}
                       min={key === "x" || key === "y" ? -10000 : 20}
                       max={key === "x" || key === "y" ? 10000 : 2000}
-                      disabled={!provider.writable}
+                      disabled={!provider.writable || activeLocked}
                       onBlur={(e) => {
                         const value = e.currentTarget.valueAsNumber;
                         if (value !== active.geometry[key])
@@ -2301,7 +3423,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
               <Button
                 size="sm"
                 variant="secondary"
-                disabled={!provider.writable}
+                disabled={!provider.writable || activeLocked}
                 onClick={() => {
                   const { id, ...copy } = active;
                   create(
@@ -2326,19 +3448,70 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
               </Button>
               {active.type !== "connector" && (
                 <div className="mt-2 grid grid-cols-2 gap-1" aria-label="层级顺序">
-                  <Button size="sm" variant="ghost" disabled={!provider.writable} onClick={() => changeOrder("front")}>
+                  <Button size="sm" variant="ghost" disabled={!provider.writable || activeLocked} onClick={() => changeOrder("front")}>
                     <ChevronsUp size={13} /> 置顶
                   </Button>
-                  <Button size="sm" variant="ghost" disabled={!provider.writable} onClick={() => changeOrder("forward")}>
+                  <Button size="sm" variant="ghost" disabled={!provider.writable || activeLocked} onClick={() => changeOrder("forward")}>
                     <ArrowUp size={13} /> 上移
                   </Button>
-                  <Button size="sm" variant="ghost" disabled={!provider.writable} onClick={() => changeOrder("backward")}>
+                  <Button size="sm" variant="ghost" disabled={!provider.writable || activeLocked} onClick={() => changeOrder("backward")}>
                     <ArrowDown size={13} /> 下移
                   </Button>
-                  <Button size="sm" variant="ghost" disabled={!provider.writable} onClick={() => changeOrder("back")}>
+                  <Button size="sm" variant="ghost" disabled={!provider.writable || activeLocked} onClick={() => changeOrder("back")}>
                     <ChevronsDown size={13} /> 置底
                   </Button>
                 </div>
+              )}
+              {active.type !== "connector" && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="mt-2"
+                    disabled={!provider.writable}
+                    onClick={() => lockSelection(!activeLocked)}
+                  >
+                    {activeLocked ? <Unlock size={13} /> : <Lock size={13} />}
+                    {activeLocked ? "解锁图元" : "锁定图元"}
+                  </Button>
+                  <div className="mt-2 grid grid-cols-2 gap-2">
+                  <label className="text-xs">
+                    旋转角度
+                    <input
+                      key={`${active.id}:rotation:${active.rotation || 0}`}
+                      type="number"
+                      aria-label="旋转角度"
+                      min={0}
+                      max={359}
+                      defaultValue={Math.round(active.rotation || 0)}
+                      disabled={!provider.writable || activeLocked}
+                      onBlur={(e) => {
+                        const value = Number(e.currentTarget.value);
+                        if (!Number.isFinite(value)) return;
+                        const next = Math.max(0, Math.min(359, value));
+                        writeMeta([[`rotation:${active.id}`, next]]);
+                      }}
+                      className="mt-1 block w-full rounded-lg border border-slate-200 bg-white p-2 text-sm"
+                    />
+                  </label>
+                  <label className="text-xs">
+                    所属图层
+                    <select
+                      aria-label="所属图层"
+                      value={active.layer || "default"}
+                      disabled={!provider.writable || activeLocked}
+                      onChange={(e) => writeMeta([[`layer:${active.id}`, e.target.value]])}
+                      className="mt-1 block w-full rounded-lg border border-slate-200 bg-white p-2 text-sm"
+                    >
+                      {layers.map((layer) => (
+                        <option key={layer.id} value={layer.id}>
+                          {layer.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  </div>
+                </>
               )}
             </>
           )}
@@ -2381,7 +3554,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
               aria-label="图形文字"
               ref={textEditor}
               maxLength={2000}
-              disabled={!provider.writable}
+              disabled={!provider.writable || activeLocked}
               value={active.text}
               onChange={(e) => change(active.id, { text: e.target.value })}
               className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-2 text-sm"
@@ -2391,7 +3564,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
             颜色
             <select
               aria-label="图形颜色"
-              disabled={!provider.writable}
+              disabled={!provider.writable || activeLocked}
               value={active.fill}
               onChange={(e) =>
                 change(active.id, {
@@ -2421,6 +3594,20 @@ function BoardWorkspace({ provider }: { provider: DocumentProvider }) {
   const [mode, setMode] = useState(() =>
     provider.doc.getMap("shapes").size ? "canvas" : "mermaid",
   );
+  const modeTouched = useRef(false);
+  useEffect(() => {
+    const shapes = provider.doc.getMap("shapes");
+    const sync = () => {
+      if (!shapes.size) return;
+      const params = new URLSearchParams(window.location.search);
+      const anchored = Boolean(params.get("shape") || params.get("thread"));
+      // Newly synced or deep-linked boards open on the canvas, where anchors live.
+      if (anchored || !modeTouched.current) setMode("canvas");
+    };
+    sync();
+    shapes.observe(sync);
+    return () => shapes.unobserve(sync);
+  }, [provider]);
   const [convertMessage, setConvertMessage] = useState("");
   const convertToCanvas = () => {
     try {
@@ -2464,7 +3651,10 @@ function BoardWorkspace({ provider }: { provider: DocumentProvider }) {
           <button
             type="button"
             aria-pressed={mode === "canvas"}
-            onClick={() => setMode("canvas")}
+            onClick={() => {
+              modeTouched.current = true;
+              setMode("canvas");
+            }}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
               mode === "canvas" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
             }`}
@@ -2474,7 +3664,10 @@ function BoardWorkspace({ provider }: { provider: DocumentProvider }) {
           <button
             type="button"
             aria-pressed={mode === "mermaid"}
-            onClick={() => setMode("mermaid")}
+            onClick={() => {
+              modeTouched.current = true;
+              setMode("mermaid");
+            }}
             className={`rounded-lg px-3 py-1.5 text-xs font-medium transition ${
               mode === "mermaid" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
             }`}

@@ -318,6 +318,36 @@ export class DocumentsController implements OnModuleDestroy, OnModuleInit {
   ) {
     return this.run(o, u, "versions", id, before);
   }
+  @Get(":id/mentionable") mentionable(
+    @CurrentOrg() o: OrgContext,
+    @CurrentUser() u: { id: string },
+    @Param("id") id: string,
+  ) {
+    return this.run(o, u, "mentionable", id);
+  }
+  @Get(":id/shares") shares(
+    @CurrentOrg() o: OrgContext,
+    @CurrentUser() u: { id: string },
+    @Param("id") id: string,
+  ) {
+    return this.run(o, u, "shares", id);
+  }
+  @Post(":id/shares") share(
+    @CurrentOrg() o: OrgContext,
+    @CurrentUser() u: { id: string },
+    @Param("id") id: string,
+    @Body() b: any,
+  ) {
+    return this.run(o, u, "createShare", id, b);
+  }
+  @Post(":id/shares/:token/revoke") revokeShare(
+    @CurrentOrg() o: OrgContext,
+    @CurrentUser() u: { id: string },
+    @Param("id") id: string,
+    @Param("token") token: string,
+  ) {
+    return this.run(o, u, "revokeShare", id, token);
+  }
   @Post(":id/versions") version(
     @CurrentOrg() o: OrgContext,
     @CurrentUser() u: { id: string },

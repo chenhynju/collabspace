@@ -151,6 +151,12 @@ NestJS API
 - 图元评论：复用文档评论表与权限，锚点编码为 `shape:<图元ID>`；评论正文、回复、解决状态与审计写入 `collab_thread` / `collab_reply`，协作文档元数据失效时刷新。
 - 评审模式：顶部评论徽标显示待处理数量；面板支持定位、下一处待处理、解决/重开与回复；无待处理评论的图元以 0.3 不透明度弱化，不改变编辑权限。
 - 白板 AI Agent：从已保存白板读取选区，生成受约束操作，用户确认后单次 Yjs 事务提交并等待 ACK。
+- 导出：从画布生成 SVG 再转 PNG（2x 像素比）或 PDF；范围可选选中区域或全部；保留文字、便签、箭头与中文字体，导出是只读操作。
+- 持久布局：分组、锁定、旋转写入 `boardMeta`（`group|locked|rotation|frame|layer:<id>`）；刷新与第二会话从 Y.Doc 恢复。锁定图元在命中层被跳过拖动/改字，但评论锚点仍可选中。
+- Frame 与图层：Frame 在图元层裁切其包围盒内内容并随之整体移动；图层以 `layers` JSON 存于 `boardMeta`，显隐/锁定/排序持久化，隐藏图层不进入命中测试与导出。
+- 自动布局：读取连接线构建有向图，按最长路径分层、同层均分并留间距避免重叠；走线支持正交与曲线，整次布局在单次事务内提交，一次撤销回退。
+- 形状库：扩展 UML（类/时序）、ERD、网络设备、云厂商、K8s、BPMN 核心图形，图元目录支持关键词过滤。
+- `.drawio`：解析 mxGraph XML 的图形/文字/连接线映射为白板图元；导出生成可再次导入的 mxGraph，作为迁移与逃生通道。
 
 ### 6.4 白板 AI 操作协议
 
@@ -217,6 +223,8 @@ NestJS API
 - 个人通知不依赖先加入目标组织；通知中心聚合邀请、系统消息与业务提醒。
 - 邮件通过 Resend：注册验证、邀请、项目邮件；合成域名只落日志供测试读取。
 - 多项目回调验签、业务分流、持久化 outbox 与幂等，防止重复投递。
+- 评论 @提及：`GET /documents/:id/mentionable` 只返回对文档有权限且状态正常的成员；评论/回复写入时由 `@collabspace/store` 解析 `@Name` 并写入 `collab_board_notification`（排除操作者），通知中心以 `board_mention` 合并展示，`link` 携带 `thread`/`shape` 深链；前端打开时自动切到画布并选中图元。
+- 公开分享：`POST /documents/:id/shares` 写入创建时 JSON 快照（`collab_share`），可选 1–30 天到期；公开读取走 `GET /shares/:token`（`@Public`），数据库以 `app.share_public='on'` 的独立 RLS 策略按 token 读取，不暴露实时 Y.Doc 或组织内其他资源；`POST /documents/:id/shares/:token/revoke` 撤销，外部分享与内部 ACL 分离。
 
 ## 10. 搜索、审计与监控
 
