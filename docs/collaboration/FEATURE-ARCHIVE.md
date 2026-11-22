@@ -1,7 +1,7 @@
 # CollabSpace 功能归档
 
 > 更新日期：2026-11-22 ｜ 生产站点：https://collabspace.purelamp.uk
-> 当前发布：前端 `collabspace-ca5sq74m2-purelamp.vercel.app`（已别名）；API 镜像 `collabspace-api:api-r20261121-11`（`sha256:527038532857a3a221902719833c0d17fcc7cc15a9c977ed0b2d900d59b1a126`）；提交 `4da42cd`；标签 `collabspace-20261122-smart-guides`、`collabspace-20261122-multiselect`、`collabspace-20261122-arrow`、`collabspace-20261122-docs`、`collabspace-20261121-board-ai`。
+> 当前发布：前端 `collabspace-ca5sq74m2-purelamp.vercel.app`（已别名）；API 镜像 `collabspace-api:api-r20261121-11`（`sha256:527038532857a3a221902719833c0d17fcc7cc15a9c977ed0b2d900d59b1a126`）；提交 `1cf06c8`；标签 `collabspace-20261122-review-comments`、`collabspace-20261122-smart-guides`、`collabspace-20261122-multiselect`、`collabspace-20261122-arrow`、`collabspace-20261122-docs`、`collabspace-20261121-board-ai`。
 > 本文是“已完成功能”的唯一归档入口。功能完成并通过验收后，必须同时更新本文、对应 evidence 和 README 状态；未验证的内容不得写成已上线。
 
 ## 状态口径

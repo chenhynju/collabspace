@@ -107,7 +107,7 @@ node node_modules/@playwright/test/cli.js test
 - 生产站点：https://collabspace.purelamp.uk
 - 前端部署：`collabspace-ca5sq74m2-purelamp.vercel.app`（已别名）
 - API 镜像：`collabspace-api:api-r20261121-11`
-- 提交：`4da42cd`；标签：`collabspace-20261122-smart-guides`、`collabspace-20261122-multiselect`、`collabspace-20261122-arrow`、`collabspace-20261122-docs`、`collabspace-20261121-board-ai`
+- 提交：`1cf06c8`；标签：`collabspace-20261122-review-comments`、`collabspace-20261122-smart-guides`、`collabspace-20261122-multiselect`、`collabspace-20261122-arrow`、`collabspace-20261122-docs`、`collabspace-20261121-board-ai`
 
 ### 已上线
 
