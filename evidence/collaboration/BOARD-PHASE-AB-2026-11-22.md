@@ -70,3 +70,13 @@ PHASE_B_PROBE {"online":true,"header":"已保存到服务器 · OWNER | 陈知�
 - 公开分享只提供只读快照，不提供外部实时协作；复杂渐变/图片导出按画布能力近似。
 - `.drawio` 以图形/文字/连接线的迁移为目标，不承诺 Visio 全兼容。
 - 自动布局的连线走向为启发式（正交/曲线），极端密集图可能需要手动微调。
+
+## api-r20261122-02 再发布核验（2026-11-22）
+
+- 发布源码固定为 `22cb45ce592501a98124db2b0d9b2e68aa4d546f`（标签 `collabspace-20261122-board-phase-ab`）。发布工作树中的 3 个未提交旧文件覆盖未纳入构建，也未被还原或删除。
+- 不可变源码归档：`.test-runs/board/collabspace-22cb45c-source.tgz`，SHA-256 `F7A5A37910FF33D5B0E88D8B3CC5E820007B7AE93B907A1E3B814F04F8BCE6F5`。
+- Vercel 生产部署 `dpl_3ThTHJ9cogELsNWoLNdJs2d4S4QZ`：`Ready`，生产构建完成 TypeScript 检查，别名包含 `https://collabspace.purelamp.uk`。
+- API/WS 镜像分别为 `collabspace-api:api-r20261122-02`、`collabspace-ws:api-r20261122-02`。公开健康检查与 WS readiness 均通过，两个容器均为 `healthy`、`RESTARTS=0`、`OOM=false`。
+- Phase A 重新实跑通过：`docId=38081a43-972d-4646-895e-81e444b7b4e0`；分组、锁定、旋转、Frame、图层、布局撤销、K8s 搜索、PNG/PDF 与 drawio 往返结果均符合上表断言。
+- Phase B 重新实跑通过：`docId=862ecc10-9b3b-4d6b-9263-c3a05a29b684`；越权不可提及、授权后候选、通知未读/已读、深链、公开只读和撤销均符合上表断言。
+- 标准账号目录只读核验：6 个合成账号均为 `NORMAL` 且成员关系为 `ACTIVE`；Acme 含 OWNER/ADMIN/MEMBER，Globex 含 OWNER/MEMBER，平台运营空间含平台超管兼 OWNER。未读取或输出密码、Token、连接串。
