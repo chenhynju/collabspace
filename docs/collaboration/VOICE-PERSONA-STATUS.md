@@ -36,7 +36,7 @@
 - 继续融入现有系统：NestJS/TypeScript API、Next.js/React/Tailwind UI、Prisma与原生SQL、PostgreSQL组织+actor RLS、现有鉴权/审计和私有FILE附件。没有独立部署第二套业务系统。
 - 新模块：`apps/api/src/modules/voice`；前端`components/voice`及`components/personas`；数据库`packages/collab-store/voice.sql`。状态写入权威在API/数据库，形象不能改变权限或冒充Agent身份。
 - 浏览器MediaRecorder/Web Audio转PCM；Azure REST为已实现的语音适配器；Three.js 0.180.0、three-vrm 3.5.5；BullMQ 5.61.0为关闭的可选队列。真人供应商未锁定，不引入新常驻服务或付费资源。
-- 正式前端Vercel构建；现有服务器API限制384MiB/1CPU，WS与Office沿用。当前容量未触发迁移43.130.127.57的条件，资源采样见发布报告。
+- 正式前端Vercel构建；现有服务器API限制384MiB/1CPU，WS与Office沿用。当前容量未触发迁移office-host.example.invalid的条件，资源采样见发布报告。
 
 ## 待完成顺序和验收标准
 
