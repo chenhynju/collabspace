@@ -2258,6 +2258,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
               <div className="space-y-1">
                 <button
                   type="button"
+                  aria-label="流程图模板"
                   disabled={!provider.writable}
                   onClick={() => {
                     template(false);
@@ -2272,6 +2273,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
                 </button>
                 <button
                   type="button"
+                  aria-label="思维导图模板"
                   disabled={!provider.writable}
                   onClick={() => {
                     template(true);
@@ -2286,6 +2288,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
                 </button>
                 <button
                   type="button"
+                  aria-label="Mermaid 源码"
                   onClick={() => {
                     setSourceOpen((v) => !v);
                     setTemplatePanel(false);
