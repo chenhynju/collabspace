@@ -2,7 +2,7 @@
 
 当前前端为最终复核部署`dpl_3Ab9wM6uNvN9G79qA6m85xnmDfSv`，API仍为r20261025-04；下方按发布阶段保留历史身份。源码首个归档为`6ece7c1`/`collabspace-20261025-voice`，后续自测补充使用`collabspace-20261025-voice-selftest`标签。最终[功能清单](../../docs/collaboration/VOICE-PERSONA-STATUS.md)、[逐项自测](VOICE-SELFTEST-2026-10-25.md)为当前验收入口。
 
-2026-10-25，用户明确授权更新现有站点，并要求关注服务器CPU、内存和磁盘；资源不足时允许迁移到43.130.127.57。本次增量部署余量足够，未迁移项目，未修改其他项目、DNS或Office/正文WS服务。
+2026-10-25，用户明确授权更新现有站点，并要求关注服务器CPU、内存和磁盘；资源不足时允许迁移到office-host.example.invalid。本次增量部署余量足够，未迁移项目，未修改其他项目、DNS或Office/正文WS服务。
 
 ## 运行身份
 
@@ -15,7 +15,7 @@
 
 ## 服务器资源与部署方式
 
-现服务器170.106.161.82：2核，3723MiB内存，约59GiB根盘，承载多个项目。所有检查和操作仅针对CollabSpace，不执行共享Docker prune。
+现服务器app-host.example.invalid：2核，3723MiB内存，约59GiB根盘，承载多个项目。所有检查和操作仅针对CollabSpace，不执行共享Docker prune。
 
 | 时点 | 可用内存 | 根盘可用/使用率 | 负载/CPU观察 | API内存 |
 | --- | --- | --- | --- | --- |
@@ -67,7 +67,7 @@ Swap约820MiB已使用，因此避免服务器编译和新增常驻worker。保�
 - `scripts/verify-voice-online.cjs`通过显式使用本机既有代理完成正式API验证：登录后语音状态与human身份、未配置TTS返回503、跨组织403、真实Linux DOCX提取合成文件。证据`voice-online-api.json`。无模型、付费语音或真实发信。
 - 最终前端候选`https://collabspace-6eea9z4i4-purelamp.vercel.app`，`dpl_3Ab9wM6uNvN9G79qA6m85xnmDfSv`，inspect Ready并promote成功。122文件快照内容哈希仍为`815df1b6883a1ea250d917b6c6da1f44878387aec1a5e93e92a36e928e9f93f2`，与上次发布相同；快照`.test-runs/deploy/voice-web-r20261025-05`。
 - 后端最新编译的9个增量JS与已部署r20261025-04清单逐项一致，保留相同镜像和容器；没有重复迁移或重启。现API仍为上文r04。回退前端优先使用上一成功部署`dpl_G4xzHfAg49G6mtaBFRvAgfNZJkm6`。
-- 服务器再次核查：MemAvailable1723MiB、磁盘9.0GiB/85%、load1/5/15为1.25/0.74/0.76；API CPU2.78%、内存71.32MiB/384MiB。ready的PG/Redis为up，Office=true，API OOM=false、restart=0。仍未触发43.130.127.57迁移条件。
+- 服务器再次核查：MemAvailable1723MiB、磁盘9.0GiB/85%、load1/5/15为1.25/0.74/0.76；API CPU2.78%、内存71.32MiB/384MiB。ready的PG/Redis为up，Office=true，API OOM=false、restart=0。仍未触发office-host.example.invalid迁移条件。
 - 归档前检查779个可归档文件，未发现私钥或非example的.env文件。源码压缩归档与Git标签在本轮验收后生成，私有测试凭据及.test-runs不进入Git源码。
 - 切换完成后，通过显式本机代理在沙箱外复测正式域名：`COLLAB_ACCEPTANCE_PROXY=http://127.0.0.1:6382 COLLAB_BROWSER_CONFIG=.test-runs/deploy/online-config.json VOICE_ONLINE_ACCEPTANCE=1 node node_modules/@playwright/test/cli.js test tests/browser/voice-persona-online.spec.cjs --config playwright.config.cjs --reporter=list --output=.test-runs/voice-persona-online-final-proxy`，**1/1通过，测试1.5分钟、总计1.7分钟**。`.last-run.json`为passed，failedTests为空。两账号原音收发/鉴权下载、重放幂等、组织拒绝、3D偏好持久化与恢复、云服务禁用、邮件仅确认预览全部通过；截图已更新。直连失败后使用既有代理成功，不修改生产网络配置。
 - 归档标签采用`collabspace-20261025-voice`，源码压缩包输出到`.test-runs/archives/collabspace-20261025-voice.tar.gz`；对应提交、SHA256和远端核验结果另存同目录manifest，避免归档自引用。归档只包含Git跟踪源码与验收材料。
