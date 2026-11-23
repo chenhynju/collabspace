@@ -18,7 +18,7 @@ PASSED：API构建；专用4项测试（真实Svix签名、篡改/过期拒绝�
 
 ## 两项目适配及真实邮件续验收
 
-用户已明确授权两个项目回归后部署。billandcharge提交f23280dea6252698ef34c2eebf6bf5c6c9866655已推送原codex/plan-entitlements分支；API sandbox-mail-router-v8上线43.130.127.57，镜像sha256:c046c7d36a1896f0683bab7c07afbce4afdbdbbf06508f617a76bf1453466924。备份位于该项目backups/pre-mail-router-v8，数据库目录已校验，未跑迁移或真实支付，旧image/config保留。原有其他人的AGENTS/README/未跟踪备忘录均未纳入本次提交。
+用户已明确授权两个项目回归后部署。billandcharge提交f23280dea6252698ef34c2eebf6bf5c6c9866655已推送原codex/plan-entitlements分支；API sandbox-mail-router-v8上线office-host.example.invalid，镜像sha256:c046c7d36a1896f0683bab7c07afbce4afdbdbbf06508f617a76bf1453466924。备份位于该项目backups/pre-mail-router-v8，数据库目录已校验，未跑迁移或真实支付，旧image/config保留。原有其他人的AGENTS/README/未跟踪备忘录均未纳入本次提交。
 
 计费单元54/54。完整隔离PG/HTTP211/211：首次退信测试借用前序已取消邮件夹具而失败，已改独立SUCCEEDED夹具并保留原业务断言，重新在全新目录验收。线上原回调：已验签collabspace/portfolio未知邮件各201忽略，未分类未知邮件仍503重试；内部路由正确签名未知邮件503（通过鉴权后未找到本地关联），错误项目/过期签名401。
 

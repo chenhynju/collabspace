@@ -2,7 +2,7 @@
 
 Office已经按用户明确要求上线，不再是只有隔离开发。正式报告：evidence/collaboration/OFFICE-ONLINE-2026-10-22.md；机器元数据 office-online-2026-10-22.json。
 
-后端r20261022-02/641693b，旧机170.106.161.82；最终前端c40b2ae，Vercel dpl_Gac3sEtHxoWCgvHXJtqjwxWZh2iy，正式collabspace.purelamp.uk。Office引擎新机43.130.127.57原collabspace-office-dev独立容器，回环3390。旧机collabspace-office-link.service持续SSH连接，远端无特权nologin账号只准转发3390，禁止远程监听和shell。旧机回环/Docker私网3396，公网API站点/office-engine路径，callback走正式APIv1。不依赖本机开发隧道。
+后端r20261022-02/641693b，旧机app-host.example.invalid；最终前端c40b2ae，Vercel dpl_Gac3sEtHxoWCgvHXJtqjwxWZh2iy，正式collabspace.purelamp.uk。Office引擎新机office-host.example.invalid原collabspace-office-dev独立容器，回环3390。旧机collabspace-office-link.service持续SSH连接，远端无特权nologin账号只准转发3390，禁止远程监听和shell。旧机回环/Docker私网3396，公网API站点/office-engine路径，callback走正式APIv1。不依赖本机开发隧道。
 
 线上Office三格式一轮3/3（两编辑者+一只读）；最后前端两账号再次打开原生Word并同时显示在线；下载内容、微软12.0保存/新实例重开3/3通过。原六条业务初轮4过2失败，文档按实测慢加载等待复测过，Markdown修复静默列表失败并注入首请求中断后过，合计六流程均覆盖。CI c40b2ae已全绿。正式样本链接在报告，授权已恢复可演示；不要撤销这些样本权限或删数据。
 
