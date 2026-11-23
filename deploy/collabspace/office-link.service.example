@@ -8,6 +8,8 @@ Wants=network-online.target
 # nonprivileged collabspace-office-link account, not a remote root shell.
 EnvironmentFile=/etc/collabspace/office-link.env
 # Set COLLABSPACE_OFFICE_HOST in the environment file above.
+EnvironmentFile=/etc/collabspace/office-link.env
+# Set COLLABSPACE_OFFICE_HOST in the environment file above.
 ExecStart=/usr/bin/ssh -NT -i /opt/collabspace/shared/office_tunnel -o UserKnownHostsFile=/opt/collabspace/shared/office_known_hosts -o StrictHostKeyChecking=yes -o BatchMode=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -L127.0.0.1:3396:127.0.0.1:3390 -L172.17.0.1:3396:127.0.0.1:3390 collabspace-office-link@${COLLABSPACE_OFFICE_HOST}
 Restart=always
 RestartSec=5

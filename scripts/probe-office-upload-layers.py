@@ -1,5 +1,6 @@
 """Replay a synthetic native upload in memory. Never print credentials or signed URLs."""
 import os
+import os
 import json, sys, re, shlex, http.client, base64, time
 from pathlib import Path
 import paramiko
