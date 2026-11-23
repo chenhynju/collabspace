@@ -132,7 +132,7 @@ CollabSpace 是一个**多人实时协作办公平台**：团队成员在同一�
 
 ```
 浏览器 ──> Vercel（前端 collabspace.purelamp.uk，project: collabspace）
-       ──> 腾讯云轻量服务器 170.106.161.82（Docker Compose 链）
+       ──> 腾讯云轻量服务器 app-host.example.invalid（Docker Compose 链）
              ├── collabspace-api（NestJS，collabspace-api.purelamp.uk/api/v1）
              ├── collabspace-ws（独立原生 WebSocket 协作服务 /collab）
              ├── PostgreSQL 16（原生，FORCE RLS；compose 内网，不暴露宿主端口）
