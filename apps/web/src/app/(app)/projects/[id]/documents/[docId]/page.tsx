@@ -19,6 +19,7 @@ import { DocumentFormula } from "@/components/documents/DocumentFormula";
 import { DocumentImage } from "@/components/documents/DocumentImage";
 import OfflineStorage from "@/components/documents/OfflineStorage";
 import { MarkdownHistory } from "@/components/documents/MarkdownEditor";
+import { History } from "lucide-react";
 import { Button } from "@/components/ui";
 const MarkdownEditor = dynamic(() => import("@/components/documents/MarkdownEditor"), {
   ssr: false,
@@ -70,6 +71,7 @@ export default function DocumentPage({ params }: { params: { id: string; docId: 
   const org = useAuthStore((s) => s.currentOrgId),
     user = useAuthStore((s) => s.user);
   const [panelOpen, setPanelOpen] = useState(true);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const historyExpanded = useRef(false);
   const [meta, setMeta] = useState<any>(null),
     [provider, setProvider] = useState<DocumentProvider | null>(null),
@@ -236,13 +238,6 @@ export default function DocumentPage({ params }: { params: { id: string; docId: 
                 共享权限
               </Button>
             )}
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => (setPanelOpen(true), setTab("history"))}
-            >
-              历史版本
-            </Button>
             {provider?.writable && (
               <Button
                 size="sm"
@@ -306,13 +301,12 @@ export default function DocumentPage({ params }: { params: { id: string; docId: 
           <nav className="mb-5 flex gap-1 border-b border-slate-200 pb-2" aria-label="文档侧栏">
             {[
               ["comments", "评论"],
-              ["history", "历史"],
               ...(meta.role === "OWNER" ? [["share", "权限"]] : []),
             ].map(([key, label]) => (
               <button
                 key={key}
                 aria-pressed={tab === key}
-                onClick={() => (key === "share" ? share() : (setPanelOpen(true), setTab(key as "comments" | "history")))}
+                onClick={() => (key === "share" ? share() : (setPanelOpen(true), setTab("comments")))}
                 className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition ${
                   tab === key
                     ? "bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-200"
@@ -421,145 +415,6 @@ export default function DocumentPage({ params }: { params: { id: string; docId: 
               ))}
             </>
           )}
-          {tab === "history" && (
-            <>
-              <h2 className="font-medium">快照时间轴</h2>
-              <p className="my-2 text-xs text-slate-500">
-                有编辑时每分钟最多自动保留一个快照；命名版本可随时保留当前节点。快照仅含服务器已确认内容，恢复会创建独立副本。
-              </p>
-              {!versions.length && (
-                <p className="my-4 text-sm text-slate-500">暂无快照，保存编辑后将自动生成。</p>
-              )}
-              {versions.length > 1 && (
-                <label className="block text-xs text-slate-500">
-                  从早到晚浏览快照
-                  <input
-                    aria-label="快照时间轴"
-                    type="range"
-                    min={0}
-                    max={versions.length - 1}
-                    defaultValue={versions.length - 1}
-                    disabled={busy}
-                    className="my-3 w-full"
-                    onChange={(e) => {
-                      const v = versions[versions.length - 1 - Number(e.target.value)];
-                      void action(async () =>
-                        setPreview((await api.get(`${base}/versions/${v.id}`)).data),
-                      );
-                    }}
-                  />
-                </label>
-              )}
-              {provider?.writable && (
-                <button
-                  disabled={busy || !provider.saved}
-                  className="my-2 rounded border px-3 py-2 text-sm disabled:opacity-40"
-                  onClick={() =>
-                    void action(async () => {
-                      await api.post(`${base}/versions`, {
-                        id: crypto.randomUUID(),
-                        name: "快照 · " + new Date().toLocaleString(),
-                      });
-                    })
-                  }
-                >
-                  立即保留快照
-                </button>
-              )}
-              {provider?.writable && (
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    void action(async () => {
-                      await api.post(`${base}/versions`, {
-                        id: crypto.randomUUID(),
-                        name: versionName,
-                      });
-                      setVersionName("");
-                    });
-                  }}
-                >
-                  <input
-                    aria-label="版本名称"
-                    className="mt-2 w-full rounded border p-2 text-sm"
-                    placeholder="例如：客户确认 v1"
-                    value={versionName}
-                    maxLength={160}
-                    onChange={(e) => setVersionName(e.target.value)}
-                    required
-                  />
-                  <button
-                    disabled={busy || !provider.saved}
-                    className="my-3 rounded bg-slate-900 px-3 py-2 text-sm text-white disabled:opacity-40"
-                  >
-                    创建版本
-                  </button>
-                </form>
-              )}
-              {versions.map((v) => (
-                <div
-                  key={v.id}
-                  className="my-3 rounded-lg border-l-4 border border-l-indigo-300 p-3 text-sm"
-                >
-                  <p className="font-medium">{v.source === "AUTO" ? "自动快照" : v.name}</p>
-                  <p className="my-2 text-xs text-slate-400">
-                    <time dateTime={v.created_at}>{displayDateTime(v.created_at)}（上海）</time> · #
-                    {v.seq}
-                  </p>
-                  <button
-                    disabled={busy}
-                    className="text-blue-700"
-                    onClick={() =>
-                      void action(async () => {
-                        setPreview((await api.get(`${base}/versions/${v.id}`)).data);
-                      })
-                    }
-                  >
-                    只读预览
-                  </button>
-                  {provider?.writable && (
-                    <button
-                      disabled={busy}
-                      className="ml-4 text-blue-700"
-                      onClick={() =>
-                        void action(async () => {
-                          const r = await api.post(`${base}/versions/${v.id}/restore-copy`, {
-                            id: crypto.randomUUID(),
-                          });
-                          window.location.href = `/projects/${params.id}/documents/${r.data.id}`;
-                        })
-                      }
-                    >
-                      恢复为副本
-                    </button>
-                  )}
-                </div>
-              ))}
-              {hasOlder && (
-                <button
-                  disabled={busy}
-                  className="my-3 text-sm text-blue-700"
-                  onClick={() => {
-                    setBusy(true);
-                    api
-                      .get(`${base}/versions`, {
-                        params: { before: versions[versions.length - 1].id },
-                      })
-                      .then((r) => {
-                        historyExpanded.current = true;
-                        setVersions((v) => [...v, ...r.data]);
-                        setHasOlder(r.data.length === 100);
-                        setError("");
-                      })
-                      .catch(() => setError("较早快照加载失败，请重试。"))
-                      .finally(() => setBusy(false));
-                  }}
-                >
-                  加载更早快照
-                </button>
-              )}
-            </>
-          )}
           {tab === "share" && meta.role === "OWNER" && (
             <>
               <h2 className="font-medium">文档访问权限</h2>
@@ -628,6 +483,183 @@ export default function DocumentPage({ params }: { params: { id: string; docId: 
             </>
           )}
         </aside>
+      </div>
+      <div className="pointer-events-none fixed bottom-5 right-5 z-40 flex flex-col items-end gap-3">
+        {historyOpen && (
+          <section
+            aria-label="历史版本面板"
+            className="pointer-events-auto flex max-h-[70vh] w-[336px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-[var(--paper-raised)] shadow-2xl"
+          >
+            <header className="flex items-start justify-between gap-2 border-b border-slate-200 px-3.5 py-2.5">
+              <div>
+                <p className="text-xs font-semibold text-slate-800">快照时间轴</p>
+                <p className="mt-0.5 text-[11px] leading-4 text-slate-500">
+                  共 {versions.length} 个快照 · 恢复会创建副本
+                </p>
+              </div>
+              <button
+                type="button"
+                aria-label="收起历史版本"
+                onClick={() => setHistoryOpen(false)}
+                className="rounded-md px-1.5 text-sm leading-5 text-slate-400 transition hover:bg-slate-100"
+              >
+                ×
+              </button>
+            </header>
+            <div className="min-h-0 flex-1 overflow-y-auto px-3.5 py-3">
+              <p className="text-[11px] leading-5 text-slate-500">
+                有编辑时每分钟最多自动保留一个快照；命名版本可随时保留当前节点。快照仅含服务器已确认内容。
+              </p>
+              {!versions.length && (
+                <p className="my-4 text-[11px] text-slate-400">暂无快照，保存编辑后将自动生成。</p>
+              )}
+              {versions.length > 1 && (
+                <label className="mt-3 block text-[11px] text-slate-500">
+                  从早到晚浏览快照
+                  <input
+                    aria-label="快照时间轴"
+                    type="range"
+                    min={0}
+                    max={versions.length - 1}
+                    defaultValue={versions.length - 1}
+                    disabled={busy}
+                    className="my-2 w-full"
+                    onChange={(e) => {
+                      const v = versions[versions.length - 1 - Number(e.target.value)];
+                      void action(async () =>
+                        setPreview((await api.get(`${base}/versions/${v.id}`)).data),
+                      );
+                    }}
+                  />
+                </label>
+              )}
+              {provider?.writable && (
+                <button
+                  disabled={busy || !provider.saved}
+                  className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-medium text-slate-600 transition hover:border-indigo-200 hover:bg-indigo-50/60 disabled:opacity-40"
+                  onClick={() =>
+                    void action(async () => {
+                      await api.post(`${base}/versions`, {
+                        id: crypto.randomUUID(),
+                        name: "快照 · " + new Date().toLocaleString(),
+                      });
+                    })
+                  }
+                >
+                  立即保留快照
+                </button>
+              )}
+              {provider?.writable && (
+                <form
+                  className="mt-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void action(async () => {
+                      await api.post(`${base}/versions`, {
+                        id: crypto.randomUUID(),
+                        name: versionName,
+                      });
+                      setVersionName("");
+                    });
+                  }}
+                >
+                  <input
+                    aria-label="版本名称"
+                    className="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px]"
+                    placeholder="例如：客户确认 v1"
+                    value={versionName}
+                    maxLength={160}
+                    onChange={(e) => setVersionName(e.target.value)}
+                    required
+                  />
+                  <button
+                    disabled={busy || !provider.saved}
+                    className="mt-1.5 w-full rounded-lg bg-slate-900 px-2.5 py-1.5 text-[11px] font-medium text-white transition hover:bg-slate-800 disabled:opacity-40"
+                  >
+                    创建版本
+                  </button>
+                </form>
+              )}
+              <div className="mt-3 space-y-1.5">
+                {versions.map((v) => (
+                  <div
+                    key={v.id}
+                    className="rounded-lg border border-slate-200 border-l-2 border-l-indigo-300 bg-white px-2.5 py-2"
+                  >
+                    <p className="text-[11px] font-medium text-slate-800">
+                      {v.source === "AUTO" ? "自动快照" : v.name}
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-slate-400">
+                      <time dateTime={v.created_at}>{displayDateTime(v.created_at)}（上海）</time> · #
+                      {v.seq}
+                    </p>
+                    <div className="mt-1.5 flex gap-3 text-[11px]">
+                      <button
+                        disabled={busy}
+                        className="text-indigo-700 transition hover:text-indigo-900"
+                        onClick={() =>
+                          void action(async () => {
+                            setPreview((await api.get(`${base}/versions/${v.id}`)).data);
+                          })
+                        }
+                      >
+                        只读预览
+                      </button>
+                      {provider?.writable && (
+                        <button
+                          disabled={busy}
+                          className="text-slate-500 transition hover:text-slate-800"
+                          onClick={() =>
+                            void action(async () => {
+                              const r = await api.post(`${base}/versions/${v.id}/restore-copy`, {
+                                id: crypto.randomUUID(),
+                              });
+                              window.location.href = `/projects/${params.id}/documents/${r.data.id}`;
+                            })
+                          }
+                        >
+                          恢复为副本
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {hasOlder && (
+                <button
+                  disabled={busy}
+                  className="mt-2 w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] text-slate-600 transition hover:bg-slate-50"
+                  onClick={() => {
+                    setBusy(true);
+                    api
+                      .get(`${base}/versions`, {
+                        params: { before: versions[versions.length - 1].id },
+                      })
+                      .then((r) => {
+                        historyExpanded.current = true;
+                        setVersions((v) => [...v, ...r.data]);
+                        setHasOlder(r.data.length === 100);
+                        setError("");
+                      })
+                      .catch(() => setError("较早快照加载失败，请重试。"))
+                      .finally(() => setBusy(false));
+                  }}
+                >
+                  加载更早快照
+                </button>
+              )}
+            </div>
+          </section>
+        )}
+        <button
+          type="button"
+          aria-label="历史版本"
+          aria-expanded={historyOpen}
+          onClick={() => setHistoryOpen((v) => !v)}
+          className="pointer-events-auto flex items-center gap-2 rounded-full bg-slate-900 px-3.5 py-2.5 text-[11px] font-medium text-white shadow-lg transition hover:bg-slate-800"
+        >
+          <History size={15} aria-hidden="true" /> 历史版本
+        </button>
       </div>
       {preview && (
         <Dialog.Root

@@ -22,6 +22,7 @@ import {
   Hand,
   Layers,
   LayoutGrid,
+  LayoutTemplate,
   Link2,
   Lock,
   MapPin,
@@ -580,6 +581,7 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
   const [shareError, setShareError] = useState("");
   const [shareCopied, setShareCopied] = useState("");
   const [shapePanel, setShapePanel] = useState(false);
+  const [templatePanel, setTemplatePanel] = useState(false);
   const [sourceOpen, setSourceOpen] = useState(false),
     [source, setSource] = useState(
       "flowchart LR\n  A[开始] --> B{验收通过？}\n  B -->|是| C[交付]",
@@ -1731,15 +1733,6 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           智能参考线
         </label>
         <span className="h-6 w-px bg-slate-200" />
-        <Button size="sm" variant="secondary" disabled={!provider.writable} onClick={() => template(false)}>
-          流程图模板
-        </Button>
-        <Button size="sm" variant="secondary" disabled={!provider.writable} onClick={() => template(true)}>
-          思维导图模板
-        </Button>
-        <Button size="sm" variant="ghost" onClick={() => setSourceOpen((v) => !v)}>
-          Mermaid 源码
-        </Button>
         <Button
           size="sm"
           variant="ghost"
@@ -2229,8 +2222,84 @@ function Canvas({ provider }: { provider: DocumentProvider }) {
           >
             <Shapes className="size-[18px]" aria-hidden="true" />
           </button>
+          <button
+            type="button"
+            aria-label="模板"
+            title="模板"
+            aria-expanded={templatePanel}
+            onClick={() => {
+              setTemplatePanel((value) => !value);
+              setShapePanel(false);
+              setLayersOpen(false);
+            }}
+            className={`grid size-10 shrink-0 place-items-center rounded-xl transition ${
+              templatePanel
+                ? "bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-200"
+                : "text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+            }`}
+          >
+            <LayoutTemplate className="size-[18px]" aria-hidden="true" />
+          </button>
         </nav>
         <div className="relative min-w-0 flex-1 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          {templatePanel && (
+            <div className="absolute left-3 top-3 z-20 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
+              <div className="flex items-center justify-between px-1 pb-1.5">
+                <p className="text-xs font-semibold text-slate-700">模板</p>
+                <button
+                  type="button"
+                  aria-label="关闭模板面板"
+                  onClick={() => setTemplatePanel(false)}
+                  className="rounded-md px-1 text-sm text-slate-400 hover:bg-slate-100"
+                >
+                  ×
+                </button>
+              </div>
+              <div className="space-y-1">
+                <button
+                  type="button"
+                  disabled={!provider.writable}
+                  onClick={() => {
+                    template(false);
+                    setTemplatePanel(false);
+                  }}
+                  className="w-full rounded-lg px-2 py-1.5 text-left text-[11px] font-medium text-slate-600 transition hover:bg-indigo-50 hover:text-indigo-700 disabled:opacity-40"
+                >
+                  流程图模板
+                  <span className="mt-0.5 block text-[10px] font-normal text-slate-400">
+                    流程节点与连接线
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  disabled={!provider.writable}
+                  onClick={() => {
+                    template(true);
+                    setTemplatePanel(false);
+                  }}
+                  className="w-full rounded-lg px-2 py-1.5 text-left text-[11px] font-medium text-slate-600 transition hover:bg-indigo-50 hover:text-indigo-700 disabled:opacity-40"
+                >
+                  思维导图模板
+                  <span className="mt-0.5 block text-[10px] font-normal text-slate-400">
+                    中心主题与分支
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSourceOpen((v) => !v);
+                    setTemplatePanel(false);
+                  }}
+                  className="w-full rounded-lg px-2 py-1.5 text-left text-[11px] font-medium text-slate-600 transition hover:bg-indigo-50 hover:text-indigo-700"
+                >
+                  Mermaid 源码
+                  <span className="mt-0.5 block text-[10px] font-normal text-slate-400">
+                    用文字生成图形
+                  </span>
+                </button>
+              </div>
+            </div>
+          )}
           {shapePanel && (
             <div className="absolute left-3 top-3 z-20 flex max-h-[70%] w-72 flex-col rounded-2xl border border-slate-200 bg-white p-2 shadow-xl">
               <div className="flex items-center justify-between px-1 pb-1.5">
