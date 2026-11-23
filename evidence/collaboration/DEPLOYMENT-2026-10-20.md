@@ -8,7 +8,7 @@
 - Vercel purelamp/collabspace，项目 prj_ikHFp2kdcaWziNqBymd5GPVA53MS，部署 dpl_3mHHDyHg5X217663BvxjZZtGyEAa READY；apps/web，Node 22。实际前端代码与本次发布一致。
 - 腾讯云独立目录 /opt/collabspace/releases/r20261020-01，compose 项目 collabspace；PG/Redis 无宿主端口，API/WS 仅绑定 127.0.0.1:3321/3322，由专用 Caddy 站点提供 HTTPS/WSS。
 - 四个运行容器均 healthy；API readiness 确认 database/redis up。collabspace_app 的 rolsuper=false、rolbypassrls=false，8 张协作表启用 FORCE RLS。
-- Cloudflare 仅新增 DNS only A：collabspace→76.76.21.21，collabspace-api→170.106.161.82；截图 dns-live.png。Vercel 验证 misconfigured=false，托管 TLS 签发成功；从弗吉尼亚实际请求前端 /login 返回 HTTPS 200。
+- Cloudflare 仅新增 DNS only A：collabspace→76.76.21.21，collabspace-api→app-host.example.invalid；截图 dns-live.png。Vercel 验证 misconfigured=false，托管 TLS 签发成功；从弗吉尼亚实际请求前端 /login 返回 HTTPS 200。
 - 独立随机凭据仅在服务端 0600 文件和本机忽略目录，未提交。支付 sandbox、邮件 console，不声称真实支付/邮件上线。
 
 ## 初始化与修复证据
