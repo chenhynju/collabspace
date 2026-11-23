@@ -41,7 +41,7 @@
 
 本地成绩以上述命令为准；正式发布身份与上线后验收在本节追加。目标为现有站点，API从已核对r20261025-04固定镜像增量覆盖6个JS，无依赖安装或数据库迁移；只重建API，WS/Office保持。回退API r20261025-04，前端回退dpl_3Ab9wM6uNvN9G79qA6m85xnmDfSv，不回滚业务数据。
 
-部署前服务器抽样：2CPU/3723MiB，总可用内存1691MiB，磁盘8.9GiB/85%，load1/5/15=1.46/1.02/0.89；API73.8MiB/384MiB、CPU0.12%、OOM=false、restart0。满足现门槛，不触发迁移43.130.127.57。
+部署前服务器抽样：2CPU/3723MiB，总可用内存1691MiB，磁盘8.9GiB/85%，load1/5/15=1.46/1.02/0.89；API73.8MiB/384MiB、CPU0.12%、OOM=false、restart0。满足现门槛，不触发迁移office-host.example.invalid。
 
 ### 本次正式发布身份
 

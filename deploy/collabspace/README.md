@@ -10,7 +10,7 @@ Office runtime 变量从服务器0600私密环境注入；PUBLIC_URL允许受控
 
 切回旧前端可保留新API的Office存储ACL层；已有Office文件后，不得直接回退到不知道Office ACL的旧API。需冻结并撤销活动会话、停Office入口且保留新读取授权层。数据库自动回退不能代替数据恢复审核。备份文件已验证目录但未完整演练恢复，不能宣称灾备通过。
 
-前端：Vercel 项目 `purelamp/collabspace`，Root Directory `apps/web`，Node 22，域名 `collabspace.purelamp.uk`。后端：腾讯云弗吉尼亚 `170.106.161.82`，独立目录 `/opt/collabspace`，Compose project `collabspace`，API/WS 仅绑定 `127.0.0.1:3321/3322`。Caddy 专用站点 `collabspace-api.purelamp.uk`，`/collab` 转发独立 WS，其余转发 API（含原有 Socket.IO）。
+前端：Vercel 项目 `purelamp/collabspace`，Root Directory `apps/web`，Node 22，域名 `collabspace.purelamp.uk`。后端：腾讯云弗吉尼亚 `app-host.example.invalid`，独立目录 `/opt/collabspace`，Compose project `collabspace`，API/WS 仅绑定 `127.0.0.1:3321/3322`。Caddy 专用站点 `collabspace-api.purelamp.uk`，`/collab` 转发独立 WS，其余转发 API（含原有 Socket.IO）。
 
 ## 初始化边界
 
@@ -21,7 +21,7 @@ Office runtime 变量从服务器0600私密环境注入；PUBLIC_URL允许受控
 ## DNS
 
 - Cloudflare：`A collabspace → 76.76.21.21`，DNS only；此值来自本次 Vercel domains inspect 的推荐记录。
-- Cloudflare：`A collabspace-api → 170.106.161.82`，DNS only；Caddy 自动签发证书。
+- Cloudflare：`A collabspace-api → app-host.example.invalid`，DNS only；Caddy 自动签发证书。
 - 不修改 purelamp.uk 根域及其他子域记录。
 
 ## 发布步骤

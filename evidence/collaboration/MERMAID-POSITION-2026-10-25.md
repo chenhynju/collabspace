@@ -47,7 +47,7 @@
 - Vercel dpl_49sw1YognkLsUSiUkcpNt1ofFUCj，https://collabspace-3y6haough-purelamp.vercel.app；独立构建52秒，inspect Ready后promote成功。回退为发布前实际核对的dpl_AxnSU8GDEsCtBvPZsQgnrVBotoMv。
 - 全局Node环境在续做期间变为24.22.1，部署与正式验收使用现存Node22.20.0/Vercel59.23.2绝对路径，没有更改全局nvm。没有申请额外付费资源。
 - 正式API保持r06及sha256:fd64a9f00b066bda9c828c47c543ae7860dcf44cdf35f8fb492992661ee104a8；不重启API，不做数据库迁移。WS/Office保持。
-- 北京时间02:07服务器抽样：MemAvailable1698MiB，API75.57MiB/384MiB、CPU0.12%、OOM=false/restart0；磁盘8.8GiB/85%，load0.40/0.59/0.62，DB/Redis up、Office=true。不触发43.130.127.57迁移条件。
+- 北京时间02:07服务器抽样：MemAvailable1698MiB，API75.57MiB/384MiB、CPU0.12%、OOM=false/restart0；磁盘8.8GiB/85%，load0.40/0.59/0.62，DB/Redis up、Office=true。不触发office-host.example.invalid迁移条件。
 
 ## 正式验收
 

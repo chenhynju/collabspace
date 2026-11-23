@@ -1,4 +1,5 @@
 """Replay a synthetic native upload in memory. Never print credentials or signed URLs."""
+import os
 import json, sys, re, shlex, http.client, base64, time
 from pathlib import Path
 import paramiko
@@ -30,7 +31,7 @@ print(json.dumps(rows))
 def connect(host):
     c=paramiko.SSHClient();c.load_host_keys(str(Path.home()/'.ssh/known_hosts'));c.set_missing_host_key_policy(paramiko.RejectPolicy())
     options=dict(username='root',allow_agent=False,look_for_keys=False,timeout=20)
-    if host=='170.106.161.82': options['key_filename']=str(Path.home()/'.ssh/toolkit_deploy')
+    if host==os.environ['COLLABSPACE_APP_HOST']: options['key_filename']=str(Path.home()/'.ssh/toolkit_deploy')
     else:
         config=Path(r'D:\appspace\server_config.txt').read_text(encoding='utf-8-sig')
         for block in re.split(r'(?m)(?=^\s*公网 IP\s*[：:])',config):
@@ -54,7 +55,7 @@ try:
         if response.status!=200 or not valid:raise RuntimeError('Public replay rejected')
         rows.append({'status':response.status,'bytes':len(body),'sendMs':round((sent-started)*1000,2),'waitMs':round((first-sent)*1000,2),'totalMs':round((ended-started)*1000,2),'mediaResult':valid})
     results['client-public-http1']=rows
-    for label,host,port in [('application-proxy','170.106.161.82',443),('application-tunnel','170.106.161.82',3396),('engine-loopback','43.130.127.57',3390)]:
+    for label,host,port in [('application-proxy',os.environ['COLLABSPACE_APP_HOST'],443),('application-tunnel',os.environ['COLLABSPACE_APP_HOST'],3396),('engine-loopback',os.environ['COLLABSPACE_OFFICE_HOST'],3390)]:
         client=connect(host)
         try:
             payload=dict(packet,port=port)
