@@ -36,12 +36,15 @@ test("Mermaid editor: minimal tools, text editing for flow/mindmap, drag shape a
     await page.goto(`${c.WEB_URL}/projects/${c.TEST_PROJECT}/documents/${doc.id}`, {
       timeout: 120000,
     });
+    await page.getByRole("button", {name:"Mermaid 图表工作区", exact:true}).click();
+    const toggle = page.getByRole("switch",{name:"显示模式：源码或图元"});
     const source = page.getByLabel("协作 Mermaid 源码");
+    await toggle.click();
     await expect(source).toBeVisible({ timeout: 60000 });
     await source.fill(
       'flowchart LR\n  A@{ shape: rect, label: "开始" }\n  B@{ shape: diamond, label: "判断" }\n  A --> B',
     );
-    await page.waitForTimeout(1200);
+    await toggle.click();
 
     await expect(page.getByRole("button", { name: "AI 生成图表", exact: true })).toBeVisible();
     await page.getByRole("button", { name: "AI 生成图表", exact: true }).click();
@@ -52,7 +55,7 @@ test("Mermaid editor: minimal tools, text editing for flow/mindmap, drag shape a
     await page.getByRole("button", { name: "画布图元 开始", exact: true }).press("F2");
     await page.getByLabel("图元文字", { exact: true }).fill("启动");
     await page.getByLabel("图元文字", { exact: true }).press("Enter");
-    await expect(source).toHaveValue(/label: "启动"/);
+    await expect(page.getByRole("button",{name:"画布图元 启动",exact:true})).toBeVisible();
 
     await page
       .getByRole("button", { name: "处理图元", exact: true })
@@ -60,20 +63,23 @@ test("Mermaid editor: minimal tools, text editing for flow/mindmap, drag shape a
     await page.getByRole("button", { name: "画布图元 处理", exact: true }).press("F2");
     await page.getByLabel("图元文字", { exact: true }).fill("人工复核");
     await page.getByLabel("图元文字", { exact: true }).press("Enter");
+    await toggle.click();
     await expect(source).toHaveValue(/人工复核/);
 
     await source.fill("mindmap\n  root((项目))\n    需求\n    设计");
-    await page.waitForTimeout(1200);
+    await toggle.click();
     await page.getByRole("button", { name: "思维主题 需求", exact: true }).click();
     await page.getByLabel("选中节点名称").fill("需求分析");
     await page.getByRole("button", { name: "更新节点名称", exact: true }).click();
-    await expect(source).toHaveValue(/需求分析/);
+    await expect(page.getByRole("button",{name:"思维主题 需求分析",exact:true})).toBeVisible();
     await page.getByLabel("子主题文字").fill("需求评审");
     await page.getByRole("button", { name: "添加子主题", exact: true }).click();
+    await toggle.click();
     await expect(source).toHaveValue(/需求评审/);
+    await toggle.click();
 
-    await expect(page.getByText("1. 添加主题", { exact: false })).toBeVisible();
-    await expect(page.getByText("第一次用？查看三步说明", { exact: false })).toBeVisible();
+    await expect(page.getByRole("heading",{name:"添加主题",exact:true})).toBeVisible();
+    await expect(page.getByText("第一次用？查看三步说明", { exact: true })).toHaveCount(0);
     await expect(page.locator('iframe[title="Mermaid 图表"]')).toBeVisible({ timeout: 60000 });
     await page.screenshot({ path: ".test-runs/mermaid-ux-main.png", fullPage: true });
   } finally {
