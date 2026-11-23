@@ -435,7 +435,7 @@ function jpegBytes(canvas: HTMLCanvasElement) {
   return bytes;
 }
 
-function pdfBlob(canvas: HTMLCanvasElement) {
+export function pdfBlob(canvas: HTMLCanvasElement) {
   const bytes = jpegBytes(canvas);
   const pageWidth = (canvas.width * 72) / 96;
   const pageHeight = (canvas.height * 72) / 96;

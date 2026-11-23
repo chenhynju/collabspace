@@ -1,7 +1,15 @@
 "use client";
 import { exportDiagram } from "@/lib/diagram-export";
 import { flowSvgLayout, type CanvasNode } from "@/lib/mermaid-svg-layout";
-import { addFlowNode, connectFlowNodes, deleteFlowNodes, isFlowSource } from "@/lib/mermaid-edit";
+import {
+  addFlowNode,
+  connectFlowNodes,
+  deleteFlowNodes,
+  renameFlowEdge,
+  renameFlowNode,
+  type FlowEdge,
+  isFlowSource,
+} from "@/lib/mermaid-edit";
 import {
   positionNode,
   removeNodePositions,
@@ -43,7 +51,13 @@ export function MermaidPreview({
   selectedIds?: string[];
   onSelect?: (ids: string[]) => void;
 }) {
-  const [canvas, setCanvas] = useState<{ nodes: CanvasNode[]; width: number; height: number }>({
+  const [canvas, setCanvas] = useState<{
+      edges: ReturnType<typeof flowSvgLayout>["edges"];
+      nodes: CanvasNode[];
+      width: number;
+      height: number;
+    }>({
+      edges: [],
       nodes: [],
       width: 1000,
       height: 800,
@@ -62,6 +76,30 @@ export function MermaidPreview({
     }>();
   const [edgeKind, setEdgeKind] = useState<"arrow" | "line" | "dashed" | "bold" | "both">("arrow"),
     [edgeLabel, setEdgeLabel] = useState("");
+  const [connectStart, setConnectStart] = useState<string | null>(null);
+  type TextTarget = { node: string } | { edge: FlowEdge };
+  const [editor, setEditor] = useState<{
+    target: TextTarget;
+    before: string;
+    value: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  const openNode = (n: CanvasNode) =>
+    setEditor({ target: { node: n.id }, before: source, value: n.label, x: n.x, y: n.y });
+  const finishText = () => {
+    if (!editor) return;
+    try {
+      const { target, before, value } = editor;
+      const next =
+        "node" in target
+          ? renameFlowNode(before, target.node, value)
+          : renameFlowEdge(before, target.edge, value);
+      if (mutate(before, next)) setEditor(null);
+    } catch (err) {
+      setActionError((err as Error).message);
+    }
+  };
   const [wire, setWire] = useState<{
     from: string;
     x: number;
@@ -106,6 +144,7 @@ export function MermaidPreview({
   useEffect(() => {
     let alive = true;
     cancelWire();
+    setConnectStart(null);
     setHtml("");
     setRendered(null);
     setExportError("");
@@ -224,7 +263,7 @@ export function MermaidPreview({
           >
             放大
           </button>
-          {(["svg", "png"] as const).map((format) => (
+          {(["svg", "png", "pdf", "html"] as const).map((format) => (
             <button
               key={format}
               disabled={!rendered || rendered.source !== source || exporting}
@@ -277,14 +316,26 @@ export function MermaidPreview({
           <details className="text-slate-400">
             <summary className="cursor-pointer text-slate-500">画布操作说明</summary>
             <div className="mt-1 max-w-xl leading-5">
-              从左侧拖入形状；拖动形状移动位置；Shift 点选可多选；Delete
-              删除；拖动形状边缘蓝色连接点到另一形状可连线。
+              从左侧拖入形状；拖动形状移动位置；Shift 点选可多选；Delete 删除；双击形状或按 F2
+              改字。拖动蓝色连接点连线，点击线条编辑文字。
             </div>
           </details>
         </div>
       )}
       {interactive && (
         <div className="flex flex-wrap items-center gap-2 border-b p-2 text-xs">
+          <button
+            type="button"
+            disabled={!writable}
+            aria-pressed={connectStart !== null}
+            className="rounded border px-3 py-2 aria-pressed:bg-indigo-100"
+            onClick={() => setConnectStart(connectStart === null ? "" : null)}
+          >
+            依次点选连线
+          </button>
+          {connectStart !== null && (
+            <span role="status">{connectStart ? "请选择终点" : "请选择起点"}</span>
+          )}
           <label>
             连线样式{" "}
             <select
@@ -405,6 +456,71 @@ export function MermaidPreview({
               }}
               className="border-0"
             />
+            {interactive && writable && (
+              <svg
+                width="100%"
+                height="100%"
+                viewBox={`0 0 ${canvas.width} ${canvas.height}`}
+                className="pointer-events-none absolute inset-0"
+                aria-label="画布连线"
+              >
+                {canvas.edges.map(({ edge, d, x, y, labelAt }) => {
+                  const edit = (path: SVGPathElement) => {
+                    const point = path.getPointAtLength(path.getTotalLength() / 2);
+                    setEditor({
+                      target: { edge },
+                      before: source,
+                      value: edge.label,
+                      x: point.x + x,
+                      y: point.y + y,
+                    });
+                  };
+                  return (
+                    <g key={edge.start}>
+                      <path
+                        d={d}
+                        transform={`translate(${x} ${y})`}
+                        fill="none"
+                        stroke="transparent"
+                        strokeWidth={16}
+                        pointerEvents="stroke"
+                        role="button"
+                        tabIndex={0}
+                        aria-label={`编辑连线 ${edge.from} 到 ${edge.to} ${edge.label}`.trim()}
+                        className="cursor-text hover:stroke-indigo-300/50 focus:stroke-indigo-300/50"
+                        onClick={(e) => edit(e.currentTarget)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === "F2") {
+                            e.preventDefault();
+                            edit(e.currentTarget);
+                          }
+                        }}
+                      />
+                      {labelAt && (
+                        <rect
+                          x={labelAt.x}
+                          y={labelAt.y - 10}
+                          width={Math.max(20, edge.label.length * 14)}
+                          height={20}
+                          transform={`translate(${-Math.max(20, edge.label.length * 14) / 2} 0)`}
+                          fill="transparent"
+                          pointerEvents="all"
+                          className="cursor-text"
+                          onClick={() =>
+                            setEditor({
+                              target: { edge },
+                              before: source,
+                              value: edge.label,
+                              ...labelAt,
+                            })
+                          }
+                        />
+                      )}
+                    </g>
+                  );
+                })}
+              </svg>
+            )}
             {interactive &&
               canvas.nodes.map((n) => (
                 <button
@@ -427,7 +543,28 @@ export function MermaidPreview({
                     touchAction: "none",
                     cursor: "move",
                   }}
+                  title="双击或按 F2 编辑文字"
+                  onDoubleClick={() => {
+                    if (writable && connectStart === null) openNode(n);
+                  }}
                   onClick={(e) => {
+                    if (connectStart !== null) {
+                      if (!connectStart) setConnectStart(n.id);
+                      else {
+                        try {
+                          if (
+                            mutate(
+                              source,
+                              connectFlowNodes(source, connectStart, n.id, edgeKind, edgeLabel),
+                            )
+                          )
+                            setConnectStart(null);
+                        } catch (err) {
+                          setActionError((err as Error).message);
+                        }
+                      }
+                      return;
+                    }
                     if (e.shiftKey)
                       onSelect?.(
                         selectedIds.includes(n.id)
@@ -437,6 +574,11 @@ export function MermaidPreview({
                     else onSelect?.([n.id]);
                   }}
                   onKeyDown={(e) => {
+                    if (writable && e.key === "F2") {
+                      e.preventDefault();
+                      openNode(n);
+                      return;
+                    }
                     if (writable && (e.key === "Delete" || e.key === "Backspace")) {
                       e.preventDefault();
                       e.stopPropagation();
@@ -455,7 +597,7 @@ export function MermaidPreview({
                     }
                   }}
                   onPointerDown={(e) => {
-                    if (!writable) return;
+                    if (!writable || connectStart !== null) return;
                     if (!e.shiftKey && !selectedIds.includes(n.id)) onSelect?.([n.id]);
                     const box = e.currentTarget.parentElement!.getBoundingClientRect();
                     drag.current = {
@@ -601,6 +743,47 @@ export function MermaidPreview({
                   }}
                 />
               ))}
+            {editor && writable && (
+              <form
+                className="absolute z-20 flex rounded border border-indigo-500 bg-white p-1 shadow"
+                style={{
+                  left: Math.max(
+                    0,
+                    Math.min((canvas.width * zoom) / 100 - 210, (editor.x * zoom) / 100 - 90),
+                  ),
+                  top: Math.max(0, (editor.y * zoom) / 100 - 18),
+                }}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  finishText();
+                }}
+              >
+                <input
+                  key={
+                    editor.before +
+                    ("node" in editor.target ? editor.target.node : editor.target.edge.start)
+                  }
+                  autoFocus
+                  onFocus={(e) => e.currentTarget.select()}
+                  aria-label={"node" in editor.target ? "图元文字" : "连线文字"}
+                  className="w-32 px-1 text-sm"
+                  value={editor.value}
+                  maxLength={"node" in editor.target ? 100 : 80}
+                  onChange={(e) => setEditor({ ...editor, value: e.target.value })}
+                  onKeyDown={(e) => {
+                    e.stopPropagation();
+                    if (e.nativeEvent.isComposing && e.key === "Enter") e.preventDefault();
+                    if (e.key === "Escape") setEditor(null);
+                  }}
+                />
+                <button type="submit" className="px-1 text-xs">
+                  保存
+                </button>
+                <button type="button" className="px-1 text-xs" onClick={() => setEditor(null)}>
+                  取消
+                </button>
+              </form>
+            )}
           </div>
         </div>
       ) : (

@@ -35,6 +35,7 @@ export default function MermaidWorkspace({
   const markdown = format === "markdown";
   const limit = markdown ? 64000 : 32000;
   const text = provider.doc.getText(format);
+  const [inspector, setInspector] = useState<HTMLDivElement | null>(null);
   const [canvasSelection, setCanvasSelection] = useState<string[]>([]);
   const [source, setSource] = useState(text.toString());
   const [view, setView] = useState<"source" | "graph">("graph");
@@ -345,8 +346,9 @@ export default function MermaidWorkspace({
       >
         {!markdown && view === "graph" && (
           <MermaidComposer
+            inspector={inspector}
             selectedId={canvasSelection[0] || ""}
-            onSelect={(id) => setCanvasSelection([id])}
+            onSelect={(id) => setCanvasSelection(id ? [id] : [])}
             source={source}
             writable={provider.writable}
             commit={(before, after) => {
@@ -441,6 +443,7 @@ export default function MermaidWorkspace({
                 }}
               />
             ))}
+          {!markdown && view === "graph" && <div ref={setInspector} className="empty:hidden" />}
         </div>
       </div>
       {markdown && (

@@ -94,17 +94,19 @@ test("Mermaid authority: official graph/source views, two editors, viewer, offli
     await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator("svg")).toBeVisible({
       timeout: 60000,
     });
-    await a.getByLabel("新节点名称").fill("拖拽交付");
     await showGraph(a);
     await a
       .getByRole("button", { name: "处理图元", exact: true })
       .dragTo(a.getByLabel("Mermaid 图形画布", { exact: true }), {
         targetPosition: { x: 250, y: 200 },
       });
+    await a.getByRole("button", { name: "画布图元 处理", exact: true }).press("F2");
+    await a.getByLabel("图元文字", { exact: true }).fill("拖拽交付");
+    await a.getByLabel("图元文字", { exact: true }).press("Enter");
     await expect(source(b)).toHaveValue(/拖拽交付/);
-    const newNode = a.getByRole("button", { name: "流程节点 拖拽交付", exact: true });
+    const newNode = a.getByRole("button", { name: "画布图元 拖拽交付", exact: true });
     await a.getByRole("button", { name: "依次点选连线", exact: true }).click();
-    await a.getByRole("button", { name: "流程节点 需求", exact: true }).click();
+    await a.getByRole("button", { name: "画布图元 需求", exact: true }).click();
     await newNode.click();
     await expect(source(b)).toHaveValue(/A --> N[a-f0-9]+/);
     await expect(a.frameLocator('iframe[title="Mermaid 图表"]').locator("svg")).toContainText(

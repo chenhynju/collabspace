@@ -49,15 +49,17 @@ test("Mermaid editor: minimal tools, text editing for flow/mindmap, drag shape a
     await expect(page.getByLabel("图表修改要求")).toBeVisible();
     await page.keyboard.press("Escape");
 
-    await page.getByRole("button", { name: "流程节点 开始", exact: true }).click();
-    await page.getByLabel("选中节点名称").fill("启动");
-    await page.getByRole("button", { name: "更新节点名称", exact: true }).click();
+    await page.getByRole("button", { name: "画布图元 开始", exact: true }).press("F2");
+    await page.getByLabel("图元文字", { exact: true }).fill("启动");
+    await page.getByLabel("图元文字", { exact: true }).press("Enter");
     await expect(source).toHaveValue(/label: "启动"/);
 
-    await page.getByLabel("新节点名称").fill("人工复核");
     await page
       .getByRole("button", { name: "处理图元", exact: true })
       .dragTo(page.getByLabel("Mermaid 图形画布", { exact: true }));
+    await page.getByRole("button", { name: "画布图元 处理", exact: true }).press("F2");
+    await page.getByLabel("图元文字", { exact: true }).fill("人工复核");
+    await page.getByLabel("图元文字", { exact: true }).press("Enter");
     await expect(source).toHaveValue(/人工复核/);
 
     await source.fill("mindmap\n  root((项目))\n    需求\n    设计");

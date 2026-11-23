@@ -6,6 +6,82 @@ export function isFlowSource(source: string) {
 export function getFlowDirection(source: string) {
   return flowHeader.exec(source)?.[2]?.replace("TD", "TB") || "LR";
 }
+export type FlowEdge = {
+  from: string;
+  to: string;
+  label: string;
+  start: number;
+  end: number;
+  operator?: string;
+};
+
+// Record offsets only for statements that can be consumed in full.
+export function flowEdges(source: string): FlowEdge[] {
+  const edges: FlowEdge[] = [];
+  const node =
+    /^([A-Za-z]\w*)(?:@\{[^}\n]*\}|\[\[[^\]\n]*\]\]|\[[^\]\n]*\]|\(\([^()\n]*\)\)|\([^()\n]*\)|\{[^{}\n]*\})?/;
+  let offset = 0;
+  for (const line of source.split("\n")) {
+    let rest = line.trimStart();
+    let pos = offset + line.length - rest.length;
+    offset += line.length + 1;
+    const first = node.exec(rest);
+    if (!first) continue;
+    const found: FlowEdge[] = [];
+    let from = first[1];
+    rest = rest.slice(first[0].length);
+    pos += first[0].length;
+    while (true) {
+      const pipe = /^(\s*)(<-->|-->|---|-\.->|==>)(?:\|([^|\n]*)\|)?(\s*)/.exec(rest);
+      const words = !pipe && /^(\s*)(--|==|-\.)\s+([^<>|\n]+?)\s+(-->|==>|\.->)(\s*)/.exec(rest);
+      const link = pipe || words;
+      if (!link) break;
+      const next = node.exec(rest.slice(link[0].length));
+      if (!next) break;
+      const start = pos + link[1].length + (pipe ? pipe[2].length : 0);
+      found.push({
+        from,
+        to: next[1],
+        label: link[3] || "",
+        start,
+        end: pipe
+          ? start + (pipe[3] === undefined ? 0 : pipe[3].length + 2)
+          : pos + link[0].length - link[5].length,
+        operator: words ? (words[4] === ".->" ? "-.->" : words[4]) : undefined,
+      });
+      const used = link[0].length + next[0].length;
+      pos += used;
+      rest = rest.slice(used);
+      from = next[1];
+    }
+    if (/^\s*;?\s*$/.test(rest)) edges.push(...found);
+  }
+  return edges;
+}
+
+export function renameFlowEdge(source: string, edge: FlowEdge, value: string) {
+  const label = value.trim();
+  if (label.length > 80 || /["\n\r<>|\\]/.test(label))
+    throw Error("连线文字限80字，不能包含引号、换行、竖线或HTML。");
+  if (
+    !flowEdges(source).some(
+      (e) =>
+        e.start === edge.start &&
+        e.end === edge.end &&
+        e.from === edge.from &&
+        e.to === edge.to &&
+        e.label === edge.label,
+    )
+  )
+    throw Error("连线已变化，请重新选择。");
+  return (
+    source.slice(0, edge.start) +
+    (edge.operator || "") +
+    (label ? `|${label}|` : "") +
+    source.slice(edge.end)
+  );
+}
+
 // Source remains authoritative. Append-only operations preserve unsupported syntax.
 export function flowNodes(source: string) {
   if (!isFlowSource(source)) return [];
@@ -30,6 +106,12 @@ export function flowNodes(source: string) {
       }
     }
   }
+  for (const edge of flowEdges(source))
+    for (const id of [edge.from, edge.to])
+      if (!seen.has(id)) {
+        seen.add(id);
+        nodes.push({ id, label: id });
+      }
   return nodes;
 }
 export function addFlowNode(source: string, label: string, kind: DiagramShape, id: string) {
@@ -87,11 +169,23 @@ export function renameFlowNode(source: string, id: string, label: string) {
         .trimStart()
         .startsWith("%%"),
   );
+  if (!matches.length && flowEdges(source).some((e) => e.from === id || e.to === id)) {
+    // Only introduce a definition when every occurrence is a bare endpoint.
+    const other = source
+      .split("\n")
+      .filter((line) => new RegExp(`\\b${id}\\b`).test(line) && !line.trimStart().startsWith("%%"));
+    if (
+      other.every(
+        (line) => flowEdges(line).length && !new RegExp(`\\b${id}\\s*[@({\\[]`).test(line),
+      )
+    )
+      return source + `\n  ${id}["${clean}"]`;
+  }
   if (matches.length !== 1) throw Error("此节点定义复杂或重复，请通过源码修改名称。");
   const m = matches[0],
     old = m[0],
     next = old.includes("@{")
-      ? old.replace(/label:\s*"[^"\n]+"/, `label: "${clean}"`)
+      ? old.replace(/label:\s*"[^"\n]+"/, () => `label: "${clean}"`)
       : old.startsWith(id + "((")
         ? `${id}(("${clean}"))`
         : old.startsWith(id + "{")

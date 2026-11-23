@@ -101,10 +101,12 @@ test("actual canvas: drop at coordinates, move, share/reload, partial deletion a
     await expect(a.getByRole("button", { name: "画布图元 Keep", exact: true })).toBeVisible({
       timeout: 60000,
     });
-    await a.getByLabel("新节点名称").fill("Placed");
     await a
       .getByRole("button", { name: "处理图元", exact: true })
       .dragTo(canvas, { targetPosition: { x: 450, y: 350 } });
+    await a.getByRole("button", { name: "画布图元 处理", exact: true }).press("F2");
+    await a.getByLabel("图元文字", { exact: true }).fill("Placed");
+    await a.getByLabel("图元文字", { exact: true }).press("Enter");
     await expect(source(b)).toHaveValue(/%% collab-position N\w+ 450 350/);
     const placed = a.getByRole("button", { name: "画布图元 Placed", exact: true });
     await expect(placed).toBeVisible();
@@ -270,7 +272,6 @@ test("blank canvas at 50 percent: drop, undo/redo, reset layout and guarded comp
     const canvas = p.getByLabel("Mermaid 图形画布", { exact: true });
     await p.getByRole("button", { name: "缩小", exact: true }).click();
     await p.getByRole("button", { name: "缩小", exact: true }).click();
-    await p.getByLabel("新节点名称").fill("Zoomed");
     await p
       .getByRole("button", { name: "处理图元", exact: true })
       .dragTo(canvas, { targetPosition: { x: 200, y: 150 } });

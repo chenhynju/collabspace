@@ -89,8 +89,10 @@ test("Figma layout: real creation, recent search, two-user source sync, panels a
     await showSource(b);
     await expect(b.getByLabel("协作 Mermaid 源码")).toHaveValue(/PostgreSQL/);
     await showGraph(b);
-    await b.getByLabel("新节点名称").fill("共享缓存");
     await b.getByRole("button", { name: "数据库图元", exact: true }).click();
+    await b.getByRole("button", { name: "画布图元 数据库", exact: true }).press("F2");
+    await b.getByLabel("图元文字", { exact: true }).fill("共享缓存");
+    await b.getByLabel("图元文字", { exact: true }).press("Enter");
     await expect(source).toHaveValue(/共享缓存/);
     await showGraph(a);
     const svg = a.frameLocator('iframe[title="Mermaid 图表"]').locator("svg");
